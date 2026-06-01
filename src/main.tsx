@@ -713,7 +713,7 @@ function HomeScreen() {
         <div className="hero-copy">
           <p className="eyebrow">Premium faith media</p>
           <h1>Faith Flix</h1>
-          <p>Vertical worship, testimony, teaching, and community spaces powered by local data and ready for Supabase later.</p>
+          <p>Stream faith content, share testimonies, worship together, and connect with a community of believers.</p>
           <div className="hero-actions">
             <button className="primary-button" onClick={() => go("watch")}>Open Watch</button>
             <button className="secondary-button" onClick={() => go("upload")}>Submit Testimony</button>
@@ -754,14 +754,18 @@ function WatchScreen() {
   const { publicVideos, selectedVideoId, setSelectedVideoId, saved, setSaved, likes, setLikes, currentUser, go, notify, comments, setComments, setCommunityView } = useApp();
   const userPostVideos = publicVideos.filter((video) => video.source === "user");
   const selectedPublicVideo = publicVideos.find((video) => video.id === selectedVideoId);
-  const feedVideos = selectedPublicVideo && selectedPublicVideo.source !== "user" ? publicVideos : userPostVideos;
+  const feedVideos = selectedPublicVideo && selectedPublicVideo.source !== "user"
+    ? publicVideos
+    : userPostVideos.length > 0
+      ? userPostVideos
+      : publicVideos;
   const selected = feedVideos.find((video) => video.id === selectedVideoId) ?? feedVideos[0];
   const [comment, setComment] = React.useState("");
   const [touchStartX, setTouchStartX] = React.useState<number | null>(null);
   const actorId = currentUser?.id ?? "guest";
 
   if (!selected) {
-    return <section className="screen"><SectionIntro eyebrow="Watch" title="User video feed" body="User-posted faith videos will play here." /><EmptyState icon={Video} title="No user videos yet" body="When members post faith videos, they will appear here in the swipe feed." action="Upload Video" onAction={() => go("upload")} /></section>;
+    return <section className="screen"><SectionIntro eyebrow="Watch" title="Faith video feed" body="Faith videos from the community will play here in swipe style." /><EmptyState icon={Video} title="No videos yet" body="Published admin videos and approved member videos will appear here." action="Upload Video" onAction={() => go("upload")} /></section>;
   }
 
   const savedIds = saved[actorId] ?? [];
@@ -1322,15 +1326,39 @@ function AdminVideos() {
   const { videos, setVideos, notify, setStudioView } = useApp();
   const [editingId, setEditingId] = React.useState("");
   const platformVideos = videos.filter((video) => video.source === "admin");
-  const update = (id: string, patch: Partial<VideoItem>) => setVideos(videos.map((video) => video.id === id ? { ...video, ...patch } : video));
-  const finishEditing = () => {
+  const update = (id: string, patch: Partial<VideoItem>) =>
+    setVideos(videos.map((video) => video.id === id ? { ...video, ...patch } : video));
+
+  const finishEditing = async () => {
+    const video = videos.find((v) => v.id === editingId);
     setEditingId("");
-    notify("Video edits saved.");
+    if (!video) { notify("Video edits saved."); return; }
+    const { error } = await supabase.from("videos").update({
+      title: video.title,
+      description: video.description,
+      scripture_reference: video.scripture,
+      creator_ministry_name: video.creator,
+      app_category: video.category,
+      app_series_title: video.seriesId,
+    }).eq("id", video.id);
+    notify(error ? "Edits saved locally. DB sync failed: " + error.message : "Video edits saved.");
+  };
+
+  const updateStatus = async (id: string, status: Status) => {
+    update(id, { status });
+    const { error } = await supabase.from("videos").update({ status: statusToDb(status) }).eq("id", id);
+    if (error) notify("Status update failed: " + error.message);
+  };
+
+  const deleteVideoAdmin = async (id: string) => {
+    setVideos(videos.filter((item) => item.id !== id));
+    const { error } = await supabase.from("videos").delete().eq("id", id);
+    notify(error ? "Deleted locally. DB sync failed: " + error.message : "Video deleted.");
   };
   if (!platformVideos.length) return <EmptyState icon={Video} title="No platform videos uploaded yet." body="Only admin-created platform content is edited here. User videos and posts can be moderated in User Posts Monitor." action="Add Platform Video" onAction={() => setStudioView("upload")} />;
   return <div className="content-grid">{platformVideos.map((video) => {
     const isEditing = editingId === video.id;
-    return <article className="content-panel" key={video.id}><MediaThumb item={video} /><h3>{video.title}</h3><p>{video.description || "No description."}</p><InfoLine label="Status" value={video.status} />{isEditing && <><Field label="Title" value={video.title} onChange={(title) => update(video.id, { title })} /><Field label="Creator" value={video.creator} onChange={(creator) => update(video.id, { creator })} /><label>Description<textarea value={video.description} onChange={(event) => update(video.id, { description: event.target.value })} /></label><Field label="Scripture reference" value={video.scripture} onChange={(scripture) => update(video.id, { scripture })} /><Field label="Series" value={video.seriesId} onChange={(seriesId) => update(video.id, { seriesId })} /></>}<div className="button-row">{isEditing ? <button className="primary-button" onClick={finishEditing}><CheckCircle2 size={16} /> Done</button> : <button className="secondary-button" onClick={() => setEditingId(video.id)}><Edit3 size={16} /> Edit</button>}<button className="secondary-button" onClick={() => notify(video.videoUrl ? "Preview is available in the video manager card." : "No playable file URL in this session.")}><Eye size={16} /> Preview</button><button className="secondary-button" onClick={() => update(video.id, { status: video.status === "Published" ? "Draft" : "Published" })}>{video.status === "Published" ? <EyeOff size={16} /> : <Eye size={16} />} {video.status === "Published" ? "Unpublish" : "Publish"}</button><SelectButton value={video.status} options={["Draft", "Published", "Hidden"]} onChange={(status) => update(video.id, { status: status as Status })} /><button className="secondary-button danger" onClick={() => { setVideos(videos.filter((item) => item.id !== video.id)); notify("Video deleted."); }}><Trash2 size={16} /> Delete</button></div>{video.videoUrl && (isCloudflareStreamUrl(video.videoUrl) ? <iframe className="inline-video inline-video-frame" src={video.videoUrl} allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowFullScreen /> : <video className="inline-video" controls src={video.videoUrl} />)}</article>;
+    return <article className="content-panel" key={video.id}><MediaThumb item={video} /><h3>{video.title}</h3><p>{video.description || "No description."}</p><InfoLine label="Status" value={video.status} />{isEditing && <><Field label="Title" value={video.title} onChange={(title) => update(video.id, { title })} /><Field label="Creator" value={video.creator} onChange={(creator) => update(video.id, { creator })} /><label>Description<textarea value={video.description} onChange={(event) => update(video.id, { description: event.target.value })} /></label><Field label="Scripture reference" value={video.scripture} onChange={(scripture) => update(video.id, { scripture })} /><Field label="Series" value={video.seriesId} onChange={(seriesId) => update(video.id, { seriesId })} /></>}<div className="button-row">{isEditing ? <button className="primary-button" onClick={finishEditing}><CheckCircle2 size={16} /> Done</button> : <button className="secondary-button" onClick={() => setEditingId(video.id)}><Edit3 size={16} /> Edit</button>}<button className="secondary-button" onClick={() => notify(video.videoUrl ? "Preview is available in the video manager card." : "No playable file URL in this session.")}><Eye size={16} /> Preview</button><button className="secondary-button" onClick={() => updateStatus(video.id, video.status === "Published" ? "Draft" : "Published")}>{video.status === "Published" ? <EyeOff size={16} /> : <Eye size={16} />} {video.status === "Published" ? "Unpublish" : "Publish"}</button><SelectButton value={video.status} options={["Draft", "Published", "Hidden"]} onChange={(status) => updateStatus(video.id, status as Status)} /><button className="secondary-button danger" onClick={() => deleteVideoAdmin(video.id)}><Trash2 size={16} /> Delete</button></div>{video.videoUrl && (isCloudflareStreamUrl(video.videoUrl) ? <iframe className="inline-video inline-video-frame" src={video.videoUrl} allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowFullScreen /> : <video className="inline-video" controls src={video.videoUrl} />)}</article>;
   })}</div>;
 }
 
@@ -1383,18 +1411,21 @@ function AdminTakeDown() {
   const reportedPosts = posts.filter((post) => post.reports.length > 0);
   const hasContent = userVideos.length || platformVideos.length || posts.length || prayers.length || hiddenVideos.length;
 
-  const hideVideo = (id: string) => {
+  const hideVideo = async (id: string) => {
     setVideos(videos.map((video) => video.id === id ? { ...video, status: "Hidden" } : video));
+    await supabase.from("videos").update({ status: "hidden" }).eq("id", id);
     notify("Content taken down.");
   };
 
-  const restoreVideo = (id: string) => {
+  const restoreVideo = async (id: string) => {
     setVideos(videos.map((video) => video.id === id ? { ...video, status: "Published" } : video));
+    await supabase.from("videos").update({ status: "published" }).eq("id", id);
     notify("Content restored.");
   };
 
-  const deleteVideo = (id: string) => {
+  const deleteVideo = async (id: string) => {
     setVideos(videos.filter((video) => video.id !== id));
+    await supabase.from("videos").delete().eq("id", id);
     notify("Content deleted.");
   };
 
