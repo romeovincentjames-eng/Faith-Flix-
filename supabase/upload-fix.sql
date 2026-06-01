@@ -6,9 +6,9 @@ alter table public.videos add column if not exists app_series_title text;
 alter table public.videos add column if not exists crop_dimension text;
 alter table public.videos add column if not exists crop_ratio text;
 
-insert into storage.buckets (id, name, public)
-values ('faithflix-media', 'faithflix-media', true)
-on conflict (id) do update set public = true;
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('faithflix-media', 'faithflix-media', true, 524288000)
+on conflict (id) do update set public = true, file_size_limit = 524288000;
 
 do $$
 begin

@@ -174,10 +174,18 @@ async function uploadMediaFile(file: File | null, ownerId: string, folder: strin
   if (!file) return { name: "", url: "" };
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const filePath = ownerId + "/" + folder + "/" + Date.now() + "-" + safeName;
-  const { error } = await supabase.storage.from(mediaBucket).upload(filePath, file, { cacheControl: "3600", upsert: false });
-  if (error) throw error;
+  const { error } = await supabase.storage.from(mediaBucket).upload(filePath, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });
+  if (error) throw new Error("Storage upload failed: " + error.message);
   const { data } = supabase.storage.from(mediaBucket).getPublicUrl(filePath);
   return { name: file.name, url: data.publicUrl };
+}
+
+async function getActiveAuthUser() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw new Error(error.message);
+  const authUser = data.session?.user;
+  if (!authUser) throw new Error("Please log out and log back in before uploading.");
+  return authUser;
 }
 
 function startUploadProgress(setUploadProgress: React.Dispatch<React.SetStateAction<UploadProgress>>, label: string) {
@@ -833,14 +841,16 @@ function UploadScreen() {
 
     void (async () => {
       try {
+        progress.step("Checking login", 20);
+        const authUser = await getActiveAuthUser();
         progress.step("Uploading video", 24);
-        const video = await uploadMediaFile(uploadVideoFile, uploadUser.id, "videos");
+        const video = await uploadMediaFile(uploadVideoFile, authUser.id, "videos");
         progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving post", 78);
-        const thumb = await uploadMediaFile(uploadThumbFile, uploadUser.id, "thumbnails");
+        const thumb = await uploadMediaFile(uploadThumbFile, authUser.id, "thumbnails");
         progress.step("Publishing post", 92);
         const uploadId = uid("upload");
         const publicVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "user", title: uploadForm.title, description: uploadForm.description, scripture: uploadForm.scripture, category: uploadForm.category, seriesId: "", episode: "", duration: "", creator: uploadUser.name, tags: uploadForm.tags, status: "Published", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: uploadForm.cropDimension, cropRatio: uploadForm.cropRatio };
-        const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, uploadUser.id)).select("*").single();
+        const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, authUser.id)).select("*").single();
         if (error) throw error;
         const savedVideo = videoFromDb(data as DbVideo);
         setUploads((current) => [...current, { id: uploadId, userId: uploadUser.id, ...uploadForm, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, status: "Approved", adminNote: "Published instantly." }]);
@@ -1235,13 +1245,15 @@ function AdminUpload() {
 
     void (async () => {
       try {
+        progress.step("Checking login", 20);
+        const authUser = await getActiveAuthUser();
         progress.step("Uploading video", 24);
-        const video = await uploadMediaFile(uploadVideoFile, uploadUser.id, "admin-videos");
+        const video = await uploadMediaFile(uploadVideoFile, authUser.id, "admin-videos");
         progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving video", 78);
-        const thumb = await uploadMediaFile(uploadThumbFile, uploadUser.id, "admin-thumbnails");
+        const thumb = await uploadMediaFile(uploadThumbFile, authUser.id, "admin-thumbnails");
         progress.step("Publishing video", 92);
         const platformVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "admin", ...uploadForm, status, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: "9:16", cropRatio: "9 / 16" };
-        const { data, error } = await supabase.from("videos").insert(videoToDb(platformVideo, uploadUser.id)).select("*").single();
+        const { data, error } = await supabase.from("videos").insert(videoToDb(platformVideo, authUser.id)).select("*").single();
         if (error) throw error;
         const savedVideo = videoFromDb(data as DbVideo);
         setVideos((current) => [...current.filter((item) => item.id !== savedVideo.id), savedVideo]);
