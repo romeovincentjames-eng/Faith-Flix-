@@ -5,6 +5,38 @@ alter table public.videos add column if not exists app_category text;
 alter table public.videos add column if not exists app_series_title text;
 alter table public.videos add column if not exists crop_dimension text;
 alter table public.videos add column if not exists crop_ratio text;
+alter table public.videos add column if not exists featured boolean not null default false;
+
+alter table public.series add column if not exists app_category text;
+alter table public.series add column if not exists featured boolean not null default false;
+
+insert into public.categories (name, hidden, custom)
+values
+  ('Bible Stories', false, false),
+  ('Sermons', false, false),
+  ('Worship Videos', false, false),
+  ('Testimonies', false, false),
+  ('Prayer Videos', false, false),
+  ('Christian Short Films', false, false),
+  ('Faith Music Visuals', false, false),
+  ('Gospel Messages', false, false),
+  ('Christian Motivation', false, false),
+  ('Youth Faith Content', false, false),
+  ('Family Faith Content', false, false),
+  ('Vertical Faith Series', false, false),
+  ('Animated Bible Stories', false, false),
+  ('Church Clips', false, false),
+  ('Pastor Teachings', false, false),
+  ('Faith Trailers', false, false),
+  ('Scripture Reflections', false, false),
+  ('Devotional Clips', false, false),
+  ('Bible Study Content', false, false),
+  ('Christian Creator Videos', false, false),
+  ('Church Media', false, false),
+  ('Prayer Room Content', false, false),
+  ('Answered Prayer Stories', false, false),
+  ('Faith Journey Videos', false, false)
+on conflict (name) do nothing;
 
 insert into storage.buckets (id, name, public, file_size_limit)
 values ('faithflix-media', 'faithflix-media', true, 524288000)

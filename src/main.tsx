@@ -408,7 +408,21 @@ function App() {
       if (data.length > 0) setVideos((data as DbVideo[]).map(videoFromDb));
     };
 
+    const loadSupabaseSeries = async () => {
+      const { data, error } = await supabase.from("series").select("*").order("created_at", { ascending: true });
+      if (!active || error || !data) return;
+      if (data.length > 0) setSeries((data as DbSeries[]).map(seriesFromDb));
+    };
+
+    const loadSupabaseCategories = async () => {
+      const { data, error } = await supabase.from("categories").select("*").order("created_at", { ascending: true });
+      if (!active || error || !data) return;
+      if (data.length > 0) setCategories((data as DbCategory[]).map(categoryFromDb));
+    };
+
     void loadSupabaseVideos();
+    void loadSupabaseSeries();
+    void loadSupabaseCategories();
 
     return () => {
       active = false;
@@ -670,6 +684,26 @@ type DbVideo = {
   app_series_title?: string | null;
   crop_dimension?: string | null;
   crop_ratio?: string | null;
+  featured?: boolean | null;
+};
+
+type DbSeries = {
+  id: string;
+  title: string;
+  description: string | null;
+  poster_url: string | null;
+  scripture_theme: string | null;
+  status: "draft" | "published" | "hidden" | string;
+  app_category?: string | null;
+  featured?: boolean | null;
+  created_at?: string | null;
+};
+
+type DbCategory = {
+  id: string;
+  name: string;
+  hidden: boolean | null;
+  custom: boolean | null;
 };
 
 type DbProfile = {
@@ -732,6 +766,7 @@ function videoFromDb(video: DbVideo): VideoItem {
     creator: video.creator_ministry_name || "Faith Flix",
     tags: video.tags || "",
     status: statusFromDb(video.status),
+    featured: !!video.featured,
     videoName: video.video_url ? video.video_url.split("/").pop() || "Video" : "",
     videoUrl: video.video_url || "",
     thumbnailName: video.thumbnail_url ? video.thumbnail_url.split("/").pop() || "Thumbnail" : "",
@@ -760,6 +795,43 @@ function videoToDb(video: Omit<VideoItem, "id" | "createdAt">, createdBy: string
     app_series_title: video.seriesId,
     crop_dimension: video.cropDimension || "9:16",
     crop_ratio: video.cropRatio || "9 / 16",
+    featured: video.featured ?? false,
+  };
+}
+
+function seriesFromDb(item: DbSeries): SeriesItem {
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description || "",
+    posterName: item.poster_url ? item.poster_url.split("/").pop() || "Poster" : "",
+    posterUrl: item.poster_url || "",
+    scriptureTheme: item.scripture_theme || "",
+    category: item.app_category || "Bible Stories",
+    status: statusFromDb(item.status),
+    featured: !!item.featured,
+  };
+}
+
+function seriesToDb(item: Omit<SeriesItem, "id">, createdBy?: string) {
+  return {
+    title: item.title,
+    description: item.description,
+    poster_url: item.posterUrl || null,
+    scripture_theme: item.scriptureTheme,
+    status: statusToDb(item.status),
+    app_category: item.category,
+    featured: item.featured ?? false,
+    ...(createdBy ? { created_by: createdBy } : {}),
+  };
+}
+
+function categoryFromDb(item: DbCategory): CategoryItem {
+  return {
+    id: item.id,
+    name: item.name,
+    hidden: !!item.hidden,
+    custom: item.custom ?? true,
   };
 }
 
@@ -1840,23 +1912,72 @@ function AdminVideos() {
 }
 
 function AdminSeries() {
-  const { series, setSeries, visibleCategories, notify, t } = useApp();
+  const { currentUser, series, setSeries, visibleCategories, notify, t } = useApp();
   const [form, setForm] = React.useState({ title: "", description: "", posterName: "", posterUrl: "", scriptureTheme: "", category: visibleCategories[0]?.name ?? "", status: "Published" as Status, featured: false });
+  const [posterFile, setPosterFile] = React.useState<File | null>(null);
   const [editingId, setEditingId] = React.useState("");
-  const save = () => {
+  const [pendingPosterFiles, setPendingPosterFiles] = React.useState<Record<string, File | null>>({});
+
+  const save = async () => {
     if (!form.title) return notify("Add a series title.");
-    setSeries([...series, { id: uid("series"), ...form }]);
-    setForm({ ...form, title: "", description: "", scriptureTheme: "", featured: false });
-    notify("Series saved.");
+    const authUser = await getActiveAuthUser().catch(() => null);
+    if (!authUser) return notify("Please log in as admin first.");
+    try {
+      const poster = posterFile ? await uploadMediaFile(posterFile, authUser.id, "series-posters") : { name: form.posterName, url: form.posterUrl };
+      const seriesItem: Omit<SeriesItem, "id"> = { ...form, posterName: poster.name, posterUrl: poster.url };
+      const { data, error } = await supabase.from("series").insert(seriesToDb(seriesItem, currentUser?.id || authUser.id)).select("*").single();
+      if (error) throw error;
+      const savedSeries = seriesFromDb(data as DbSeries);
+      setSeries((current) => [...current.filter((item) => item.id !== savedSeries.id), savedSeries]);
+      setPosterFile(null);
+      setForm({ ...form, title: "", description: "", posterName: "", posterUrl: "", scriptureTheme: "", featured: false });
+      notify("Series saved online.");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Series could not be saved.");
+    }
   };
-  const update = (id: string, patch: Partial<SeriesItem>) => setSeries(series.map((item) => item.id === id ? { ...item, ...patch } : item));
+
+  const update = (id: string, patch: Partial<SeriesItem>) => setSeries((current) => current.map((item) => item.id === id ? { ...item, ...patch } : item));
+
+  const saveSeriesEdit = async (id: string) => {
+    const item = series.find((seriesItem) => seriesItem.id === id);
+    if (!item) return;
+    try {
+      const authUser = await getActiveAuthUser();
+      const poster = pendingPosterFiles[id] ? await uploadMediaFile(pendingPosterFiles[id], authUser.id, "series-posters") : { name: item.posterName, url: item.posterUrl || "" };
+      const nextItem = { ...item, posterName: poster.name || item.posterName, posterUrl: poster.url || item.posterUrl };
+      const { data, error } = await supabase.from("series").update(seriesToDb(nextItem)).eq("id", id).select("*").single();
+      if (error) throw error;
+      const savedSeries = seriesFromDb(data as DbSeries);
+      setSeries((current) => current.map((seriesItem) => seriesItem.id === id ? savedSeries : seriesItem));
+      setPendingPosterFiles((current) => ({ ...current, [id]: null }));
+      setEditingId("");
+      notify("Series changes saved online.");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Series changes could not be saved.");
+    }
+  };
+
+  const changeStatus = async (id: string, status: Status) => {
+    update(id, { status });
+    const { error } = await supabase.from("series").update({ status: statusToDb(status) }).eq("id", id);
+    notify(error ? "Series status could not be saved." : "Series status saved online.");
+  };
+
+  const deleteSeries = async (id: string) => {
+    const { error } = await supabase.from("series").delete().eq("id", id);
+    if (error) return notify("Series could not be deleted online.");
+    setSeries((current) => current.filter((item) => item.id !== id));
+    notify("Series deleted online.");
+  };
+
   return (
     <>
       <div className="form-card">
         <h2>Create series</h2>
         <Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
         <label>Description<textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
-        <FileField label="Poster image" onChange={(file) => setForm({ ...form, posterName: fileInfo(file).name, posterUrl: fileInfo(file).url })} />
+        <FileField label="Poster image" onChange={(file) => { setPosterFile(file); setForm({ ...form, posterName: fileInfo(file).name, posterUrl: file ? URL.createObjectURL(file) : "" }); }} />
         <Field label="Scripture theme" value={form.scriptureTheme} onChange={(scriptureTheme) => setForm({ ...form, scriptureTheme })} />
         <Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={visibleCategories.map((item) => item.name)} />
         <Select label="Status" value={form.status} onChange={(status) => setForm({ ...form, status: status as Status })} options={["Draft", "Published"]} />
@@ -1884,7 +2005,7 @@ function AdminSeries() {
                 <div className="admin-edit-form">
                   <Field label="Title" value={item.title} onChange={(title) => update(item.id, { title })} />
                   <label>Description<textarea value={item.description} onChange={(e) => update(item.id, { description: e.target.value })} /></label>
-                  <FileField label="Poster image" onChange={(file) => update(item.id, { posterName: fileInfo(file).name, posterUrl: fileInfo(file).url })} />
+                  <FileField label="Poster image" onChange={(file) => { setPendingPosterFiles((current) => ({ ...current, [item.id]: file })); update(item.id, { posterName: fileInfo(file).name, posterUrl: file ? URL.createObjectURL(file) : item.posterUrl }); }} />
                   <Field label="Scripture theme" value={item.scriptureTheme} onChange={(scriptureTheme) => update(item.id, { scriptureTheme })} />
                   <Select label="Category" value={item.category} onChange={(category) => update(item.id, { category })} options={visibleCategories.map((c) => c.name)} />
                   <Select label="Status" value={item.status} onChange={(status) => update(item.id, { status: status as Status })} options={["Draft", "Published", "Hidden"]} />
@@ -1895,11 +2016,13 @@ function AdminSeries() {
                 </div>
               )}
               <div className="button-row">
-                <button className="secondary-button" onClick={() => setEditingId(editingId === item.id ? "" : item.id)}>
-                  <Edit3 size={15} /> {editingId === item.id ? "Done" : "Edit All Details"}
-                </button>
-                <SelectButton value={item.status} options={["Draft", "Published", "Hidden"]} onChange={(status) => update(item.id, { status: status as Status })} />
-                <button className="secondary-button danger" onClick={() => { setSeries(series.filter((s) => s.id !== item.id)); notify("Series deleted."); }}>
+                {editingId === item.id ? (
+                  <button className="primary-button" onClick={() => saveSeriesEdit(item.id)}><CheckCircle2 size={15} /> Done</button>
+                ) : (
+                  <button className="secondary-button" onClick={() => setEditingId(item.id)}><Edit3 size={15} /> Edit All Details</button>
+                )}
+                <SelectButton value={item.status} options={["Draft", "Published", "Hidden"]} onChange={(status) => changeStatus(item.id, status as Status)} />
+                <button className="secondary-button danger" onClick={() => deleteSeries(item.id)}>
                   <Trash2 size={15} /> Delete
                 </button>
               </div>
@@ -1914,14 +2037,36 @@ function AdminSeries() {
 function AdminCategories() {
   const { categories, setCategories, notify, t } = useApp();
   const [name, setName] = React.useState("");
-  const add = () => {
+
+  const add = async () => {
     if (!name.trim()) return notify("Add a category name.");
-    setCategories([...categories, { id: uid("cat"), name, hidden: false, custom: true }]);
+    const { data, error } = await supabase.from("categories").insert({ name: name.trim(), hidden: false, custom: true }).select("*").single();
+    if (error) return notify("Category could not be saved online.");
+    const savedCategory = categoryFromDb(data as DbCategory);
+    setCategories((current) => [...current.filter((cat) => cat.id !== savedCategory.id), savedCategory]);
     setName("");
-    notify("Category added.");
+    notify("Category added online.");
   };
-  const update = (id: string, patch: Partial<CategoryItem>) => setCategories(categories.map((cat) => cat.id === id ? { ...cat, ...patch } : cat));
-  return <><div className="form-card"><h2>Add category</h2><Field label="Category name" value={name} onChange={setName} /><button className="primary-button" onClick={add}>Add Category</button></div><div className="content-grid">{categories.map((category) => <article className="content-panel" key={category.id}><Field label="Name" value={category.name} onChange={(catName) => update(category.id, { name: catName })} /><div className="button-row"><button className="secondary-button" onClick={() => update(category.id, { hidden: !category.hidden })}>{category.hidden ? "Show" : "Hide"}</button>{category.custom && <button className="secondary-button danger" onClick={() => { setCategories(categories.filter((cat) => cat.id !== category.id)); notify("Custom category deleted."); }}>Delete</button>}</div></article>)}</div></>;
+
+  const update = async (id: string, patch: Partial<CategoryItem>) => {
+    setCategories((current) => current.map((cat) => cat.id === id ? { ...cat, ...patch } : cat));
+    const dbPatch: Record<string, string | boolean> = {};
+    if (patch.name !== undefined) dbPatch.name = patch.name;
+    if (patch.hidden !== undefined) dbPatch.hidden = patch.hidden;
+    if (patch.custom !== undefined) dbPatch.custom = patch.custom;
+    if (!Object.keys(dbPatch).length) return;
+    const { error } = await supabase.from("categories").update(dbPatch).eq("id", id);
+    if (error) notify("Category change could not be saved online.");
+  };
+
+  const deleteCategory = async (id: string) => {
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+    if (error) return notify("Category could not be deleted online.");
+    setCategories((current) => current.filter((cat) => cat.id !== id));
+    notify("Custom category deleted online.");
+  };
+
+  return <><div className="form-card"><h2>Add category</h2><Field label="Category name" value={name} onChange={setName} /><button className="primary-button" onClick={add}>Add Category</button></div><div className="content-grid">{categories.map((category) => <article className="content-panel" key={category.id}><Field label="Name" value={category.name} onChange={(catName) => update(category.id, { name: catName })} /><div className="button-row"><button className="secondary-button" onClick={() => update(category.id, { hidden: !category.hidden })}>{category.hidden ? "Show" : "Hide"}</button>{category.custom && <button className="secondary-button danger" onClick={() => deleteCategory(category.id)}>Delete</button>}</div></article>)}</div></>;
 }
 
 function AdminReviewQueue() {
