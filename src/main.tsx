@@ -129,84 +129,8 @@ type Message = { id: string; fromId: string; toId: string; text: string; created
 const adminEmail = "romeovgalasso@gmail.com";
 const adminPassword = "Rvjg123100";
 
-const starterVideos: VideoItem[] = [
-  {
-    id: "starter-jael",
-    source: "admin",
-    title: "Jael Bible Story",
-    description: "A vertical Bible story video from the starter Faith Flix library.",
-    scripture: "Judges 4",
-    category: "Bible Stories",
-    seriesId: "Ai bible",
-    episode: "1",
-    duration: "",
-    creator: "Faith Flix",
-    tags: "Bible Stories, Jael, Faith",
-    status: "Published",
-    videoName: "jael.mp4",
-    videoUrl: "/starter-videos/jael.mp4",
-    thumbnailName: "jael.png",
-    thumbnailUrl: "/starter-videos/jael.png",
-    cropDimension: "9:16",
-    cropRatio: "9 / 16",
-    createdAt: "Starter library",
-  },
-  {
-    id: "starter-moses",
-    source: "admin",
-    title: "Moses Bible Story",
-    description: "A vertical Bible story video from the starter Faith Flix library.",
-    scripture: "Exodus",
-    category: "Bible Stories",
-    seriesId: "Ai bible",
-    episode: "2",
-    duration: "",
-    creator: "Faith Flix",
-    tags: "Bible Stories, Moses, Faith",
-    status: "Published",
-    videoName: "moses.mp4",
-    videoUrl: "/starter-videos/moses.mp4",
-    thumbnailName: "moses.png",
-    thumbnailUrl: "/starter-videos/moses.png",
-    cropDimension: "9:16",
-    cropRatio: "9 / 16",
-    createdAt: "Starter library",
-  },
-  {
-    id: "starter-elijah",
-    source: "admin",
-    title: "Elijah Bible Story",
-    description: "A vertical Bible story video from the starter Faith Flix library.",
-    scripture: "1 Kings",
-    category: "Bible Stories",
-    seriesId: "Ai bible",
-    episode: "3",
-    duration: "",
-    creator: "Faith Flix",
-    tags: "Bible Stories, Elijah, Faith",
-    status: "Published",
-    videoName: "elijah.mp4",
-    videoUrl: "/starter-videos/elijah.mp4",
-    thumbnailName: "elijah.png",
-    thumbnailUrl: "/starter-videos/elijah.png",
-    cropDimension: "9:16",
-    cropRatio: "9 / 16",
-    createdAt: "Starter library",
-  },
-];
-
-const starterSeries: SeriesItem[] = [
-  {
-    id: "starter-ai-scripture-visuals",
-    title: "Ai bible",
-    description: "Cinematic vertical Bible story visuals created as the first Faith Flix series.",
-    posterName: "jael.png",
-    posterUrl: "/starter-videos/jael.png",
-    scriptureTheme: "Bible Stories",
-    category: "Bible Stories",
-    status: "Published",
-  },
-];
+const starterVideoIds = ["starter-jael", "starter-moses", "starter-elijah"];
+const starterSeriesIds = ["starter-ai-scripture-visuals"];
 
 const defaultCategories = [
   "Bible Stories",
@@ -334,20 +258,8 @@ function App() {
   }, [setSessionId, setUsers]);
 
   React.useEffect(() => {
-    setVideos((current) => {
-      const starterIds = starterVideos.map((starter) => starter.id);
-      const updated = current.map((video) => {
-        const starter = starterVideos.find((item) => item.id === video.id);
-        return starter ? { ...video, source: "admin" as const, seriesId: starter.seriesId, creator: "Faith Flix" } : video;
-      });
-      const missingStarterVideos = starterVideos.filter((starter) => !updated.some((video) => video.id === starter.id));
-      const withoutDuplicateStarters = updated.filter((video) => !starterIds.includes(video.id) || starterVideos.some((starter) => starter.id === video.id));
-      return missingStarterVideos.length ? [...missingStarterVideos, ...withoutDuplicateStarters] : withoutDuplicateStarters;
-    });
-    setSeries((current) => {
-      const updated = current.map((item) => item.id === "starter-ai-scripture-visuals" || item.title === "Ai bible" ? { ...item, ...starterSeries[0] } : item);
-      return updated.some((item) => item.title === "Ai bible") ? updated : [starterSeries[0], ...updated];
-    });
+    setVideos((current) => current.filter((video) => !starterVideoIds.includes(video.id)));
+    setSeries((current) => current.filter((item) => !starterSeriesIds.includes(item.id) && item.title !== "Ai bible"));
   }, [setVideos, setSeries]);
 
   React.useEffect(() => {
