@@ -996,27 +996,108 @@ function SavedScreen() {
   );
 }
 
+const COMM_STORIES = [
+  { name: "Sarah M.", initials: "SM", color: "#a78bfa" },
+  { name: "Pastor James", initials: "PJ", color: "#60a5fa" },
+  { name: "Grace H.", initials: "GH", color: "#f472b6" },
+  { name: "David K.", initials: "DK", color: "#34d399" },
+  { name: "Maria L.", initials: "ML", color: "#fb923c" },
+  { name: "Thomas R.", initials: "TR", color: "#facc15" },
+];
+
 function CommunityScreen() {
-  const { communityView, setCommunityView } = useApp();
+  const { communityView, setCommunityView, notify } = useApp();
   const tabs: { id: CommunityView; label: string; icon: React.ElementType }[] = [
-    { id: "feed", label: "Faith Feed", icon: MessagesSquare },
-    { id: "prayer", label: "Prayer Wall", icon: HeartHandshake },
-    { id: "groups", label: "Bible Study Groups", icon: Users },
-    { id: "discussions", label: "Series Discussions", icon: MessageCircle },
+    { id: "feed", label: "Feed", icon: MessagesSquare },
+    { id: "prayer", label: "Prayer", icon: HeartHandshake },
+    { id: "groups", label: "Groups", icon: Users },
+    { id: "discussions", label: "Discuss", icon: MessageCircle },
     { id: "friends", label: "Friends", icon: UserPlus },
-    { id: "messages", label: "Messages", icon: Inbox },
+    { id: "messages", label: "DMs", icon: Inbox },
   ];
+
+  const screenTitles: Record<CommunityView, string> = {
+    feed: "Faith Feed",
+    prayer: "Prayer Wall",
+    groups: "Bible Study",
+    discussions: "Discussions",
+    friends: "Friends",
+    messages: "Messages",
+  };
+
   return (
-    <section className="screen">
-      <SectionIntro eyebrow="Community" title="Faith-centered connection" body="Post encouragement, pray together, discuss videos, manage friends, and message." />
-      <div className="segmented-row">{tabs.map(({ id, label, icon: Icon }) => <button key={id} className={communityView === id ? "segment active" : "segment"} onClick={() => setCommunityView(id)}><Icon size={17} />{label}</button>)}</div>
-      {communityView === "feed" && <FaithFeed />}
-      {communityView === "prayer" && <PrayerWall />}
-      {communityView === "groups" && <EmptyState icon={Users} title="No Bible study groups yet." body="Groups are ready for local data and future Supabase records." action="Create post instead" onAction={() => setCommunityView("feed")} />}
-      {communityView === "discussions" && <DiscussionRooms />}
-      {communityView === "friends" && <FriendsPanel />}
-      {communityView === "messages" && <MessagesPanel />}
-    </section>
+    <div className="community-app">
+      <div className="community-topbar">
+        <div className="community-brand">
+          <span className="community-brand-icon"><Cross size={16} /></span>
+          <span className="community-brand-name">{screenTitles[communityView]}</span>
+        </div>
+        <div className="community-topbar-actions">
+          <button className="community-icon-btn" aria-label="Search" onClick={() => notify("Search coming soon.")}><Search size={20} /></button>
+          <button className="community-icon-btn" aria-label="Write post" onClick={() => setCommunityView("feed")}><Edit3 size={20} /></button>
+        </div>
+      </div>
+
+      {communityView === "feed" && (
+        <div className="comm-story-row">
+          <button className="comm-story-item" onClick={() => notify("Add your story — coming soon!")}>
+            <div className="comm-story-avatar comm-story-add"><Plus size={22} /></div>
+            <span className="comm-story-name">Your Story</span>
+          </button>
+          {COMM_STORIES.map((member) => (
+            <button className="comm-story-item" key={member.name} onClick={() => notify(`${member.name}'s story — coming soon!`)}>
+              <div className="comm-story-avatar comm-story-ring" style={{ "--story-color": member.color } as React.CSSProperties}>
+                <span>{member.initials}</span>
+              </div>
+              <span className="comm-story-name">{member.name.split(" ")[0]}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="community-body">
+        {communityView === "feed" && <FaithFeed />}
+        {communityView === "prayer" && <PrayerWall />}
+        {communityView === "groups" && (
+          <div className="comm-groups-grid">
+            {[
+              { name: "Morning Devotions", members: 24, verse: "Psalm 143:8", color: "#a78bfa" },
+              { name: "Romans Study", members: 18, verse: "Romans 8:28", color: "#60a5fa" },
+              { name: "Youth Ministry", members: 31, verse: "Proverbs 22:6", color: "#34d399" },
+              { name: "Worship & Prayer", members: 42, verse: "Psalm 100:1", color: "#fb923c" },
+              { name: "Apologetics", members: 11, verse: "1 Peter 3:15", color: "#f472b6" },
+              { name: "Missionaries", members: 7, verse: "Matthew 28:19", color: "#facc15" },
+            ].map((group) => (
+              <button key={group.name} className="comm-group-card" onClick={() => notify(`${group.name} — joining coming soon!`)}>
+                <div className="comm-group-icon" style={{ background: group.color + "22", borderColor: group.color + "44" }}>
+                  <Users size={22} style={{ color: group.color }} />
+                </div>
+                <p className="comm-group-name">{group.name}</p>
+                <p className="comm-group-meta">{group.members} members</p>
+                <p className="comm-group-verse">{group.verse}</p>
+              </button>
+            ))}
+          </div>
+        )}
+        {communityView === "discussions" && <DiscussionRooms />}
+        {communityView === "friends" && <FriendsPanel />}
+        {communityView === "messages" && <MessagesPanel />}
+      </div>
+
+      <nav className="community-inner-nav">
+        {tabs.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            className={communityView === id ? "comm-nav-btn active" : "comm-nav-btn"}
+            onClick={() => setCommunityView(id)}
+            aria-label={label}
+          >
+            <Icon size={21} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
+    </div>
   );
 }
 

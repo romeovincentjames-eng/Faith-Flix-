@@ -1944,3 +1944,329 @@ textarea:focus {
   border-color: rgba(246, 210, 123, 0.42);
   box-shadow: 0 0 0 3px rgba(246, 210, 123, 0.1);
 }
+
+/* ════════════════════════════════════════════════════
+   COMMUNITY MINI-APP
+   ════════════════════════════════════════════════════ */
+
+.community-app {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 92px - env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 80% 5%, rgba(139, 92, 246, 0.14), transparent 30rem),
+    radial-gradient(circle at 10% 60%, rgba(96, 165, 250, 0.12), transparent 24rem),
+    linear-gradient(180deg, #080d1a 0%, #04050c 100%);
+  border-radius: 0;
+  position: relative;
+}
+
+/* ── Community topbar ────────────────────────────────── */
+.community-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  background: linear-gradient(180deg,
+    rgba(8, 10, 22, 0.98) 0%,
+    rgba(8, 10, 22, 0.82) 100%);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.16);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.community-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.community-brand-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #a78bfa, #7c3aed);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.38);
+  flex-shrink: 0;
+}
+
+.community-brand-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #fff 50%, #c4b5fd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.community-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.community-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(247, 251, 255, 0.75);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.community-icon-btn:hover {
+  background: rgba(139, 92, 246, 0.22);
+  color: #c4b5fd;
+}
+
+/* ── Stories row ─────────────────────────────────────── */
+.comm-story-row {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 14px 18px;
+  scrollbar-width: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.comm-story-row::-webkit-scrollbar {
+  display: none;
+}
+
+.comm-story-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.comm-story-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #fff;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.comm-story-add {
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px dashed rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.comm-story-ring {
+  background: rgba(139, 92, 246, 0.18);
+  box-shadow:
+    0 0 0 2.5px var(--story-color, #a78bfa),
+    0 0 0 5px rgba(8, 10, 22, 1),
+    0 0 0 7px var(--story-color, #a78bfa),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.comm-story-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(247, 251, 255, 0.65);
+  white-space: nowrap;
+  max-width: 58px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+/* ── Community body ──────────────────────────────────── */
+.community-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* leave room for inner nav (64px) stacked above main nav (72px) + buffer */
+  padding-bottom: calc(64px + 72px + 20px + env(safe-area-inset-bottom));
+}
+
+/* ── Community inner bottom nav ──────────────────────── */
+.community-inner-nav {
+  position: fixed;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: stretch;
+  height: 64px;
+  background: rgba(6, 7, 16, 0.96);
+  backdrop-filter: blur(24px) saturate(160%);
+  border-top: 1px solid rgba(139, 92, 246, 0.2);
+  z-index: 40;
+  padding: 0 4px;
+}
+
+.comm-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: rgba(247, 251, 255, 0.42);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0 2px;
+  transition: color 0.18s ease;
+  position: relative;
+}
+
+.comm-nav-btn:hover {
+  color: #c4b5fd;
+}
+
+.comm-nav-btn.active {
+  color: #a78bfa;
+}
+
+.comm-nav-btn.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 2.5px;
+  border-radius: 0 0 4px 4px;
+  background: linear-gradient(90deg, #a78bfa, #7c3aed);
+  box-shadow: 0 0 10px rgba(167, 139, 250, 0.6);
+}
+
+/* ── Bible Study groups grid ─────────────────────────── */
+.comm-groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.comm-group-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  color: #f7fbff;
+}
+
+.comm-group-card:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(139, 92, 246, 0.32);
+}
+
+.comm-group-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid;
+  margin-bottom: 2px;
+}
+
+.comm-group-name {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.comm-group-meta {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(247, 251, 255, 0.45);
+}
+
+.comm-group-verse {
+  margin: 0;
+  font-size: 0.68rem;
+  font-style: italic;
+  color: rgba(196, 181, 253, 0.7);
+}
+
+/* ── Community app overrides for inner content ───────── */
+.community-body .form-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(139, 92, 246, 0.18);
+}
+
+.community-body .content-panel {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.community-body .post-card {
+  border-left: 2.5px solid rgba(139, 92, 246, 0.38);
+}
+
+.community-body .primary-button {
+  background: linear-gradient(135deg, #a78bfa, #7c3aed);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.32);
+}
+
+.community-body .primary-button:hover {
+  background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+  box-shadow: 0 12px 32px rgba(124, 58, 237, 0.48);
+}
+
+.community-body .post-avatar {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.28), rgba(96, 165, 250, 0.18));
+  border-color: rgba(139, 92, 246, 0.32);
+  color: #c4b5fd;
+}
+
+/* Fade-in for community body switching */
+.community-body > * {
+  animation: fade-up 0.28s ease both;
+}
+
+@media (max-width: 560px) {
+  .comm-groups-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .community-inner-nav {
+    height: 58px;
+  }
+
+  .comm-nav-btn {
+    font-size: 0.58rem;
+  }
+}
