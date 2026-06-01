@@ -1,6 +1,7 @@
 import React from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
+import { LANGUAGES, LangCode, translate } from "./i18n";
 import {
   Bell,
   Bookmark,
@@ -13,6 +14,7 @@ import {
   Eye,
   EyeOff,
   Film,
+  Globe,
   Heart,
   HeartHandshake,
   Home,
@@ -339,6 +341,8 @@ function App() {
   const [friendRequests, setFriendRequests] = useStoredState<FriendRequest[]>("faithflix-friends", []);
   const [messages, setMessages] = useStoredState<Message[]>("faithflix-messages", []);
   const [mainSearchQuery, setMainSearchQuery] = React.useState("");
+  const [lang, setLang] = useStoredState<LangCode>("faithflix-lang", "en");
+  const t = React.useCallback((key: string) => translate(lang, key), [lang]);
   const [commSearchQuery, setCommSearchQuery] = React.useState("");
   const [showMainSearch, setShowMainSearch] = React.useState(false);
 
@@ -433,7 +437,7 @@ function App() {
     void supabase.auth.signOut();
     setSessionId("");
     setPage("home");
-    notify("Signed out.");
+    notify(t("profile.signedOut"));
   };
 
   const finishPullRefresh = (y: number) => {
@@ -442,7 +446,7 @@ function App() {
     setPullStartY(null);
     if (window.scrollY <= 4 && pulled > 90) {
       setIsPullRefreshing(true);
-      notify("Refreshing.");
+      notify(t("toast.refreshing"));
       window.setTimeout(() => window.location.reload(), 450);
     }
   };
@@ -509,6 +513,9 @@ function App() {
     setMessages,
     notify,
     signOut,
+    lang,
+    setLang,
+    t,
   };
 
   return (
@@ -524,7 +531,7 @@ function App() {
               <Search size={17} className="topbar-search-icon" />
               <input
                 className="topbar-search-input"
-                placeholder="Search videos, series, categories…"
+                placeholder={t("search.placeholder")}
                 autoFocus
                 value={mainSearchQuery}
                 onChange={(e) => setMainSearchQuery(e.target.value)}
@@ -541,7 +548,7 @@ function App() {
               </button>
               <div className="top-actions">
                 <button className="icon-button" aria-label="Search" onClick={() => setShowMainSearch(true)}><Search size={19} /></button>
-                <button className="icon-button" aria-label="Notifications" onClick={() => notify("No notifications yet.")}><Bell size={19} /></button>
+                <button className="icon-button" aria-label="Notifications" onClick={() => notify(t("toast.noNotifications"))}><Bell size={19} /></button>
               </div>
             </>
           )}
@@ -562,12 +569,12 @@ function App() {
 
         {page !== "community" && page !== "upload" && (
           <nav className="bottom-nav six" aria-label="Primary navigation">
-            <NavButton label="Home" icon={Home} active={page === "home"} onClick={() => go("home")} />
-            <NavButton label="Watch" icon={Film} active={page === "watch"} onClick={() => go("watch")} />
-            <NavButton label="Series" icon={Clapperboard} active={page === "series"} onClick={() => go("series")} />
-            <NavButton label="Community" icon={MessagesSquare} active={false} onClick={() => go("community")} />
-            <NavButton label="Saved" icon={Bookmark} active={page === "saved"} onClick={() => go("saved")} />
-            <NavButton label="Profile" icon={User} active={page === "profile" || page === "admin-login" || page === "admin-studio"} onClick={() => go("profile")} />
+            <NavButton label={t("nav.home")} icon={Home} active={page === "home"} onClick={() => go("home")} />
+            <NavButton label={t("nav.watch")} icon={Film} active={page === "watch"} onClick={() => go("watch")} />
+            <NavButton label={t("nav.series")} icon={Clapperboard} active={page === "series"} onClick={() => go("series")} />
+            <NavButton label={t("nav.community")} icon={MessagesSquare} active={false} onClick={() => go("community")} />
+            <NavButton label={t("nav.saved")} icon={Bookmark} active={page === "saved"} onClick={() => go("saved")} />
+            <NavButton label={t("nav.profile")} icon={User} active={page === "profile" || page === "admin-login" || page === "admin-studio"} onClick={() => go("profile")} />
           </nav>
         )}
         {toast && <div className="toast">{toast}</div>}
@@ -630,6 +637,9 @@ function buildContextShape() {
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
     notify: (message: string) => void;
     signOut: () => void;
+    lang: LangCode;
+    setLang: React.Dispatch<React.SetStateAction<LangCode>>;
+    t: (key: string) => string;
   };
 }
 const AppContext = React.createContext<AppState | null>(null);
@@ -762,7 +772,7 @@ function NavButton({ label, icon: Icon, active, onClick }: { label: string; icon
 }
 
 function HomeScreen() {
-  const { isAdmin, publicVideos, publicSeries, visibleCategories, go, setSelectedVideoId, setSelectedSeriesId, mainSearchQuery } = useApp();
+  const { isAdmin, publicVideos, publicSeries, visibleCategories, go, setSelectedVideoId, setSelectedSeriesId, mainSearchQuery, t } = useApp();
   const [selectedCategory, setSelectedCategory] = React.useState(visibleCategories[0]?.name ?? "");
   const latest = publicVideos.slice(-10).reverse();
   const selectedCategoryVideos = publicVideos.filter((video) => video.category === selectedCategory);
@@ -803,17 +813,17 @@ function HomeScreen() {
           <span>Results for <strong>"{mainSearchQuery}"</strong></span>
         </div>
         {matchVideos.length === 0 && matchSeries.length === 0 && (
-          <EmptyState icon={Search} title="No results found." body={`Nothing matches "${mainSearchQuery}". Try a different keyword.`} action="" onAction={() => {}} />
+          <EmptyState icon={Search} title={t("search.noResults")} body={`Nothing matches "${mainSearchQuery}". Try a different keyword.`} action="" onAction={() => {}} />
         )}
         {matchVideos.length > 0 && (
           <>
-            <SectionHeader title="Videos" action={`${matchVideos.length} found`} />
+            <SectionHeader title={t("search.videos")} action={`${matchVideos.length} ${t("home.found")}`} />
             <div className="content-grid">{matchVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} />)}</div>
           </>
         )}
         {matchSeries.length > 0 && (
           <>
-            <SectionHeader title="Series" action={`${matchSeries.length} found`} />
+            <SectionHeader title={t("search.series")} action={`${matchSeries.length} ${t("home.found")}`} />
             <div className="series-grid">{matchSeries.map((item) => <button key={item.id} className="series-grid-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>{item.posterUrl ? <img className="series-grid-poster" src={item.posterUrl} alt={item.title} /> : <div className="series-grid-poster series-grid-poster-empty"><Clapperboard size={36} /></div>}<div className="series-grid-info"><p className="eyebrow">{item.category || item.status}</p><h3 className="series-grid-title">{item.title}</h3>{item.scriptureTheme && <p className="series-grid-verse">✦ {item.scriptureTheme}</p>}</div><ChevronRight size={18} className="series-grid-arrow" /></button>)}</div>
           </>
         )}
@@ -826,17 +836,17 @@ function HomeScreen() {
       <div className="hero">
         <div className="hero-media"><div className="hero-image-frame"><img src="/faith-hero-cross.png" alt="Glowing cross in a forest" /></div></div>
         <div className="hero-copy">
-          <p className="eyebrow">Premium faith media</p>
+          <p className="eyebrow">{t("brand.tagline")}</p>
           <h1>Faith Flix</h1>
-          <p>Stream faith content, share testimonies, worship together, and connect with a community of believers.</p>
+          <p>{t("brand.description")}</p>
           <div className="hero-actions">
-            <button className="primary-button" onClick={() => go("watch")}>Open Watch</button>
-            <button className="secondary-button" onClick={() => go("upload")}>Submit Testimony</button>
+            <button className="primary-button" onClick={() => go("watch")}>{t("hero.openWatch")}</button>
+            <button className="secondary-button" onClick={() => go("upload")}>{t("hero.submitTestimony")}</button>
           </div>
         </div>
       </div>
 
-      <SectionHeader title="Faith categories" action={`${visibleCategories.length} visible`} />
+      <SectionHeader title={t("home.categories")} action={`${visibleCategories.length} ${t("home.visible")}`} />
       <div className="category-grid category-top-row">
         {visibleCategories.map((category) => (
           <button id={`home-category-button-${category.id}`} className={selectedCategory === category.name ? "category-pill active" : "category-pill"} key={category.id} onClick={() => chooseHomeCategory(category)}>{category.name}</button>
@@ -849,7 +859,7 @@ function HomeScreen() {
           <div className="horizontal-video-row centered-video-row">
             {selectedCategoryVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} />)}
           </div>
-        ) : <EmptyState icon={Film} title="No videos in this category yet." body="Videos added to this category will appear here." action="Open Upload" onAction={() => go("upload")} />}
+        ) : <EmptyState icon={Film} title={t("watch.noVideosInCategory")} body={t("watch.noVideosInCategoryBody")} action="Open Upload" onAction={() => go("upload")} />}
       </div>
 
       {(() => {
@@ -857,7 +867,7 @@ function HomeScreen() {
         if (!featuredVideos.length) return null;
         return (
           <>
-            <SectionHeader title="✦ Featured videos" action={`${featuredVideos.length} spotlighted`} />
+            <SectionHeader title={t("home.featuredVideos")} action={`${featuredVideos.length} ${t("home.spotlighted")}`} />
             <div className="featured-video-row">
               {featuredVideos.map((video) => (
                 <button key={video.id} className="featured-video-card" onClick={() => openHomeVideo(video)}>
@@ -882,7 +892,7 @@ function HomeScreen() {
         if (!featuredSeries.length) return null;
         return (
           <>
-            <SectionHeader title="✦ Featured series" action={`${featuredSeries.length} spotlighted`} />
+            <SectionHeader title={t("home.featuredSeries")} action={`${featuredSeries.length} ${t("home.spotlighted")}`} />
             <div className="featured-series-row">
               {featuredSeries.map((item) => (
                 <button key={item.id} className="featured-series-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>
@@ -902,21 +912,21 @@ function HomeScreen() {
         );
       })()}
 
-      <SectionHeader title="Published videos" action={`${publicVideos.length} live`} />
+      <SectionHeader title={t("home.publishedVideos")} action={`${publicVideos.length} ${t("home.live")}`} />
       {latest.length ? (
         <div className="horizontal-video-row published-row">
           {latest.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} />)}
         </div>
       ) : <EmptyState icon={Film} title="No videos uploaded yet." body="Published admin and approved testimony videos will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
 
-      <SectionHeader title="Published series" action={`${publicSeries.length} live`} />
-      {publicSeries.length ? <div className="horizontal-series-row">{publicSeries.map((item) => <SeriesCard key={item.id} item={item} onClick={() => { setSelectedSeriesId(item.id); go("series"); }} />)}</div> : <EmptyState icon={Clapperboard} title="No series created yet." body="Published series will appear here after the admin creates them." action="Open Series" onAction={() => go("series")} />}
+      <SectionHeader title={t("home.publishedSeries")} action={`${publicSeries.length} ${t("home.live")}`} />
+      {publicSeries.length ? <div className="horizontal-series-row">{publicSeries.map((item) => <SeriesCard key={item.id} item={item} onClick={() => { setSelectedSeriesId(item.id); go("series"); }} />)}</div> : <EmptyState icon={Clapperboard} title={t("series.noSeries")} body={t("series.noSeriesBodyHome")} action={t("nav.series")} onAction={() => go("series")} />}
     </section>
   );
 }
 
 function WatchScreen() {
-  const { publicVideos, selectedVideoId, setSelectedVideoId, saved, setSaved, likes, setLikes, currentUser, go, notify, comments, setComments, setCommunityView } = useApp();
+  const { publicVideos, selectedVideoId, setSelectedVideoId, saved, setSaved, likes, setLikes, currentUser, go, notify, comments, setComments, setCommunityView, t } = useApp();
   const playerRef = React.useRef<HTMLDivElement>(null);
   const userPostVideos = publicVideos.filter((video) => video.source === "user");
   const selectedPublicVideo = publicVideos.find((video) => video.id === selectedVideoId);
@@ -942,7 +952,7 @@ function WatchScreen() {
   }, [selected?.id]);
 
   if (!selected) {
-    return <section className="screen"><SectionIntro eyebrow="Watch" title="Faith video feed" body="Faith videos from the community will play here in swipe style." /><EmptyState icon={Video} title="No videos yet" body="Published admin videos and approved member videos will appear here." action="Upload Video" onAction={() => go("upload")} /></section>;
+    return <section className="screen"><SectionIntro eyebrow={t("watch.eyebrow")} title={t("watch.feedTitle")} body={t("watch.feedBody")} /><EmptyState icon={Video} title={t("watch.noVideos")} body={t("watch.noVideosBody")} action={t("btn.uploadVideo")} onAction={() => go("upload")} /></section>;
   }
 
   const savedIds = saved[actorId] ?? [];
@@ -977,7 +987,7 @@ function WatchScreen() {
 
   return (
     <section className="screen watch-screen">
-      <SectionIntro eyebrow="Watch" title={selected.title} body={`${selected.creator || "Faith member"} • ${selected.category}`} />
+      <SectionIntro eyebrow={t("watch.eyebrow")} title={selected.title} body={`${selected.creator || t("watch.faithMember")} • ${selected.category}`} />
       <div className="player-layout">
         <div
           ref={playerRef}
@@ -1018,14 +1028,14 @@ function WatchScreen() {
         </div>
         <div className="detail-panel">
           <p>{selected.description || "No description added."}</p>
-          <InfoLine label="Scripture" value={selected.scripture || "Not provided"} />
-          <InfoLine label="Category" value={selected.category} />
-          <InfoLine label="Series" value={selected.seriesId || "Not assigned"} />
-          <InfoLine label="Duration" value={selected.duration || "Not set"} />
+          <InfoLine label={t("info.scripture")} value={selected.scripture || t("info.notProvided")} />
+          <InfoLine label={t("info.category")} value={selected.category} />
+          <InfoLine label={t("info.series")} value={selected.seriesId || t("info.notAssigned")} />
+          <InfoLine label={t("info.duration")} value={selected.duration || t("info.notSet")} />
           <div className="button-row">
             <button className="secondary-button" onClick={() => toggleList(setLikes, likes, selected.id, likedIds.includes(selected.id) ? "Like removed." : "Video liked.")}><Heart size={17} /> {likedIds.includes(selected.id) ? "Liked" : "Like"}</button>
             <button className="secondary-button" onClick={() => toggleList(setSaved, saved, selected.id, savedIds.includes(selected.id) ? "Removed from saved." : "Saved.")}><Bookmark size={17} /> {savedIds.includes(selected.id) ? "Saved" : "Save"}</button>
-            <button className="secondary-button" onClick={() => { navigator.clipboard?.writeText(`faithflix://video/${selected.id}`); notify("Link copied."); }}>Share</button>
+            <button className="secondary-button" onClick={() => { navigator.clipboard?.writeText(`faithflix://video/${selected.id}`); notify(t("toast.linkCopied")); }}>Share</button>
             <button className="secondary-button" onClick={() => { setCommunityView("feed"); go("community"); }}><MessageCircle size={17} /> Discuss</button>
             <button className="secondary-button" onClick={() => openVideo(previousVideo.id)}>← Prev</button>
             <button className="primary-button" onClick={() => openVideo(nextVideo.id)}>Next →</button>
@@ -1033,14 +1043,14 @@ function WatchScreen() {
           <CommentBox targetId={selected.id} comments={videoComments} value={comment} setValue={setComment} />
         </div>
       </div>
-      <SectionHeader title="More user posts" action={`${userPostVideos.length} total`} />
+      <SectionHeader title={t("watch.moreUserPosts")} action={`${userPostVideos.length} ${t("home.total")}`} />
       <div className="content-grid">{userPostVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => setSelectedVideoId(video.id)} />)}</div>
     </section>
   );
 }
 
 function SeriesScreen() {
-  const { isAdmin, publicSeries, publicVideos, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId } = useApp();
+  const { isAdmin, publicSeries, publicVideos, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId, t } = useApp();
   const focusedSeries = selectedSeriesId ? publicSeries.find((s) => s.id === selectedSeriesId) : null;
   const focusedEpisodes = focusedSeries ? publicVideos.filter((v) => v.seriesId === focusedSeries.title) : [];
 
@@ -1073,7 +1083,7 @@ function SeriesScreen() {
             ))}
           </div>
         ) : (
-          <EmptyState icon={Film} title="No episodes yet." body="Episodes assigned to this series will appear here once the admin adds them." action="Open Watch" onAction={() => go("watch")} />
+          <EmptyState icon={Film} title={t("series.noEpisodes")} body={t("series.noEpisodesBody")} action={t("nav.watch")} onAction={() => go("watch")} />
         )}
       </section>
     );
@@ -1081,7 +1091,7 @@ function SeriesScreen() {
 
   return (
     <section className="screen">
-      <SectionIntro eyebrow="Series" title="Faith series" body="Tap a series to see all its episodes." />
+      <SectionIntro eyebrow={t("series.eyebrow")} title={t("series.title")} body={t("series.body")} />
       {publicSeries.length ? (
         <div className="series-grid">
           {publicSeries.map((item) => {
@@ -1102,13 +1112,13 @@ function SeriesScreen() {
             );
           })}
         </div>
-      ) : <EmptyState icon={Clapperboard} title="No series created yet." body="Published series will appear here after admin setup." action={isAdmin ? "Edit Series" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "series") : go("profile")} />}
+      ) : <EmptyState icon={Clapperboard} title={t("series.noSeries")} body={t("series.noSeriesBody")} action={isAdmin ? t("btn.editSeries") : t("btn.logIn")} onAction={() => isAdmin ? go("admin-studio", "series") : go("profile")} />}
     </section>
   );
 }
 
 function UploadScreen() {
-  const { currentUser, isAdmin, visibleCategories, setUploads, uploads, videos, setVideos, setSelectedVideoId, setUploadProgress, notify, go } = useApp();
+  const { currentUser, isAdmin, visibleCategories, setUploads, uploads, videos, setVideos, setSelectedVideoId, setUploadProgress, notify, go, t } = useApp();
   const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: visibleCategories[0]?.name ?? "", testimonyType: "Testimony", visibility: "Public", tags: "", consent: false, rules: false, cropDimension: "9:16", cropRatio: "9 / 16" });
   const [videoFile, setVideoFile] = React.useState<File | null>(null);
   const [thumbFile, setThumbFile] = React.useState<File | null>(null);
@@ -1117,7 +1127,7 @@ function UploadScreen() {
   if (isAdmin) {
     return (
       <section className="screen">
-        <SectionIntro eyebrow="Admin Upload" title="Add platform video" body="You are logged in as admin, so this upload page opens the platform video editor." />
+        <SectionIntro eyebrow={t("upload.adminEyebrow")} title={t("upload.adminTitle")} body={t("upload.adminBody")} />
         <AdminUpload />
       </section>
     );
@@ -1170,8 +1180,8 @@ function UploadScreen() {
 
   return (
     <section className="screen">
-      <SectionIntro eyebrow="Upload" title="Share your faith" body="Post faith videos or testimonies instantly to the public app." />
-      {!currentUser && <EmptyState icon={Lock} title="Create an account first" body="Sign up or log in before submitting content." action="Open Profile" onAction={() => go("profile")} />}
+      <SectionIntro eyebrow={t("upload.eyebrow")} title={t("upload.title")} body={t("upload.body")} />
+      {!currentUser && <EmptyState icon={Lock} title={t("upload.needAccount")} body={t("upload.needAccountBody")} action={t("profile.eyebrow")} onAction={() => go("profile")} />}
       <form className="form-card">
         <Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
         <label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
@@ -1193,12 +1203,12 @@ function UploadScreen() {
 }
 
 function SavedScreen() {
-  const { currentUser, saved, videos, setSaved, go, notify } = useApp();
+  const { currentUser, saved, videos, setSaved, go, notify, t } = useApp();
   const actorId = currentUser?.id ?? "guest";
   const savedVideos = videos.filter((video) => (saved[actorId] ?? []).includes(video.id));
   return (
     <section className="screen">
-      <SectionIntro eyebrow="Saved" title="Your faith library" body="Videos you save appear here." />
+      <SectionIntro eyebrow={t("saved.eyebrow")} title={t("saved.title")} body={t("saved.body")} />
       {savedVideos.length ? <div className="content-grid">{savedVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => go("watch")} extra={<button className="secondary-button" onClick={() => { setSaved({ ...saved, [actorId]: (saved[actorId] ?? []).filter((id) => id !== video.id) }); notify("Removed from saved."); }}>Remove</button>} />)}</div> : <EmptyState icon={Bookmark} title="No saved content yet." body="Save a published video from Watch to build your library." action="Open Watch" onAction={() => go("watch")} />}
     </section>
   );
@@ -1214,24 +1224,24 @@ const COMM_STORIES = [
 ];
 
 function CommunityScreen() {
-  const { communityView, setCommunityView, notify, go, commSearchQuery, setCommSearchQuery } = useApp();
+  const { communityView, setCommunityView, notify, go, commSearchQuery, setCommSearchQuery, t } = useApp();
   const [showCommSearch, setShowCommSearch] = React.useState(false);
   const tabs: { id: CommunityView; label: string; icon: React.ElementType }[] = [
-    { id: "feed", label: "Feed", icon: MessagesSquare },
-    { id: "prayer", label: "Prayer", icon: HeartHandshake },
-    { id: "upload", label: "Share", icon: Upload },
-    { id: "groups", label: "Groups", icon: Users },
-    { id: "friends", label: "Friends", icon: UserPlus },
-    { id: "messages", label: "DMs", icon: Inbox },
+    { id: "feed", label: t("comm.tab.feed"), icon: MessagesSquare },
+    { id: "prayer", label: t("comm.tab.prayer"), icon: HeartHandshake },
+    { id: "upload", label: t("comm.tab.upload"), icon: Upload },
+    { id: "groups", label: t("comm.tab.groups"), icon: Users },
+    { id: "friends", label: t("comm.tab.friends"), icon: UserPlus },
+    { id: "messages", label: t("comm.tab.messages"), icon: Inbox },
   ];
 
   const screenTitles: Record<CommunityView, string> = {
-    feed: "Faith Feed",
-    prayer: "Prayer Wall",
-    upload: "Share Faith",
-    groups: "Bible Study",
-    friends: "Friends",
-    messages: "Messages",
+    feed: t("comm.title.feed"),
+    prayer: t("comm.title.prayer"),
+    upload: t("comm.title.upload"),
+    groups: t("comm.title.groups"),
+    friends: t("comm.title.friends"),
+    messages: t("comm.title.messages"),
   };
 
   return (
@@ -1319,7 +1329,7 @@ function CommunityScreen() {
           </button>
         ))}
       </nav>
-      <button className="comm-back-bar" onClick={() => go("home")} aria-label="Back to Faith Flix">
+      <button className="comm-back-bar" onClick={() => go("home")} aria-label={t("comm.backToApp")}>
         <ChevronRight size={18} style={{ transform: "rotate(180deg)" }} />
       </button>
     </div>
@@ -1327,7 +1337,7 @@ function CommunityScreen() {
 }
 
 function FaithFeed() {
-  const { currentUser, posts, setPosts, notify, comments, commSearchQuery } = useApp();
+  const { currentUser, posts, setPosts, notify, comments, commSearchQuery, t } = useApp();
   const [text, setText] = React.useState("");
   const [scripture, setScripture] = React.useState("");
   const [image, setImage] = React.useState<File | null>(null);
@@ -1369,7 +1379,7 @@ function FaithFeed() {
 }
 
 function PrayerWall() {
-  const { currentUser, prayers, setPrayers, notify, commSearchQuery } = useApp();
+  const { currentUser, prayers, setPrayers, notify, commSearchQuery, t } = useApp();
   const [form, setForm] = React.useState({ title: "", text: "", visibility: "Public" });
   const actions = ["I prayed", "Praying for you", "Amen", "Praise God", "Answered"];
   const actor = currentUser?.id ?? "guest";
@@ -1403,7 +1413,7 @@ function PrayerWall() {
           ? prayers.filter((p) => [p.title, p.text].join(" ").toLowerCase().includes(commSearchQuery.toLowerCase()))
           : prayers;
         if (commSearchQuery && filtered.length === 0) return <EmptyState icon={Search} title="No prayers match your search." body="Try a different keyword." action="" onAction={() => {}} />;
-        if (filtered.length === 0) return <EmptyState icon={HeartHandshake} title="No prayer requests yet." body="Prayer requests will appear here after members post them." action="Use prayer form" onAction={() => notify("Use the prayer form above.")} />;
+        if (filtered.length === 0) return <EmptyState icon={HeartHandshake} title={t("comm.noPrayer")} body={t("comm.noPrayerBody")} action={t("comm.usePrayerForm")} onAction={() => notify(t("comm.usePrayerForm"))} />;
         return <>{filtered.map((prayer) => <article className="content-panel" key={prayer.id}><p className="eyebrow">{prayer.visibility}</p><h3>{prayer.title}</h3><p>{prayer.text}</p><div className="button-row">{actions.map((action) => <button className="secondary-button" key={action} onClick={() => tap(prayer.id, action)}>{action} {(prayer.actions[action] ?? []).length}</button>)}</div></article>)}</>;
       })()}
     </>
@@ -1411,47 +1421,47 @@ function PrayerWall() {
 }
 
 function DiscussionRooms() {
-  const { publicVideos, comments, setSelectedVideoId, go } = useApp();
-  return publicVideos.length ? <div className="content-grid">{publicVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => { setSelectedVideoId(video.id); go("watch"); }} extra={<span className="meta">{comments.filter((item) => item.targetId === video.id).length} comments</span>} />)}</div> : <EmptyState icon={MessageCircle} title="No discussion rooms yet." body="Discussion rooms open when videos are published." action="Open Watch" onAction={() => go("watch")} />;
+  const { publicVideos, comments, setSelectedVideoId, go, t } = useApp();
+  return publicVideos.length ? <div className="content-grid">{publicVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => { setSelectedVideoId(video.id); go("watch"); }} extra={<span className="meta">{comments.filter((item) => item.targetId === video.id).length} comments</span>} />)}</div> : <EmptyState icon={MessageCircle} title={t("comm.noDiscussions")} body={t("comm.noDiscussionsBody")} action={t("nav.watch")} onAction={() => go("watch")} />;
 }
 
 function FriendsPanel() {
-  const { currentUser, users, friendRequests, setFriendRequests, notify } = useApp();
-  if (!currentUser) return <EmptyState icon={UserPlus} title="No friends yet." body="Create an account to send and accept friend requests." action="Open Profile" onAction={() => notify("Open Profile from the bottom navigation.")} />;
+  const { currentUser, users, friendRequests, setFriendRequests, notify, t } = useApp();
+  if (!currentUser) return <EmptyState icon={UserPlus} title={t("comm.noFriends")} body={t("comm.noFriendsBody")} action={t("profile.eyebrow")} onAction={() => notify(t("profile.eyebrow"))} />;
   const others = users.filter((user) => user.id !== currentUser.id && user.role !== "admin");
   const incoming = friendRequests.filter((request) => request.toId === currentUser.id && request.status === "pending");
   const accepted = friendRequests.filter((request) => request.status === "accepted" && [request.fromId, request.toId].includes(currentUser.id));
   const requestFriend = (toId: string) => {
-    if (friendRequests.some((request) => [request.fromId, request.toId].includes(currentUser.id) && [request.fromId, request.toId].includes(toId))) return notify("Friend connection already exists.");
+    if (friendRequests.some((request) => [request.fromId, request.toId].includes(currentUser.id) && [request.fromId, request.toId].includes(toId))) return notify(t("comm.friendExists"));
     setFriendRequests([...friendRequests, { id: uid("friend"), fromId: currentUser.id, toId, status: "pending" }]);
-    notify("Friend request sent.");
+    notify(t("comm.friendRequestSent"));
   };
   return (
     <div className="panel-grid">
-      <div className="content-panel"><h2>Friends</h2>{accepted.length ? accepted.map((request) => <FriendRow key={request.id} request={request} />) : <p>No friends yet.</p>}</div>
-      <div className="content-panel"><h2>Requests</h2>{incoming.length ? incoming.map((request) => <button className="secondary-button" key={request.id} onClick={() => { setFriendRequests(friendRequests.map((item) => item.id === request.id ? { ...item, status: "accepted" } : item)); notify("Friend request accepted."); }}>Accept {users.find((user) => user.id === request.fromId)?.name}</button>) : <p>No friend requests yet.</p>}</div>
-      <div className="content-panel"><h2>Other members</h2>{others.length ? others.map((user) => <button className="secondary-button" key={user.id} onClick={() => requestFriend(user.id)}>Add {user.name}</button>) : <p>No other users yet.</p>}</div>
+      <div className="content-panel"><h2>{t("comm.friends")}</h2>{accepted.length ? accepted.map((request) => <FriendRow key={request.id} request={request} />) : <p>{t("comm.noFriendsYet")}</p>}</div>
+      <div className="content-panel"><h2>{t("comm.requests")}</h2>{incoming.length ? incoming.map((request) => <button className="secondary-button" key={request.id} onClick={() => { setFriendRequests(friendRequests.map((item) => item.id === request.id ? { ...item, status: "accepted" } : item)); notify("Friend request accepted."); }}>Accept {users.find((user) => user.id === request.fromId)?.name}</button>) : <p>{t("comm.noRequestsYet")}</p>}</div>
+      <div className="content-panel"><h2>{t("comm.otherMembers")}</h2>{others.length ? others.map((user) => <button className="secondary-button" key={user.id} onClick={() => requestFriend(user.id)}>Add {user.name}</button>) : <p>{t("comm.noOtherUsers")}</p>}</div>
     </div>
   );
 }
 
 function FriendRow({ request }: { request: FriendRequest }) {
-  const { currentUser, users, setFriendRequests, friendRequests, notify } = useApp();
+  const { currentUser, users, setFriendRequests, friendRequests, notify, t } = useApp();
   const otherId = request.fromId === currentUser?.id ? request.toId : request.fromId;
   const other = users.find((user) => user.id === otherId);
-  return <div className="item-row"><span>{other?.name ?? "Member"}</span><button className="secondary-button" onClick={() => { setFriendRequests(friendRequests.filter((item) => item.id !== request.id)); notify("Friend removed."); }}>Remove</button></div>;
+  return <div className="item-row"><span>{other?.name ?? "Member"}</span><button className="secondary-button" onClick={() => { setFriendRequests(friendRequests.filter((item) => item.id !== request.id)); notify(t("comm.friendRemoved")); }}>{t("comm.remove")}</button></div>;
 }
 
 function MessagesPanel() {
-  const { currentUser, users, friendRequests, selectedMessageUser, setSelectedMessageUser, messages, setMessages, notify } = useApp();
+  const { currentUser, users, friendRequests, selectedMessageUser, setSelectedMessageUser, messages, setMessages, notify, t } = useApp();
   const [text, setText] = React.useState("");
-  if (!currentUser) return <EmptyState icon={Inbox} title="No messages yet." body="Create an account to message friends." action="Open Profile" onAction={() => notify("Open Profile from the bottom navigation.")} />;
+  if (!currentUser) return <EmptyState icon={Inbox} title={t("comm.noMessages")} body={t("comm.noMessagesBody")} action={t("profile.eyebrow")} onAction={() => notify(t("profile.eyebrow"))} />;
   const friendIds = friendRequests.filter((request) => request.status === "accepted" && [request.fromId, request.toId].includes(currentUser.id)).map((request) => request.fromId === currentUser.id ? request.toId : request.fromId);
   const friend = users.find((user) => user.id === selectedMessageUser);
   const thread = messages.filter((message) => friend && [message.fromId, message.toId].includes(currentUser.id) && [message.fromId, message.toId].includes(friend.id));
   const sendMessage = () => {
-    if (!friend) return notify("Choose a friend first.");
-    if (!text.trim()) return notify("Write a message first.");
+    if (!friend) return notify(t("comm.chooseAFriend"));
+    if (!text.trim()) return notify(t("comm.writeAMessage"));
     setMessages([...messages, { id: uid("msg"), fromId: currentUser.id, toId: friend.id, text, createdAt: new Date().toLocaleString() }]);
     setText("");
   };
@@ -1464,14 +1474,14 @@ function MessagesPanel() {
 }
 
 function ProfileScreen() {
-  const { currentUser, users, setUsers, setSessionId, isAdmin, signOut, go, notify } = useApp();
+  const { currentUser, users, setUsers, setSessionId, isAdmin, signOut, go, notify, t } = useApp();
   const [mode, setMode] = React.useState<"signup" | "login">("signup");
 
   if (!currentUser) {
     return (
       <section className="screen">
-        <SectionIntro eyebrow="Profile" title="Join Faith Flix" body="Sign up or log in. Admin accounts open Admin Studio automatically." />
-        <div className="button-row"><button className={mode === "signup" ? "primary-button" : "secondary-button"} onClick={() => setMode("signup")}>Signup</button><button className={mode === "login" ? "primary-button" : "secondary-button"} onClick={() => setMode("login")}>Login</button></div>
+        <SectionIntro eyebrow={t("profile.eyebrow")} title={t("profile.joinTitle")} body={t("profile.joinBody")} />
+        <div className="button-row"><button className={mode === "signup" ? "primary-button" : "secondary-button"} onClick={() => setMode("signup")}>{t("profile.signup")}</button><button className={mode === "login" ? "primary-button" : "secondary-button"} onClick={() => setMode("login")}>{t("profile.login")}</button></div>
         {mode === "signup" ? <SignupForm /> : <LoginForm />}
       </section>
     );
@@ -1491,33 +1501,59 @@ function ProfileScreen() {
         profile_image_url: patch.image,
       })
       .eq("id", currentUser.id);
-    notify("Profile updated.");
+    notify(t("profile.profileUpdated"));
   };
 
   return (
     <section className="screen">
-      <SectionIntro eyebrow={isAdmin ? "Admin profile" : "Profile"} title={currentUser.name} body={`@${currentUser.username || "faithmember"}`} />
+      <SectionIntro eyebrow={isAdmin ? t("profile.adminEyebrow") : t("profile.eyebrow")} title={currentUser.name} body={`@${currentUser.username || "faithmember"}`} />
       <div className="form-card">
-        <Field label="Name" value={currentUser.name} onChange={(name) => update({ name })} />
-        <Field label="Username" value={currentUser.username} onChange={(username) => update({ username })} />
-        <Field label="Bio" value={currentUser.bio ?? ""} onChange={(bio) => update({ bio })} />
-        <Field label="Favorite scripture" value={currentUser.favoriteScripture ?? ""} onChange={(favoriteScripture) => update({ favoriteScripture })} />
-        <Field label="Church/ministry name" value={currentUser.ministry ?? ""} onChange={(ministry) => update({ ministry })} />
-        <Field label="Location" value={currentUser.location ?? ""} onChange={(location) => update({ location })} />
-        <FileField label="Profile image" onChange={(file) => update({ image: fileInfo(file).name })} />
+        <Field label={t("profile.nameLabel")} value={currentUser.name} onChange={(name) => update({ name })} />
+        <Field label={t("profile.usernameLabel")} value={currentUser.username} onChange={(username) => update({ username })} />
+        <Field label={t("profile.bioLabel")} value={currentUser.bio ?? ""} onChange={(bio) => update({ bio })} />
+        <Field label={t("profile.scriptureLabel")} value={currentUser.favoriteScripture ?? ""} onChange={(favoriteScripture) => update({ favoriteScripture })} />
+        <Field label={t("profile.churchLabel")} value={currentUser.ministry ?? ""} onChange={(ministry) => update({ ministry })} />
+        <Field label={t("profile.locationLabel")} value={currentUser.location ?? ""} onChange={(location) => update({ location })} />
+        <FileField label={t("profile.imageLabel")} onChange={(file) => update({ image: fileInfo(file).name })} />
         <div className="button-row">
-          {isAdmin && <button className="primary-button" onClick={() => go("admin-studio")}>Open Admin Studio</button>}
-          <button className="secondary-button" onClick={signOut}>Sign Out</button>
-          <button className="secondary-button" onClick={() => { setSessionId(currentUser.id); notify("Profile saved locally."); }}>Save Profile</button>
+          {isAdmin && <button className="primary-button" onClick={() => go("admin-studio")}>{t("profile.openAdminStudio")}</button>}
+          <button className="secondary-button" onClick={signOut}>{t("profile.signOut")}</button>
+          <button className="secondary-button" onClick={() => { setSessionId(currentUser.id); notify(t("profile.profileSaved")); }}>{t("profile.saveProfile")}</button>
         </div>
       </div>
+      <LanguagePicker />
       {!isAdmin && <MyUploads />}
     </section>
   );
 }
 
+function LanguagePicker() {
+  const { lang, setLang, t } = useApp();
+  return (
+    <div className="lang-picker-section">
+      <div className="lang-picker-header">
+        <Globe size={16} />
+        <span>{t("profile.language")}</span>
+      </div>
+      <p className="lang-picker-sub">{t("profile.selectLanguage")}</p>
+      <div className="lang-grid">
+        {LANGUAGES.map((l) => (
+          <button
+            key={l.code}
+            className={`lang-option${lang === l.code ? " lang-option-active" : ""}`}
+            onClick={() => setLang(l.code)}
+          >
+            <span className="lang-flag">{l.flag}</span>
+            <span className="lang-name">{l.name}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SignupForm() {
-  const { users, setUsers, setSessionId, notify, go } = useApp();
+  const { users, setUsers, setSessionId, notify, go, t } = useApp();
   const [form, setForm] = React.useState({ name: "", username: "", email: "", password: "", birthday: "", image: "" });
   const [busy, setBusy] = React.useState(false);
 
@@ -1563,11 +1599,11 @@ function SignupForm() {
     setBusy(false);
   };
 
-  return <div className="form-card"><h2>Create account</h2><Field label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} /><Field label="Username" value={form.username} onChange={(username) => setForm({ ...form, username })} /><Field label="Email" type="email" value={form.email} onChange={(email) => setForm({ ...form, email })} /><Field label="Password" type="password" value={form.password} onChange={(password) => setForm({ ...form, password })} /><Field label="Birthday" type="date" value={form.birthday} onChange={(birthday) => setForm({ ...form, birthday })} /><FileField label="Optional profile image" onChange={(file) => setForm({ ...form, image: fileInfo(file).name })} /><button className="primary-button" onClick={submit}>{busy ? "Creating..." : "Create Account"}</button></div>;
+  return <div className="form-card"><h2>Create account</h2><Field label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} /><Field label="Username" value={form.username} onChange={(username) => setForm({ ...form, username })} /><Field label={t("profile.emailLabel")} type="email" value={form.email} onChange={(email) => setForm({ ...form, email })} /><Field label={t("profile.passwordLabel")} type="password" value={form.password} onChange={(password) => setForm({ ...form, password })} /><Field label="Birthday" type="date" value={form.birthday} onChange={(birthday) => setForm({ ...form, birthday })} /><FileField label="Optional profile image" onChange={(file) => setForm({ ...form, image: fileInfo(file).name })} /><button className="primary-button" onClick={submit}>{busy ? "Creating..." : "Create Account"}</button></div>;
 }
 
 function LoginForm() {
-  const { users, setUsers, setSessionId, notify, go } = useApp();
+  const { users, setUsers, setSessionId, notify, go, t } = useApp();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [busy, setBusy] = React.useState(false);
@@ -1605,7 +1641,7 @@ function AdminLogin() {
 }
 
 function AdminStudio() {
-  const { isAdmin, go, studioView, setStudioView, videos, series, categories, uploads } = useApp();
+  const { isAdmin, go, studioView, setStudioView, videos, series, categories, uploads, t } = useApp();
   if (!isAdmin) return <section className="screen"><EmptyState icon={ShieldCheck} title="Admin access required" body="Log in with an admin account to manage content." action="Log In" onAction={() => go("profile")} /></section>;
   const tabs: { id: StudioView; label: string; icon: React.ElementType }[] = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -1634,7 +1670,7 @@ function AdminStudio() {
 }
 
 function AdminUpload() {
-  const { currentUser, isAdmin, videos, setVideos, setSelectedVideoId, setStudioView, setUploadProgress, visibleCategories, series, notify, go } = useApp();
+  const { currentUser, isAdmin, videos, setVideos, setSelectedVideoId, setStudioView, setUploadProgress, visibleCategories, series, notify, go, t } = useApp();
   const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: visibleCategories[0]?.name ?? "", seriesId: "", episode: "", duration: "", creator: "", tags: "", status: "Published" as Status });
   const [videoFile, setVideoFile] = React.useState<File | null>(null);
   const [thumbFile, setThumbFile] = React.useState<File | null>(null);
@@ -1685,7 +1721,7 @@ function AdminUpload() {
 }
 
 function AdminVideos() {
-  const { videos, setVideos, notify, setStudioView } = useApp();
+  const { videos, setVideos, notify, setStudioView, t } = useApp();
   const [editingId, setEditingId] = React.useState("");
   const platformVideos = videos.filter((video) => video.source === "admin");
   const update = (id: string, patch: Partial<VideoItem>) =>
@@ -1721,7 +1757,7 @@ function AdminVideos() {
     const { error } = await supabase.from("videos").delete().eq("id", id);
     notify(error ? "Deleted locally. DB sync failed: " + error.message : "Video deleted.");
   };
-  if (!platformVideos.length) return <EmptyState icon={Video} title="No platform videos uploaded yet." body="Only admin-created platform content is edited here. User videos and posts can be moderated in User Posts Monitor." action="Add Platform Video" onAction={() => setStudioView("upload")} />;
+  if (!platformVideos.length) return <EmptyState icon={Video} title={t("admin.noVideos")} body={t("admin.noVideosBody")} action="Add Platform Video" onAction={() => setStudioView("upload")} />;
   return (
     <div className="content-grid">
       {platformVideos.map((video) => {
@@ -1776,7 +1812,7 @@ function AdminVideos() {
 }
 
 function AdminSeries() {
-  const { series, setSeries, visibleCategories, notify } = useApp();
+  const { series, setSeries, visibleCategories, notify, t } = useApp();
   const [form, setForm] = React.useState({ title: "", description: "", posterName: "", posterUrl: "", scriptureTheme: "", category: visibleCategories[0]?.name ?? "", status: "Published" as Status, featured: false });
   const [editingId, setEditingId] = React.useState("");
   const save = () => {
@@ -1848,7 +1884,7 @@ function AdminSeries() {
 }
 
 function AdminCategories() {
-  const { categories, setCategories, notify } = useApp();
+  const { categories, setCategories, notify, t } = useApp();
   const [name, setName] = React.useState("");
   const add = () => {
     if (!name.trim()) return notify("Add a category name.");
@@ -1861,7 +1897,7 @@ function AdminCategories() {
 }
 
 function AdminReviewQueue() {
-  const { uploads, setUploads, videos, setVideos, users, notify } = useApp();
+  const { uploads, setUploads, videos, setVideos, users, notify, t } = useApp();
   const [notes, setNotes] = React.useState<Record<string, string>>({});
   const decide = (upload: UserUpload, status: UploadStatus) => {
     setUploads(uploads.map((item) => item.id === upload.id ? { ...item, status, adminNote: notes[upload.id] ?? item.adminNote } : item));
@@ -1911,11 +1947,11 @@ function AdminReviewQueue() {
         </article>
       ))}
     </div>
-  ) : <EmptyState icon={CheckCircle2} title="No uploads waiting for manual review." body="User submissions will appear here." action="Open Dashboard" onAction={() => notify("No pending review items.")} />;
+  ) : <EmptyState icon={CheckCircle2} title={t("admin.noReview")} body={t("admin.noReviewBody")} action="Open Dashboard" onAction={() => notify("No pending review items.")} />;
 }
 
 function AdminTakeDown() {
-  const { videos, setVideos, posts, setPosts, prayers, setPrayers, comments, notify } = useApp();
+  const { videos, setVideos, posts, setPosts, prayers, setPrayers, comments, notify, t } = useApp();
   const userVideos = videos.filter((video) => video.source === "user" && video.status === "Published");
   const platformVideos = videos.filter((video) => video.source === "admin" && video.status === "Published");
   const hiddenVideos = videos.filter((video) => video.status === "Hidden");
@@ -1960,10 +1996,10 @@ function AdminTakeDown() {
       </div>
 
       <SectionHeader title="Reported posts" action={`${reportedPosts.length} reports`} />
-      {reportedPosts.length ? <div className="content-grid">{reportedPosts.map((post) => <article className="content-panel" key={post.id}><p className="eyebrow">{post.author} • {post.reports.length} reports</p><p>{post.text}</p>{post.scripture && <InfoLine label="Scripture" value={post.scripture} />}<InfoLine label="Comments" value={String(comments.filter((item) => item.targetId === post.id).length)} /><div className="button-row"><button className="secondary-button" onClick={() => { setPosts(posts.map((item) => item.id === post.id ? { ...item, reports: [] } : item)); notify("Report cleared."); }}>Clear Report</button><button className="secondary-button danger" onClick={() => removePost(post.id)}><Trash2 size={16} /> Remove Post</button></div></article>)}</div> : <p className="muted">No reported posts.</p>}
+      {reportedPosts.length ? <div className="content-grid">{reportedPosts.map((post) => <article className="content-panel" key={post.id}><p className="eyebrow">{post.author} • {post.reports.length} reports</p><p>{post.text}</p>{post.scripture && <InfoLine label={t("info.scripture")} value={post.scripture} />}<InfoLine label="Comments" value={String(comments.filter((item) => item.targetId === post.id).length)} /><div className="button-row"><button className="secondary-button" onClick={() => { setPosts(posts.map((item) => item.id === post.id ? { ...item, reports: [] } : item)); notify("Report cleared."); }}>Clear Report</button><button className="secondary-button danger" onClick={() => removePost(post.id)}><Trash2 size={16} /> Remove Post</button></div></article>)}</div> : <p className="muted">No reported posts.</p>}
 
       <SectionHeader title="All user posts" action={`${posts.length} posts`} />
-      {posts.length ? <div className="content-grid">{posts.map((post) => <article className="content-panel" key={post.id}><p className="eyebrow">{post.author}</p><p>{post.text}</p>{post.scripture && <InfoLine label="Scripture" value={post.scripture} />}<div className="monitor-meta"><span>Likes {post.likes.length}</span><span>Saves {post.saves.length}</span><span>Reports {post.reports.length}</span><span>Comments {comments.filter((item) => item.targetId === post.id).length}</span></div><div className="button-row"><button className="secondary-button danger" onClick={() => removePost(post.id)}><Trash2 size={16} /> Remove Post</button></div></article>)}</div> : <EmptyState icon={MessagesSquare} title="No user posts yet." body="Faith Feed posts will appear here when users share content." action="Open Community" onAction={() => notify("No posts yet.")} />}
+      {posts.length ? <div className="content-grid">{posts.map((post) => <article className="content-panel" key={post.id}><p className="eyebrow">{post.author}</p><p>{post.text}</p>{post.scripture && <InfoLine label={t("info.scripture")} value={post.scripture} />}<div className="monitor-meta"><span>Likes {post.likes.length}</span><span>Saves {post.saves.length}</span><span>Reports {post.reports.length}</span><span>Comments {comments.filter((item) => item.targetId === post.id).length}</span></div><div className="button-row"><button className="secondary-button danger" onClick={() => removePost(post.id)}><Trash2 size={16} /> Remove Post</button></div></article>)}</div> : <EmptyState icon={MessagesSquare} title="No user posts yet." body="Faith Feed posts will appear here when users share content." action="Open Community" onAction={() => notify("No posts yet.")} />}
 
       <SectionHeader title="User videos" action={`${userVideos.length} live`} />
       {userVideos.length ? <div className="content-grid">{userVideos.map((video) => <article className="content-panel" key={video.id}><MediaThumb item={video} /><p className="eyebrow">User upload</p><h3>{video.title}</h3><p>{video.description || "No description."}</p><div className="button-row"><button className="secondary-button" onClick={() => hideVideo(video.id)}><EyeOff size={16} /> Take Down</button><button className="secondary-button danger" onClick={() => deleteVideo(video.id)}><Trash2 size={16} /> Delete</button></div></article>)}</div> : <p className="muted">No live user videos.</p>}
@@ -1981,19 +2017,19 @@ function AdminTakeDown() {
 }
 
 function ContentRules() {
-  const { go } = useApp();
+  const { go, t } = useApp();
   return <section className="screen"><SectionIntro eyebrow="Content Rules" title="Faith Flix content rules" body="Submissions should be faith-centered, respectful, lawful, and appropriate for a Christian community." /><div className="content-panel"><ul className="rules-list"><li>Share only content you own or have permission to upload.</li><li>Keep all posts centered on faith, scripture, worship, testimony, prayer, or ministry.</li><li>Do not upload hateful, harassing, graphic, or unsafe material.</li><li>Prayer and testimony content should protect private information.</li></ul><button className="primary-button" onClick={() => go("upload")}>Share Your Faith</button></div></section>;
 }
 
 function MyUploads() {
-  const { currentUser, uploads } = useApp();
+  const { currentUser, uploads, t } = useApp();
   if (!currentUser) return null;
   const mine = uploads.filter((upload) => upload.userId === currentUser.id);
   return <div className="content-panel"><SectionHeader title="My Uploads" action={`${mine.length} submitted`} />{mine.length ? mine.map((upload) => <div className="item-row" key={upload.id}><span>{upload.title}</span><span className="status-pill">{upload.status}</span>{upload.adminNote && <small>{upload.adminNote}</small>}</div>) : <p>No uploads submitted yet.</p>}</div>;
 }
 
 function CommentBox({ targetId, comments, value, setValue }: { targetId: string; comments: CommentItem[]; value: string; setValue: (value: string) => void }) {
-  const { currentUser, setComments, comments: allComments, notify } = useApp();
+  const { currentUser, setComments, comments: allComments, notify, t } = useApp();
   const submit = () => {
     if (!value.trim()) return notify("Write a comment first.");
     setComments([...allComments, { id: uid("comment"), targetId, author: currentUser?.name ?? "Guest", text: value, createdAt: new Date().toLocaleString() }]);

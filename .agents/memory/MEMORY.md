@@ -1,1 +1,1 @@
-- [Faith Flix project overview](faithflix-overview.md) — single-file React+Vite+TS app with Supabase auth/DB, Cloudflare Stream video, mock content seeding
+- [i18n system](i18n-system.md) — full 11-language i18n via src/i18n.ts + AppContext t() function; lang persisted in localStorage

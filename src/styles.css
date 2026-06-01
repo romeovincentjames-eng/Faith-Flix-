@@ -2904,3 +2904,80 @@ textarea:focus {
   height: 100%;
   object-fit: contain;
 }
+
+/* ════════════════════════════════════════════════════
+   LANGUAGE PICKER
+   ════════════════════════════════════════════════════ */
+
+.lang-picker-section {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 18px 16px 14px;
+  margin: 20px 0 0;
+}
+
+.lang-picker-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f6d27b;
+  margin-bottom: 4px;
+}
+
+.lang-picker-sub {
+  font-size: 0.8rem;
+  color: rgba(247, 251, 255, 0.45);
+  margin: 0 0 14px;
+}
+
+.lang-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.lang-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.lang-option:hover {
+  background: rgba(246, 210, 123, 0.08);
+  border-color: rgba(246, 210, 123, 0.25);
+  transform: translateY(-1px);
+}
+
+.lang-option-active {
+  background: rgba(246, 210, 123, 0.12) !important;
+  border-color: #f6d27b !important;
+}
+
+.lang-flag {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.lang-name {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: rgba(247, 251, 255, 0.75);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.lang-option-active .lang-name {
+  color: #f6d27b;
+}
