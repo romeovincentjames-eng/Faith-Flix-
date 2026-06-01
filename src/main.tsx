@@ -335,6 +335,9 @@ function App() {
   const [prayers, setPrayers] = useStoredState<PrayerRequest[]>("faithflix-prayers", MOCK_PRAYERS);
   const [friendRequests, setFriendRequests] = useStoredState<FriendRequest[]>("faithflix-friends", []);
   const [messages, setMessages] = useStoredState<Message[]>("faithflix-messages", []);
+  const [mainSearchQuery, setMainSearchQuery] = React.useState("");
+  const [commSearchQuery, setCommSearchQuery] = React.useState("");
+  const [showMainSearch, setShowMainSearch] = React.useState(false);
 
   const notify = (message: string) => {
     setToast(message);
@@ -462,6 +465,10 @@ function App() {
     setSelectedVideoId,
     selectedSeriesId,
     setSelectedSeriesId,
+    mainSearchQuery,
+    setMainSearchQuery,
+    commSearchQuery,
+    setCommSearchQuery,
     selectedMessageUser,
     setSelectedMessageUser,
     uploadProgress,
@@ -508,15 +515,33 @@ function App() {
         {uploadProgress.active && <div className="upload-progress" role="status" aria-live="polite"><div><span>{uploadProgress.label}</span><strong>{uploadProgress.value}%</strong></div><progress value={uploadProgress.value} max={100} /></div>}
         <div className="ambient ambient-one" />
         <div className="ambient ambient-two" />
-        <header className="topbar">
-          <button className="brand" onClick={() => go("home")} aria-label="Faith Flix home">
-            <span className="brand-mark"><Sparkles size={18} /></span>
-            <span>Faith Flix</span>
-          </button>
-          <div className="top-actions">
-            <button className="icon-button" aria-label="Search" onClick={() => notify("Search is ready for connected content.")}><Search size={19} /></button>
-            <button className="icon-button" aria-label="Notifications" onClick={() => notify("No notifications yet.")}><Bell size={19} /></button>
-          </div>
+        <header className={`topbar${showMainSearch ? " topbar-search-open" : ""}`}>
+          {showMainSearch ? (
+            <div className="topbar-search-row">
+              <Search size={17} className="topbar-search-icon" />
+              <input
+                className="topbar-search-input"
+                placeholder="Search videos, series, categories…"
+                autoFocus
+                value={mainSearchQuery}
+                onChange={(e) => setMainSearchQuery(e.target.value)}
+              />
+              <button className="icon-button" aria-label="Close search" onClick={() => { setShowMainSearch(false); setMainSearchQuery(""); }}>
+                <X size={19} />
+              </button>
+            </div>
+          ) : (
+            <>
+              <button className="brand" onClick={() => go("home")} aria-label="Faith Flix home">
+                <span className="brand-mark"><Sparkles size={18} /></span>
+                <span>Faith Flix</span>
+              </button>
+              <div className="top-actions">
+                <button className="icon-button" aria-label="Search" onClick={() => setShowMainSearch(true)}><Search size={19} /></button>
+                <button className="icon-button" aria-label="Notifications" onClick={() => notify("No notifications yet.")}><Bell size={19} /></button>
+              </div>
+            </>
+          )}
         </header>
 
         <main className="main-stage">
@@ -532,14 +557,16 @@ function App() {
           {page === "rules" && <ContentRules />}
         </main>
 
-        <nav className="bottom-nav six" aria-label="Primary navigation">
-          <NavButton label="Home" icon={Home} active={page === "home"} onClick={() => go("home")} />
-          <NavButton label="Watch" icon={Film} active={page === "watch"} onClick={() => go("watch")} />
-          <NavButton label="Series" icon={Clapperboard} active={page === "series"} onClick={() => go("series")} />
-          <NavButton label="Community" icon={MessagesSquare} active={page === "community" || page === "upload"} onClick={() => go("community")} />
-          <NavButton label="Saved" icon={Bookmark} active={page === "saved"} onClick={() => go("saved")} />
-          <NavButton label="Profile" icon={User} active={page === "profile" || page === "admin-login" || page === "admin-studio"} onClick={() => go("profile")} />
-        </nav>
+        {page !== "community" && page !== "upload" && (
+          <nav className="bottom-nav six" aria-label="Primary navigation">
+            <NavButton label="Home" icon={Home} active={page === "home"} onClick={() => go("home")} />
+            <NavButton label="Watch" icon={Film} active={page === "watch"} onClick={() => go("watch")} />
+            <NavButton label="Series" icon={Clapperboard} active={page === "series"} onClick={() => go("series")} />
+            <NavButton label="Community" icon={MessagesSquare} active={false} onClick={() => go("community")} />
+            <NavButton label="Saved" icon={Bookmark} active={page === "saved"} onClick={() => go("saved")} />
+            <NavButton label="Profile" icon={User} active={page === "profile" || page === "admin-login" || page === "admin-studio"} onClick={() => go("profile")} />
+          </nav>
+        )}
         {toast && <div className="toast">{toast}</div>}
       </div>
     </AppContext.Provider>
@@ -559,6 +586,10 @@ function buildContextShape() {
     setSelectedVideoId: React.Dispatch<React.SetStateAction<string>>;
     selectedSeriesId: string;
     setSelectedSeriesId: React.Dispatch<React.SetStateAction<string>>;
+    mainSearchQuery: string;
+    setMainSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+    commSearchQuery: string;
+    setCommSearchQuery: React.Dispatch<React.SetStateAction<string>>;
     selectedMessageUser: string;
     setSelectedMessageUser: React.Dispatch<React.SetStateAction<string>>;
     uploadProgress: UploadProgress;
@@ -728,7 +759,7 @@ function NavButton({ label, icon: Icon, active, onClick }: { label: string; icon
 }
 
 function HomeScreen() {
-  const { isAdmin, publicVideos, publicSeries, visibleCategories, go, setSelectedVideoId, setSelectedSeriesId } = useApp();
+  const { isAdmin, publicVideos, publicSeries, visibleCategories, go, setSelectedVideoId, setSelectedSeriesId, mainSearchQuery } = useApp();
   const [selectedCategory, setSelectedCategory] = React.useState(visibleCategories[0]?.name ?? "");
   const latest = publicVideos.slice(-10).reverse();
   const selectedCategoryVideos = publicVideos.filter((video) => video.category === selectedCategory);
@@ -757,6 +788,35 @@ function HomeScreen() {
       document.getElementById(`home-category-button-${category.id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
     });
   };
+
+  const q = mainSearchQuery.trim().toLowerCase();
+  if (q) {
+    const matchVideos = publicVideos.filter((v) => [v.title, v.description, v.category, v.seriesId].join(" ").toLowerCase().includes(q));
+    const matchSeries = publicSeries.filter((s) => [s.title, s.description, s.category, s.scriptureTheme].join(" ").toLowerCase().includes(q));
+    return (
+      <section className="screen search-results-screen">
+        <div className="search-results-header">
+          <Search size={16} />
+          <span>Results for <strong>"{mainSearchQuery}"</strong></span>
+        </div>
+        {matchVideos.length === 0 && matchSeries.length === 0 && (
+          <EmptyState icon={Search} title="No results found." body={`Nothing matches "${mainSearchQuery}". Try a different keyword.`} action="" onAction={() => {}} />
+        )}
+        {matchVideos.length > 0 && (
+          <>
+            <SectionHeader title="Videos" action={`${matchVideos.length} found`} />
+            <div className="content-grid">{matchVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} />)}</div>
+          </>
+        )}
+        {matchSeries.length > 0 && (
+          <>
+            <SectionHeader title="Series" action={`${matchSeries.length} found`} />
+            <div className="series-grid">{matchSeries.map((item) => <button key={item.id} className="series-grid-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>{item.posterUrl ? <img className="series-grid-poster" src={item.posterUrl} alt={item.title} /> : <div className="series-grid-poster series-grid-poster-empty"><Clapperboard size={36} /></div>}<div className="series-grid-info"><p className="eyebrow">{item.category || item.status}</p><h3 className="series-grid-title">{item.title}</h3>{item.scriptureTheme && <p className="series-grid-verse">✦ {item.scriptureTheme}</p>}</div><ChevronRight size={18} className="series-grid-arrow" /></button>)}</div>
+          </>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section className="screen">
@@ -1057,7 +1117,8 @@ const COMM_STORIES = [
 ];
 
 function CommunityScreen() {
-  const { communityView, setCommunityView, notify } = useApp();
+  const { communityView, setCommunityView, notify, go, commSearchQuery, setCommSearchQuery } = useApp();
+  const [showCommSearch, setShowCommSearch] = React.useState(false);
   const tabs: { id: CommunityView; label: string; icon: React.ElementType }[] = [
     { id: "feed", label: "Feed", icon: MessagesSquare },
     { id: "prayer", label: "Prayer", icon: HeartHandshake },
@@ -1084,10 +1145,23 @@ function CommunityScreen() {
           <span className="community-brand-name">{screenTitles[communityView]}</span>
         </div>
         <div className="community-topbar-actions">
-          <button className="community-icon-btn" aria-label="Search" onClick={() => notify("Search coming soon.")}><Search size={20} /></button>
+          <button className="community-icon-btn" aria-label={showCommSearch ? "Close search" : "Search"} onClick={() => { setShowCommSearch((v) => !v); if (showCommSearch) setCommSearchQuery(""); }}>{showCommSearch ? <X size={20} /> : <Search size={20} />}</button>
           <button className="community-icon-btn" aria-label="Write post" onClick={() => setCommunityView("feed")}><Edit3 size={20} /></button>
         </div>
       </div>
+      {showCommSearch && (
+        <div className="comm-search-row">
+          <Search size={15} className="comm-search-icon" />
+          <input
+            className="comm-search-input"
+            placeholder={communityView === "prayer" ? "Search prayers…" : communityView === "groups" ? "Search groups…" : "Search posts…"}
+            autoFocus
+            value={commSearchQuery}
+            onChange={(e) => setCommSearchQuery(e.target.value)}
+          />
+          {commSearchQuery && <button className="community-icon-btn" onClick={() => setCommSearchQuery("")}><X size={15} /></button>}
+        </div>
+      )}
 
       {communityView === "feed" && (
         <div className="comm-story-row">
@@ -1148,12 +1222,16 @@ function CommunityScreen() {
           </button>
         ))}
       </nav>
+      <button className="comm-back-bar" onClick={() => go("home")} aria-label="Back to Faith Flix">
+        <ChevronRight size={16} style={{ transform: "rotate(180deg)" }} />
+        <span>Back to Faith Flix</span>
+      </button>
     </div>
   );
 }
 
 function FaithFeed() {
-  const { currentUser, posts, setPosts, notify, comments } = useApp();
+  const { currentUser, posts, setPosts, notify, comments, commSearchQuery } = useApp();
   const [text, setText] = React.useState("");
   const [scripture, setScripture] = React.useState("");
   const [image, setImage] = React.useState<File | null>(null);
@@ -1175,6 +1253,10 @@ function FaithFeed() {
     notify(message);
   };
 
+  const filteredPosts = commSearchQuery
+    ? posts.filter((p) => [p.text, p.author, p.scripture].join(" ").toLowerCase().includes(commSearchQuery.toLowerCase()))
+    : posts;
+
   return (
     <>
       <div className="form-card">
@@ -1183,13 +1265,15 @@ function FaithFeed() {
         <FileField label="Optional image" onChange={setImage} />
         <button className="primary-button" onClick={create}>Share Post</button>
       </div>
-      {posts.length ? posts.map((post) => <PostCard key={post.id} post={post} comments={comments.filter((item) => item.targetId === post.id)} onToggle={togglePost} />) : <EmptyState icon={MessagesSquare} title="No community posts yet. Be the first to share encouragement." body="Faith Feed posts will appear here." action="Write encouragement" onAction={() => notify("Use the form above to share encouragement.")} />}
+      {commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={Search} title="No posts match your search." body={`Try a different keyword.`} action="" onAction={() => {}} />}
+      {filteredPosts.map((post) => <PostCard key={post.id} post={post} comments={comments.filter((item) => item.targetId === post.id)} onToggle={togglePost} />)}
+      {!commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={MessagesSquare} title="No community posts yet. Be the first to share encouragement." body="Faith Feed posts will appear here." action="Write encouragement" onAction={() => notify("Use the form above to share encouragement.")} />}
     </>
   );
 }
 
 function PrayerWall() {
-  const { currentUser, prayers, setPrayers, notify } = useApp();
+  const { currentUser, prayers, setPrayers, notify, commSearchQuery } = useApp();
   const [form, setForm] = React.useState({ title: "", text: "", visibility: "Public" });
   const actions = ["I prayed", "Praying for you", "Amen", "Praise God", "Answered"];
   const actor = currentUser?.id ?? "guest";
@@ -1218,7 +1302,14 @@ function PrayerWall() {
         <Select label="Visibility" value={form.visibility} onChange={(visibility) => setForm({ ...form, visibility })} options={["Public", "Private"]} />
         <button className="primary-button" onClick={create}>Post Prayer Request</button>
       </div>
-      {prayers.length ? prayers.map((prayer) => <article className="content-panel" key={prayer.id}><p className="eyebrow">{prayer.visibility}</p><h3>{prayer.title}</h3><p>{prayer.text}</p><div className="button-row">{actions.map((action) => <button className="secondary-button" key={action} onClick={() => tap(prayer.id, action)}>{action} {(prayer.actions[action] ?? []).length}</button>)}</div></article>) : <EmptyState icon={HeartHandshake} title="No prayer requests yet." body="Prayer requests will appear here after members post them." action="Use prayer form" onAction={() => notify("Use the prayer form above.")} />}
+      {(() => {
+        const filtered = commSearchQuery
+          ? prayers.filter((p) => [p.title, p.text].join(" ").toLowerCase().includes(commSearchQuery.toLowerCase()))
+          : prayers;
+        if (commSearchQuery && filtered.length === 0) return <EmptyState icon={Search} title="No prayers match your search." body="Try a different keyword." action="" onAction={() => {}} />;
+        if (filtered.length === 0) return <EmptyState icon={HeartHandshake} title="No prayer requests yet." body="Prayer requests will appear here after members post them." action="Use prayer form" onAction={() => notify("Use the prayer form above.")} />;
+        return <>{filtered.map((prayer) => <article className="content-panel" key={prayer.id}><p className="eyebrow">{prayer.visibility}</p><h3>{prayer.title}</h3><p>{prayer.text}</p><div className="button-row">{actions.map((action) => <button className="secondary-button" key={action} onClick={() => tap(prayer.id, action)}>{action} {(prayer.actions[action] ?? []).length}</button>)}</div></article>)}</>;
+      })()}
     </>
   );
 }
