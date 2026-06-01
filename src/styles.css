@@ -1758,6 +1758,32 @@ select option {
   gap: 3px;
 }
 
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  padding: 2px 8px;
+  margin-bottom: 3px;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.source-badge-official {
+  color: #f6d27b;
+  background: rgba(246, 210, 123, 0.12);
+  border: 1px solid rgba(246, 210, 123, 0.3);
+}
+
+.source-badge-community {
+  color: #7dd3fc;
+  background: rgba(125, 211, 252, 0.12);
+  border: 1px solid rgba(125, 211, 252, 0.3);
+}
+
 .video-card-body h3 {
   margin-bottom: 0;
   font-size: 0.92rem;

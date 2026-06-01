@@ -2105,6 +2105,9 @@ function VideoCard({ video, onOpen, extra }: { video: VideoItem; onOpen: () => v
         </div>
       </button>
       <div className="video-card-body">
+        <span className={video.source === "user" ? "source-badge source-badge-community" : "source-badge source-badge-official"}>
+          {video.source === "user" ? <><Users size={11} /> Community</> : <><ShieldCheck size={11} /> Official</>}
+        </span>
         <h3>{video.title}</h3>
         <p>{video.creator || "Faith Flix"}</p>
       </div>
