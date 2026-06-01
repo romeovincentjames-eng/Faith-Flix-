@@ -170,8 +170,45 @@ function fileInfo(file?: File | null) {
   return { name: file.name, url: URL.createObjectURL(file) };
 }
 
-async function uploadMediaFile(file: File | null, ownerId: string, folder: string) {
+type UploadedMedia = { name: string; url: string; thumbnailUrl?: string };
+
+async function createCloudflareUpload() {
+  const response = await fetch("/api/cloudflare-upload", { method: "POST" });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || "Could not start Cloudflare upload.");
+  return payload as { uploadURL: string; uid: string; iframeUrl: string; thumbnailUrl: string };
+}
+
+function uploadFileWithProgress(uploadURL: string, file: File, onProgress?: (percent: number) => void) {
+  return new Promise<void>((resolve, reject) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const request = new XMLHttpRequest();
+    request.open("POST", uploadURL);
+    request.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      onProgress?.(Math.round((event.loaded / event.total) * 100));
+    };
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) resolve();
+      else reject(new Error("Cloudflare upload failed: " + (request.responseText || request.statusText)));
+    };
+    request.onerror = () => reject(new Error("Cloudflare upload failed. Check your connection and try again."));
+    request.send(formData);
+  });
+}
+
+async function uploadCloudflareVideo(file: File, onProgress?: (percent: number) => void): Promise<UploadedMedia> {
+  const upload = await createCloudflareUpload();
+  await uploadFileWithProgress(upload.uploadURL, file, onProgress);
+  return { name: file.name, url: upload.iframeUrl, thumbnailUrl: upload.thumbnailUrl };
+}
+
+async function uploadMediaFile(file: File | null, ownerId: string, folder: string, onProgress?: (percent: number) => void): Promise<UploadedMedia> {
   if (!file) return { name: "", url: "" };
+  if (file.type.startsWith("video/")) return uploadCloudflareVideo(file, onProgress);
+
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const filePath = ownerId + "/" + folder + "/" + Date.now() + "-" + safeName;
   const { error } = await supabase.storage.from(mediaBucket).upload(filePath, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });
@@ -189,18 +226,23 @@ async function getActiveAuthUser() {
 }
 
 function startUploadProgress(setUploadProgress: React.Dispatch<React.SetStateAction<UploadProgress>>, label: string) {
-  let value = 18;
+  let value = 2;
   let currentLabel = label;
   setUploadProgress({ active: true, value, label });
   const timer = window.setInterval(() => {
-    value = Math.min(92, value + (value < 52 ? 5 : value < 78 ? 3 : 1));
+    value = Math.min(96, value + 1);
     setUploadProgress({ active: true, value, label: currentLabel });
-  }, 800);
+  }, 1400);
 
   return {
     step(nextLabel: string, nextValue: number) {
       currentLabel = nextLabel;
       value = Math.max(value, nextValue);
+      setUploadProgress({ active: true, value, label: nextLabel });
+    },
+    percent(nextLabel: string, percent: number) {
+      currentLabel = nextLabel;
+      value = Math.max(value, Math.min(92, Math.round(percent)));
       setUploadProgress({ active: true, value, label: nextLabel });
     },
     done(doneLabel: string) {
@@ -214,6 +256,10 @@ function startUploadProgress(setUploadProgress: React.Dispatch<React.SetStateAct
       window.setTimeout(() => setUploadProgress({ active: false, value: 0, label: "" }), 3600);
     },
   };
+}
+
+function isCloudflareStreamUrl(url?: string) {
+  return Boolean(url?.includes("iframe.videodelivery.net"));
 }
 
 function useStoredState<T>(key: string, initialValue: T) {
@@ -755,7 +801,7 @@ function WatchScreen() {
           onTouchStart={(event) => setTouchStartX(event.touches[0].clientX)}
           onTouchEnd={(event) => handleSwipeEnd(event.changedTouches[0].clientX)}
         >
-          {selected.videoUrl ? <video className="feed-video" data-video-id={selected.id} playsInline autoPlay muted loop src={selected.videoUrl} poster={selected.thumbnailUrl} onClick={(event) => event.currentTarget.paused ? event.currentTarget.play() : event.currentTarget.pause()} /> : <><Video size={58} /><h2>{selected.videoName || "Video file saved locally"}</h2><p>Video playback is available in this session when a browser file URL exists.</p></>}
+          {selected.videoUrl ? (isCloudflareStreamUrl(selected.videoUrl) ? <iframe className="feed-video feed-video-frame" data-video-id={selected.id} src={selected.videoUrl} allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowFullScreen /> : <video className="feed-video" data-video-id={selected.id} playsInline autoPlay muted loop src={selected.videoUrl} poster={selected.thumbnailUrl} onClick={(event) => event.currentTarget.paused ? event.currentTarget.play() : event.currentTarget.pause()} />) : <><Video size={58} /><h2>{selected.videoName || "Video file saved locally"}</h2><p>Video playback is available in this session when a browser file URL exists.</p></>}
         </div>
         <div className="detail-panel">
           <p>{selected.description || "No description added."}</p>
@@ -843,10 +889,10 @@ function UploadScreen() {
       try {
         progress.step("Checking login", 20);
         const authUser = await getActiveAuthUser();
-        progress.step("Uploading video", 24);
-        const video = await uploadMediaFile(uploadVideoFile, authUser.id, "videos");
-        progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving post", 78);
-        const thumb = await uploadMediaFile(uploadThumbFile, authUser.id, "thumbnails");
+        progress.step("Starting Cloudflare upload", 8);
+        const video = await uploadMediaFile(uploadVideoFile, authUser.id, "videos", (percent) => progress.percent("Uploading video", percent));
+        progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving post", 94);
+        const thumb = uploadThumbFile ? await uploadMediaFile(uploadThumbFile, authUser.id, "thumbnails") : { name: "Cloudflare thumbnail", url: video.thumbnailUrl || "" };
         progress.step("Publishing post", 92);
         const uploadId = uid("upload");
         const publicVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "user", title: uploadForm.title, description: uploadForm.description, scripture: uploadForm.scripture, category: uploadForm.category, seriesId: "", episode: "", duration: "", creator: uploadUser.name, tags: uploadForm.tags, status: "Published", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: uploadForm.cropDimension, cropRatio: uploadForm.cropRatio };
@@ -1247,10 +1293,10 @@ function AdminUpload() {
       try {
         progress.step("Checking login", 20);
         const authUser = await getActiveAuthUser();
-        progress.step("Uploading video", 24);
-        const video = await uploadMediaFile(uploadVideoFile, authUser.id, "admin-videos");
-        progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving video", 78);
-        const thumb = await uploadMediaFile(uploadThumbFile, authUser.id, "admin-thumbnails");
+        progress.step("Starting Cloudflare upload", 8);
+        const video = await uploadMediaFile(uploadVideoFile, authUser.id, "admin-videos", (percent) => progress.percent("Uploading video", percent));
+        progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving video", 94);
+        const thumb = uploadThumbFile ? await uploadMediaFile(uploadThumbFile, authUser.id, "admin-thumbnails") : { name: "Cloudflare thumbnail", url: video.thumbnailUrl || "" };
         progress.step("Publishing video", 92);
         const platformVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "admin", ...uploadForm, status, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: "9:16", cropRatio: "9 / 16" };
         const { data, error } = await supabase.from("videos").insert(videoToDb(platformVideo, authUser.id)).select("*").single();
@@ -1284,7 +1330,7 @@ function AdminVideos() {
   if (!platformVideos.length) return <EmptyState icon={Video} title="No platform videos uploaded yet." body="Only admin-created platform content is edited here. User videos and posts can be moderated in User Posts Monitor." action="Add Platform Video" onAction={() => setStudioView("upload")} />;
   return <div className="content-grid">{platformVideos.map((video) => {
     const isEditing = editingId === video.id;
-    return <article className="content-panel" key={video.id}><MediaThumb item={video} /><h3>{video.title}</h3><p>{video.description || "No description."}</p><InfoLine label="Status" value={video.status} />{isEditing && <><Field label="Title" value={video.title} onChange={(title) => update(video.id, { title })} /><Field label="Creator" value={video.creator} onChange={(creator) => update(video.id, { creator })} /><label>Description<textarea value={video.description} onChange={(event) => update(video.id, { description: event.target.value })} /></label><Field label="Scripture reference" value={video.scripture} onChange={(scripture) => update(video.id, { scripture })} /><Field label="Series" value={video.seriesId} onChange={(seriesId) => update(video.id, { seriesId })} /></>}<div className="button-row">{isEditing ? <button className="primary-button" onClick={finishEditing}><CheckCircle2 size={16} /> Done</button> : <button className="secondary-button" onClick={() => setEditingId(video.id)}><Edit3 size={16} /> Edit</button>}<button className="secondary-button" onClick={() => notify(video.videoUrl ? "Preview is available in the video manager card." : "No playable file URL in this session.")}><Eye size={16} /> Preview</button><button className="secondary-button" onClick={() => update(video.id, { status: video.status === "Published" ? "Draft" : "Published" })}>{video.status === "Published" ? <EyeOff size={16} /> : <Eye size={16} />} {video.status === "Published" ? "Unpublish" : "Publish"}</button><SelectButton value={video.status} options={["Draft", "Published", "Hidden"]} onChange={(status) => update(video.id, { status: status as Status })} /><button className="secondary-button danger" onClick={() => { setVideos(videos.filter((item) => item.id !== video.id)); notify("Video deleted."); }}><Trash2 size={16} /> Delete</button></div>{video.videoUrl && <video className="inline-video" controls src={video.videoUrl} />}</article>;
+    return <article className="content-panel" key={video.id}><MediaThumb item={video} /><h3>{video.title}</h3><p>{video.description || "No description."}</p><InfoLine label="Status" value={video.status} />{isEditing && <><Field label="Title" value={video.title} onChange={(title) => update(video.id, { title })} /><Field label="Creator" value={video.creator} onChange={(creator) => update(video.id, { creator })} /><label>Description<textarea value={video.description} onChange={(event) => update(video.id, { description: event.target.value })} /></label><Field label="Scripture reference" value={video.scripture} onChange={(scripture) => update(video.id, { scripture })} /><Field label="Series" value={video.seriesId} onChange={(seriesId) => update(video.id, { seriesId })} /></>}<div className="button-row">{isEditing ? <button className="primary-button" onClick={finishEditing}><CheckCircle2 size={16} /> Done</button> : <button className="secondary-button" onClick={() => setEditingId(video.id)}><Edit3 size={16} /> Edit</button>}<button className="secondary-button" onClick={() => notify(video.videoUrl ? "Preview is available in the video manager card." : "No playable file URL in this session.")}><Eye size={16} /> Preview</button><button className="secondary-button" onClick={() => update(video.id, { status: video.status === "Published" ? "Draft" : "Published" })}>{video.status === "Published" ? <EyeOff size={16} /> : <Eye size={16} />} {video.status === "Published" ? "Unpublish" : "Publish"}</button><SelectButton value={video.status} options={["Draft", "Published", "Hidden"]} onChange={(status) => update(video.id, { status: status as Status })} /><button className="secondary-button danger" onClick={() => { setVideos(videos.filter((item) => item.id !== video.id)); notify("Video deleted."); }}><Trash2 size={16} /> Delete</button></div>{video.videoUrl && (isCloudflareStreamUrl(video.videoUrl) ? <iframe className="inline-video inline-video-frame" src={video.videoUrl} allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowFullScreen /> : <video className="inline-video" controls src={video.videoUrl} />)}</article>;
   })}</div>;
 }
 
