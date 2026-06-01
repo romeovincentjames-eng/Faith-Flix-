@@ -128,6 +128,7 @@ type Message = { id: string; fromId: string; toId: string; text: string; created
 
 const adminEmail = "romeovgalasso@gmail.com";
 const adminPassword = "Rvjg123100";
+const mediaBucket = "faithflix-media";
 
 const starterVideoIds = ["starter-jael", "starter-moses", "starter-elijah"];
 const starterSeriesIds = ["starter-ai-scripture-visuals"];
@@ -166,6 +167,16 @@ function uid(prefix: string) {
 function fileInfo(file?: File | null) {
   if (!file) return { name: "", url: "" };
   return { name: file.name, url: URL.createObjectURL(file) };
+}
+
+async function uploadMediaFile(file: File | null, ownerId: string, folder: string) {
+  if (!file) return { name: "", url: "" };
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+  const filePath = ownerId + "/" + folder + "/" + Date.now() + "-" + safeName;
+  const { error } = await supabase.storage.from(mediaBucket).upload(filePath, file, { cacheControl: "3600", upsert: false });
+  if (error) throw error;
+  const { data } = supabase.storage.from(mediaBucket).getPublicUrl(filePath);
+  return { name: file.name, url: data.publicUrl };
 }
 
 function useStoredState<T>(key: string, initialValue: T) {
@@ -256,6 +267,22 @@ function App() {
       listener.subscription.unsubscribe();
     };
   }, [setSessionId, setUsers]);
+
+  React.useEffect(() => {
+    let active = true;
+
+    const loadSupabaseVideos = async () => {
+      const { data, error } = await supabase.from("videos").select("*").order("created_at", { ascending: true });
+      if (!active || error || !data) return;
+      setVideos((data as DbVideo[]).map(videoFromDb));
+    };
+
+    void loadSupabaseVideos();
+
+    return () => {
+      active = false;
+    };
+  }, [setVideos]);
 
   React.useEffect(() => {
     setVideos((current) => current.filter((video) => !starterVideoIds.includes(video.id)));
@@ -439,6 +466,26 @@ function useApp() {
 
 
 
+type DbVideo = {
+  id: string;
+  source: "admin" | "user" | string;
+  title: string;
+  description: string | null;
+  scripture_reference: string | null;
+  episode_number: string | null;
+  duration: string | null;
+  creator_ministry_name: string | null;
+  tags: string | null;
+  video_url: string | null;
+  thumbnail_url: string | null;
+  status: "draft" | "published" | "hidden" | string;
+  created_at: string | null;
+  app_category?: string | null;
+  app_series_title?: string | null;
+  crop_dimension?: string | null;
+  crop_ratio?: string | null;
+};
+
 type DbProfile = {
   id: string;
   role: "admin" | "user";
@@ -473,6 +520,61 @@ function upsertLocalUser(users: Profile[], user: Profile) {
   return users.some((item) => item.id === user.id)
     ? users.map((item) => (item.id === user.id ? user : item))
     : [...users, user];
+}
+
+function statusFromDb(status: string): Status {
+  if (status === "published") return "Published";
+  if (status === "hidden") return "Hidden";
+  return "Draft";
+}
+
+function statusToDb(status: Status) {
+  return status.toLowerCase() as "draft" | "published" | "hidden";
+}
+
+function videoFromDb(video: DbVideo): VideoItem {
+  return {
+    id: video.id,
+    source: video.source === "user" ? "user" : "admin",
+    title: video.title,
+    description: video.description || "",
+    scripture: video.scripture_reference || "",
+    category: video.app_category || "Bible Stories",
+    seriesId: video.app_series_title || "",
+    episode: video.episode_number || "",
+    duration: video.duration || "",
+    creator: video.creator_ministry_name || "Faith Flix",
+    tags: video.tags || "",
+    status: statusFromDb(video.status),
+    videoName: video.video_url ? video.video_url.split("/").pop() || "Video" : "",
+    videoUrl: video.video_url || "",
+    thumbnailName: video.thumbnail_url ? video.thumbnail_url.split("/").pop() || "Thumbnail" : "",
+    thumbnailUrl: video.thumbnail_url || "",
+    cropDimension: video.crop_dimension || "9:16",
+    cropRatio: video.crop_ratio || "9 / 16",
+    createdAt: video.created_at ? new Date(video.created_at).toLocaleString() : "",
+  };
+}
+
+function videoToDb(video: Omit<VideoItem, "id" | "createdAt">, createdBy: string) {
+  return {
+    source: video.source,
+    title: video.title,
+    description: video.description,
+    scripture_reference: video.scripture,
+    episode_number: video.episode,
+    duration: video.duration,
+    creator_ministry_name: video.creator,
+    tags: video.tags,
+    video_url: video.videoUrl || null,
+    thumbnail_url: video.thumbnailUrl || null,
+    status: statusToDb(video.status),
+    created_by: createdBy,
+    app_category: video.category,
+    app_series_title: video.seriesId,
+    crop_dimension: video.cropDimension || "9:16",
+    crop_ratio: video.cropRatio || "9 / 16",
+  };
 }
 
 function NavButton({ label, icon: Icon, active, onClick }: { label: string; icon: React.ElementType; active: boolean; onClick: () => void }) {
@@ -677,20 +779,29 @@ function UploadScreen() {
     );
   }
 
-  const submit = () => {
+  const submit = async () => {
     if (!currentUser) return go("profile");
     if (!form.title || !form.consent || !form.rules) return notify("Add a title and confirm consent and content rules.");
-    const video = fileInfo(videoFile);
-    const thumb = fileInfo(thumbFile);
-    const uploadId = uid("upload");
-    const publicVideoId = uid("video");
-    setUploads([...uploads, { id: uploadId, userId: currentUser.id, ...form, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, status: "Approved", adminNote: "Published instantly." }]);
-    setVideos([...videos, { id: publicVideoId, source: "user", title: form.title, description: form.description, scripture: form.scripture, category: form.category, seriesId: "", episode: "", duration: "", creator: currentUser.name, tags: form.tags, status: "Published", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: form.cropDimension, cropRatio: form.cropRatio, createdAt: new Date().toLocaleString() }]);
-    setForm({ ...form, title: "", description: "", scripture: "", tags: "", consent: false, rules: false });
-    setVideoFile(null);
-    setThumbFile(null);
-    setThumbPreview("");
-    notify("Posted.");
+    if (!videoFile) return notify("Choose a video file first.");
+    notify("Uploading video.");
+    try {
+      const video = await uploadMediaFile(videoFile, currentUser.id, "videos");
+      const thumb = await uploadMediaFile(thumbFile, currentUser.id, "thumbnails");
+      const uploadId = uid("upload");
+      const publicVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "user", title: form.title, description: form.description, scripture: form.scripture, category: form.category, seriesId: "", episode: "", duration: "", creator: currentUser.name, tags: form.tags, status: "Published", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: form.cropDimension, cropRatio: form.cropRatio };
+      const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, currentUser.id)).select("*").single();
+      if (error) throw error;
+      const savedVideo = videoFromDb(data as DbVideo);
+      setUploads([...uploads, { id: uploadId, userId: currentUser.id, ...form, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, status: "Approved", adminNote: "Published instantly." }]);
+      setVideos([...videos, savedVideo]);
+      setForm({ ...form, title: "", description: "", scripture: "", tags: "", consent: false, rules: false });
+      setVideoFile(null);
+      setThumbFile(null);
+      setThumbPreview("");
+      notify("Posted.");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Upload failed.");
+    }
   };
 
   return (
@@ -1048,18 +1159,30 @@ function AdminStudio() {
 }
 
 function AdminUpload() {
-  const { isAdmin, videos, setVideos, visibleCategories, series, notify } = useApp();
+  const { currentUser, isAdmin, videos, setVideos, visibleCategories, series, notify } = useApp();
   const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: visibleCategories[0]?.name ?? "", seriesId: "", episode: "", duration: "", creator: "", tags: "", status: "Published" as Status });
   const [videoFile, setVideoFile] = React.useState<File | null>(null);
   const [thumbFile, setThumbFile] = React.useState<File | null>(null);
   if (!isAdmin) return <EmptyState icon={ShieldCheck} title="Admin access required" body="Only admin accounts can upload platform videos." action="Log In" onAction={() => notify("Log in with the admin account from Profile.")} />;
-  const save = (status: Status) => {
+  const save = async (status: Status) => {
+    if (!currentUser) return notify("Log in as admin first.");
     if (!form.title) return notify("Add a title first.");
-    const video = fileInfo(videoFile);
-    const thumb = fileInfo(thumbFile);
-    setVideos([...videos, { id: uid("video"), source: "admin", ...form, status, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, createdAt: new Date().toLocaleString() }]);
-    setForm({ ...form, title: "", description: "", scripture: "", tags: "", status });
-    notify(status === "Published" ? "Video published to the public app." : "Draft saved to manager.");
+    if (!videoFile) return notify("Choose a video file first.");
+    notify("Uploading video.");
+    try {
+      const video = await uploadMediaFile(videoFile, currentUser.id, "admin-videos");
+      const thumb = await uploadMediaFile(thumbFile, currentUser.id, "admin-thumbnails");
+      const platformVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "admin", ...form, status, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: "9:16", cropRatio: "9 / 16" };
+      const { data, error } = await supabase.from("videos").insert(videoToDb(platformVideo, currentUser.id)).select("*").single();
+      if (error) throw error;
+      setVideos([...videos, videoFromDb(data as DbVideo)]);
+      setForm({ ...form, title: "", description: "", scripture: "", tags: "", status });
+      setVideoFile(null);
+      setThumbFile(null);
+      notify(status === "Published" ? "Video published to the public app." : "Draft saved to manager.");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Upload failed.");
+    }
   };
   return <div className="form-card"><h2>Add platform video</h2><Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} /><label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label><Field label="Scripture reference" value={form.scripture} onChange={(scripture) => setForm({ ...form, scripture })} /><Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={visibleCategories.map((item) => item.name)} /><Select label="Series" value={form.seriesId} onChange={(seriesId) => setForm({ ...form, seriesId })} options={["", ...series.map((item) => item.title)]} /><Field label="Episode number" value={form.episode} onChange={(episode) => setForm({ ...form, episode })} /><Field label="Duration" value={form.duration} onChange={(duration) => setForm({ ...form, duration })} /><Field label="Creator / ministry name" value={form.creator} onChange={(creator) => setForm({ ...form, creator })} /><Field label="Tags" value={form.tags} onChange={(tags) => setForm({ ...form, tags })} /><Select label="Publish status" value={form.status} onChange={(status) => setForm({ ...form, status: status as Status })} options={["Draft", "Published", "Hidden"]} /><FileField label="Video file" onChange={setVideoFile} /><FileField label="Thumbnail" onChange={setThumbFile} /><div className="button-row"><button className="primary-button" onClick={() => save("Published")}>Publish Video</button><button className="secondary-button" onClick={() => save("Draft")}>Save as Draft</button></div></div>;
 }
