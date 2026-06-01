@@ -21,6 +21,7 @@ import {
   Lock,
   MessageCircle,
   MessagesSquare,
+  Play,
   Plus,
   Search,
   Send,
@@ -161,6 +162,40 @@ const defaultCategories = [
   "Faith Journey Videos",
 ].map((name, index) => ({ id: `cat-${index}`, name, hidden: false, custom: false }));
 
+const MOCK_VIDEOS: VideoItem[] = [
+  { id: "mock-v1", source: "admin", title: "Walking by Faith", description: "A powerful message on what it truly means to trust God in every season of life — even when you cannot see the path ahead.", scripture: "2 Corinthians 5:7", category: "Sermons", seriesId: "Faith Journey", episode: "1", duration: "12:34", creator: "Pastor James Rivers", tags: "faith, trust, walk", status: "Published", videoName: "walking-by-faith.mp4", videoUrl: "", thumbnailName: "sunrise.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-10" },
+  { id: "mock-v2", source: "admin", title: "The Power of the Cross", description: "Discover the transforming power of the cross and what Jesus's sacrifice means for our lives today.", scripture: "1 Corinthians 1:18", category: "Gospel Messages", seriesId: "", episode: "", duration: "8:45", creator: "Faith Flix", tags: "cross, gospel, salvation", status: "Published", videoName: "power-of-cross.mp4", videoUrl: "", thumbnailName: "cross-sunset.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-12" },
+  { id: "mock-v3", source: "admin", title: "Worship in Spirit and Truth", description: "A breathtaking worship experience that invites you into deeper connection with God through song, scripture, and stillness.", scripture: "John 4:24", category: "Worship Videos", seriesId: "", episode: "", duration: "18:20", creator: "Elevation Worship", tags: "worship, prayer, spirit", status: "Published", videoName: "worship-spirit.mp4", videoUrl: "", thumbnailName: "worship.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1555685812-4b943f1cb0eb?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-14" },
+  { id: "mock-v4", source: "admin", title: "In the Beginning", description: "An animated retelling of Genesis chapter 1 — from darkness to the first breath of creation. Perfect for all ages.", scripture: "Genesis 1:1", category: "Animated Bible Stories", seriesId: "Genesis Unlocked", episode: "1", duration: "6:15", creator: "BibleVision Studios", tags: "creation, genesis, animated", status: "Published", videoName: "in-the-beginning.mp4", videoUrl: "", thumbnailName: "creation.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-16" },
+  { id: "mock-v5", source: "admin", title: "Still Small Voice", description: "When God speaks in a whisper — a devotional on hearing God's voice in the chaos and quieting your heart to listen.", scripture: "1 Kings 19:12", category: "Devotional Clips", seriesId: "Quiet Time", episode: "3", duration: "9:02", creator: "Daily Bread Ministries", tags: "devotional, prayer, stillness", status: "Published", videoName: "still-small-voice.mp4", videoUrl: "", thumbnailName: "forest-light.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-18" },
+  { id: "mock-v6", source: "admin", title: "My Healing Testimony", description: "Sarah shares the miraculous story of how God healed her after years of chronic illness — a testimony of undeniable faith.", scripture: "Psalm 103:3", category: "Testimonies", seriesId: "", episode: "", duration: "15:50", creator: "Sarah M.", tags: "healing, testimony, miracle", status: "Published", videoName: "healing-testimony.mp4", videoUrl: "", thumbnailName: "praying-hands.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1510836217651-1a1b2f98d7de?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-20" },
+  { id: "mock-v7", source: "admin", title: "Sermon on the Mount", description: "A visual Bible study through the Beatitudes — exploring what it means to live the Kingdom way.", scripture: "Matthew 5:3–12", category: "Bible Study Content", seriesId: "Red Letter Series", episode: "2", duration: "22:08", creator: "The Bible Project", tags: "sermon, beatitudes, jesus", status: "Published", videoName: "sermon-mount.mp4", videoUrl: "", thumbnailName: "bible-open.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1543286386-2e659306cd6c?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-22" },
+  { id: "mock-v8", source: "admin", title: "Grace Like Rain", description: "A cinematic worship visual experience set to original music — experience God's grace poured out in stunning imagery.", scripture: "Ephesians 2:8", category: "Faith Music Visuals", seriesId: "", episode: "", duration: "5:33", creator: "Hillsong Creative", tags: "grace, music, visual", status: "Published", videoName: "grace-like-rain.mp4", videoUrl: "", thumbnailName: "candles.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-24" },
+  { id: "mock-v9", source: "admin", title: "The Prodigal Son", description: "A short cinematic film retelling the parable of the prodigal son in a modern-day setting. A story of redemption and love.", scripture: "Luke 15:11–32", category: "Christian Short Films", seriesId: "Parables of Jesus", episode: "1", duration: "28:14", creator: "RedemptionFilms", tags: "prodigal, film, parable", status: "Published", videoName: "prodigal-son.mp4", videoUrl: "", thumbnailName: "church-interior.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-26" },
+  { id: "mock-v10", source: "admin", title: "Praying for Your Nation", description: "Join thousands of believers in a prayer movement for national revival — intercede with scripture, worship, and bold faith.", scripture: "2 Chronicles 7:14", category: "Prayer Videos", seriesId: "Faith Journey", episode: "4", duration: "11:47", creator: "Awakening Prayer Network", tags: "prayer, nation, revival", status: "Published", videoName: "national-prayer.mp4", videoUrl: "", thumbnailName: "prayer-nature.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1499810631641-541e76d678a2?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-28" },
+];
+
+const MOCK_SERIES: SeriesItem[] = [
+  { id: "mock-s1", title: "Faith Journey", description: "A 6-part series on the foundations of Christian faith — for believers at every stage of their walk.", posterName: "faith-journey.jpg", posterUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80", scriptureTheme: "Hebrews 11:1", category: "Sermons", status: "Published" },
+  { id: "mock-s2", title: "Genesis Unlocked", description: "Animated exploration of the book of Genesis — from creation to Joseph, brought to life in stunning detail.", posterName: "genesis.jpg", posterUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80", scriptureTheme: "Genesis 1:1", category: "Animated Bible Stories", status: "Published" },
+  { id: "mock-s3", title: "Red Letter Series", description: "Deep dives into the words of Jesus — exploring the Sermon on the Mount, parables, and teachings of Christ.", posterName: "red-letter.jpg", posterUrl: "https://images.unsplash.com/photo-1543286386-2e659306cd6c?w=400&q=80", scriptureTheme: "Matthew 5–7", category: "Bible Study Content", status: "Published" },
+];
+
+const MOCK_POSTS: CommunityPost[] = [
+  { id: "mock-p1", userId: "mock-user1", author: "Grace Walker", text: "God has been so faithful this week. After months of waiting, my prayers were answered in the most unexpected way. Never stop trusting Him! 🙌", scripture: "Psalm 27:14", imageName: "", imageUrl: "", likes: ["a", "b", "c", "d"], saves: ["a"], reports: [] },
+  { id: "mock-p2", userId: "mock-user2", author: "David Chen", text: "Sharing this as a reminder to myself and to you: You are not defined by your past. In Christ, you are a new creation. Keep walking forward.", scripture: "2 Corinthians 5:17", imageName: "", imageUrl: "", likes: ["a", "b", "c", "d", "e"], saves: ["a", "b"], reports: [] },
+  { id: "mock-p3", userId: "mock-user3", author: "Miriam Johnson", text: "Our church had the most beautiful sunrise prayer service this morning. God showed up in such a powerful way. This community on Faith Flix has been such a blessing to me.", scripture: "Lamentations 3:22–23", imageName: "", imageUrl: "", likes: ["a", "b", "c"], saves: [], reports: [] },
+  { id: "mock-p4", userId: "mock-user4", author: "Pastor Samuel", text: "Quick word of encouragement: God is not surprised by what you're going through. He saw this season before you were born and He has already prepared a way through it.", scripture: "Jeremiah 29:11", imageName: "", imageUrl: "", likes: ["a", "b", "c", "d", "e", "f", "g"], saves: ["a", "b", "c"], reports: [] },
+  { id: "mock-p5", userId: "mock-user5", author: "Ruth Adeyemi", text: "Just completed the 'Walking by Faith' series and WOW. My perspective on hardship has completely changed. Thank you Faith Flix for this platform. God bless you all. 🙏", scripture: "Romans 8:28", imageName: "", imageUrl: "", likes: ["a", "b", "c", "d"], saves: ["a"], reports: [] },
+];
+
+const MOCK_PRAYERS: PrayerRequest[] = [
+  { id: "mock-pr1", userId: "mock-user1", title: "Healing for my mother", text: "My mother was diagnosed with cancer last month. I'm believing God for her complete healing. Please stand in agreement with me in prayer.", visibility: "Public", actions: { "I prayed": ["a", "b", "c"], "Amen": ["a", "b", "c", "d"], "Praying for you": ["a", "b"] } },
+  { id: "mock-pr2", userId: "mock-user2", title: "Job breakthrough needed", text: "I've been unemployed for 6 months and my family is struggling. Trusting God's provision but could use prayer warriors standing with me.", visibility: "Public", actions: { "I prayed": ["a", "b"], "Amen": ["a", "b", "c"], "Praying for you": ["a", "b", "c"] } },
+  { id: "mock-pr3", userId: "mock-user3", title: "Praise report — answered prayer!", text: "Six months ago I posted here asking for prayer about my marriage. Today I'm thrilled to share — we went to counseling, God restored our marriage, and we are closer than ever!", visibility: "Public", actions: { "Praise God": ["a", "b", "c", "d", "e"], "Answered": ["a", "b", "c"], "Amen": ["a", "b", "c", "d", "e", "f"] } },
+  { id: "mock-pr4", userId: "mock-user4", title: "Peace for anxiety", text: "Going through a difficult season of anxiety and fear. I know God hasn't given me a spirit of fear, but I need prayer to walk in that truth daily.", visibility: "Public", actions: { "I prayed": ["a", "b", "c"], "Praying for you": ["a", "b", "c", "d"] } },
+];
+
 function uid(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -288,15 +323,15 @@ function App() {
 
   const [users, setUsers] = useStoredState<Profile[]>("faithflix-users", []);
   const [sessionId, setSessionId] = useStoredState<string>("faithflix-session", "");
-  const [videos, setVideos] = useStoredState<VideoItem[]>("faithflix-videos", []);
-  const [series, setSeries] = useStoredState<SeriesItem[]>("faithflix-series", []);
+  const [videos, setVideos] = useStoredState<VideoItem[]>("faithflix-videos", MOCK_VIDEOS);
+  const [series, setSeries] = useStoredState<SeriesItem[]>("faithflix-series", MOCK_SERIES);
   const [categories, setCategories] = useStoredState<CategoryItem[]>("faithflix-categories", defaultCategories);
   const [uploads, setUploads] = useStoredState<UserUpload[]>("faithflix-user-uploads", []);
   const [saved, setSaved] = useStoredState<Record<string, string[]>>("faithflix-saved", {});
   const [likes, setLikes] = useStoredState<Record<string, string[]>>("faithflix-likes", {});
   const [comments, setComments] = useStoredState<CommentItem[]>("faithflix-comments", []);
-  const [posts, setPosts] = useStoredState<CommunityPost[]>("faithflix-posts", []);
-  const [prayers, setPrayers] = useStoredState<PrayerRequest[]>("faithflix-prayers", []);
+  const [posts, setPosts] = useStoredState<CommunityPost[]>("faithflix-posts", MOCK_POSTS);
+  const [prayers, setPrayers] = useStoredState<PrayerRequest[]>("faithflix-prayers", MOCK_PRAYERS);
   const [friendRequests, setFriendRequests] = useStoredState<FriendRequest[]>("faithflix-friends", []);
   const [messages, setMessages] = useStoredState<Message[]>("faithflix-messages", []);
 
@@ -358,7 +393,7 @@ function App() {
     const loadSupabaseVideos = async () => {
       const { data, error } = await supabase.from("videos").select("*").order("created_at", { ascending: true });
       if (!active || error || !data) return;
-      setVideos((data as DbVideo[]).map(videoFromDb));
+      if (data.length > 0) setVideos((data as DbVideo[]).map(videoFromDb));
     };
 
     void loadSupabaseVideos();
@@ -372,6 +407,14 @@ function App() {
     setVideos((current) => current.filter((video) => !starterVideoIds.includes(video.id)));
     setSeries((current) => current.filter((item) => !starterSeriesIds.includes(item.id) && item.title !== "Ai bible"));
   }, [setVideos, setSeries]);
+
+  React.useEffect(() => {
+    setVideos((current) => (current.length === 0 || current.every((v) => v.id.startsWith("starter-"))) ? MOCK_VIDEOS : current);
+    setSeries((current) => current.length === 0 ? MOCK_SERIES : current);
+    setPosts((current) => current.length === 0 ? MOCK_POSTS : current);
+    setPrayers((current) => current.length === 0 ? MOCK_PRAYERS : current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   React.useEffect(() => {
     if (selectedVideoId && !publicVideos.some((video) => video.id === selectedVideoId)) {
@@ -798,7 +841,7 @@ function WatchScreen() {
 
   return (
     <section className="screen watch-screen">
-      <SectionIntro eyebrow="Watch" title={selected.title} body={`User post • ${selected.creator || "Faith member"} • ${selected.category}`} />
+      <SectionIntro eyebrow="Watch" title={selected.title} body={`${selected.creator || "Faith member"} • ${selected.category}`} />
       <div className="player-layout">
         <div
           className="video-placeholder with-media swipe-player"
@@ -1493,11 +1536,50 @@ function CommentBox({ targetId, comments, value, setValue }: { targetId: string;
 
 function PostCard({ post, comments, onToggle }: { post: CommunityPost; comments: CommentItem[]; onToggle: (id: string, field: "likes" | "saves" | "reports", message: string) => void }) {
   const [comment, setComment] = React.useState("");
-  return <article className="content-panel"><p className="eyebrow">{post.author}</p><p>{post.text}</p>{post.scripture && <InfoLine label="Scripture" value={post.scripture} />}{post.imageUrl && <img className="poster" src={post.imageUrl} alt="" />}<div className="button-row"><button className="secondary-button" onClick={() => onToggle(post.id, "likes", "Post liked.")}>Like {post.likes.length}</button><button className="secondary-button" onClick={() => onToggle(post.id, "saves", "Post saved.")}>Save {post.saves.length}</button><button className="secondary-button" onClick={() => onToggle(post.id, "reports", "Post reported to admins.")}>Report {post.reports.length}</button></div><CommentBox targetId={post.id} comments={comments} value={comment} setValue={setComment} /></article>;
+  const initials = post.author.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  return (
+    <article className="content-panel post-card">
+      <div className="post-header">
+        <div className="post-avatar">{initials}</div>
+        <div className="post-author-info">
+          <p className="post-author-name">{post.author}</p>
+          {post.scripture && <p className="post-meta">{post.scripture}</p>}
+        </div>
+      </div>
+      <p className="post-text">{post.text}</p>
+      {post.imageUrl && <img className="poster" src={post.imageUrl} alt="" />}
+      <div className="button-row">
+        <button className="secondary-button" onClick={() => onToggle(post.id, "likes", "Post liked.")}><Heart size={15} /> {post.likes.length}</button>
+        <button className="secondary-button" onClick={() => onToggle(post.id, "saves", "Post saved.")}><Bookmark size={15} /> {post.saves.length}</button>
+        <button className="secondary-button" onClick={() => onToggle(post.id, "reports", "Post reported to admins.")}>Report</button>
+      </div>
+      <CommentBox targetId={post.id} comments={comments} value={comment} setValue={setComment} />
+    </article>
+  );
 }
 
 function VideoCard({ video, onOpen, extra }: { video: VideoItem; onOpen: () => void; extra?: React.ReactNode }) {
-  return <article className="content-panel video-card"><button className="media-button" onClick={onOpen} aria-label={`Play ${video.title}`}><MediaThumb item={video} /><span className="thumb-play"><Video size={18} /> Play</span></button><p className="eyebrow">{video.status}</p><h3>{video.title}</h3><p>{video.creator || "Faith Flix"} • {video.category}</p>{extra && <div className="button-row">{extra}</div>}</article>;
+  return (
+    <article className="content-panel video-card">
+      <button className="media-button" onClick={onOpen} aria-label={`Play ${video.title}`}>
+        <div className="thumb-wrap">
+          <MediaThumb item={video} />
+          <div className="thumb-overlay">
+            <div className="thumb-play-btn"><Play size={22} /></div>
+            <div className="thumb-info-row">
+              <span className="thumb-cat-tag">{video.category}</span>
+              {video.duration && <span className="thumb-dur">{video.duration}</span>}
+            </div>
+          </div>
+        </div>
+      </button>
+      <div className="video-card-body">
+        <h3>{video.title}</h3>
+        <p>{video.creator || "Faith Flix"}</p>
+      </div>
+      {extra && <div className="button-row">{extra}</div>}
+    </article>
+  );
 }
 
 function SeriesCard({ item }: { item: SeriesItem }) {

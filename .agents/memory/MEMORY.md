@@ -1,0 +1,1 @@
+- [Faith Flix project overview](faithflix-overview.md) — single-file React+Vite+TS app with Supabase auth/DB, Cloudflare Stream video, mock content seeding
