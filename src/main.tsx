@@ -33,6 +33,7 @@ import {
   UserPlus,
   Users,
   Video,
+  X,
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
 import "./styles.css";
@@ -81,6 +82,7 @@ type VideoItem = {
   creator: string;
   tags: string;
   status: Status;
+  featured?: boolean;
   videoName: string;
   videoUrl?: string;
   thumbnailName: string;
@@ -99,6 +101,7 @@ type SeriesItem = {
   scriptureTheme: string;
   category: string;
   status: Status;
+  featured?: boolean;
 };
 
 type CategoryItem = { id: string; name: string; hidden: boolean; custom: boolean };
@@ -163,22 +166,22 @@ const defaultCategories = [
 ].map((name, index) => ({ id: `cat-${index}`, name, hidden: false, custom: false }));
 
 const MOCK_VIDEOS: VideoItem[] = [
-  { id: "mock-v1", source: "admin", title: "Walking by Faith", description: "A powerful message on what it truly means to trust God in every season of life — even when you cannot see the path ahead.", scripture: "2 Corinthians 5:7", category: "Sermons", seriesId: "Faith Journey", episode: "1", duration: "12:34", creator: "Pastor James Rivers", tags: "faith, trust, walk", status: "Published", videoName: "walking-by-faith.mp4", videoUrl: "", thumbnailName: "sunrise.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-10" },
-  { id: "mock-v2", source: "admin", title: "The Power of the Cross", description: "Discover the transforming power of the cross and what Jesus's sacrifice means for our lives today.", scripture: "1 Corinthians 1:18", category: "Gospel Messages", seriesId: "", episode: "", duration: "8:45", creator: "Faith Flix", tags: "cross, gospel, salvation", status: "Published", videoName: "power-of-cross.mp4", videoUrl: "", thumbnailName: "cross-sunset.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-12" },
-  { id: "mock-v3", source: "admin", title: "Worship in Spirit and Truth", description: "A breathtaking worship experience that invites you into deeper connection with God through song, scripture, and stillness.", scripture: "John 4:24", category: "Worship Videos", seriesId: "", episode: "", duration: "18:20", creator: "Elevation Worship", tags: "worship, prayer, spirit", status: "Published", videoName: "worship-spirit.mp4", videoUrl: "", thumbnailName: "worship.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1555685812-4b943f1cb0eb?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-14" },
+  { id: "mock-v1", source: "admin", title: "Walking by Faith", description: "A powerful message on what it truly means to trust God in every season of life — even when you cannot see the path ahead.", scripture: "2 Corinthians 5:7", category: "Sermons", seriesId: "Faith Journey", episode: "1", duration: "12:34", creator: "Pastor James Rivers", tags: "faith, trust, walk", status: "Published", featured: false, videoName: "walking-by-faith.mp4", videoUrl: "", thumbnailName: "sunrise.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-10" },
+  { id: "mock-v2", source: "admin", title: "The Power of the Cross", description: "Discover the transforming power of the cross and what Jesus's sacrifice means for our lives today.", scripture: "1 Corinthians 1:18", category: "Gospel Messages", seriesId: "", episode: "", duration: "8:45", creator: "Faith Flix", tags: "cross, gospel, salvation", status: "Published", featured: true, videoName: "power-of-cross.mp4", videoUrl: "", thumbnailName: "cross-sunset.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-12" },
+  { id: "mock-v3", source: "admin", title: "Worship in Spirit and Truth", description: "A breathtaking worship experience that invites you into deeper connection with God through song, scripture, and stillness.", scripture: "John 4:24", category: "Worship Videos", seriesId: "", episode: "", duration: "18:20", creator: "Elevation Worship", tags: "worship, prayer, spirit", status: "Published", featured: true, videoName: "worship-spirit.mp4", videoUrl: "", thumbnailName: "worship.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1555685812-4b943f1cb0eb?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-14" },
   { id: "mock-v4", source: "admin", title: "In the Beginning", description: "An animated retelling of Genesis chapter 1 — from darkness to the first breath of creation. Perfect for all ages.", scripture: "Genesis 1:1", category: "Animated Bible Stories", seriesId: "Genesis Unlocked", episode: "1", duration: "6:15", creator: "BibleVision Studios", tags: "creation, genesis, animated", status: "Published", videoName: "in-the-beginning.mp4", videoUrl: "", thumbnailName: "creation.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-16" },
   { id: "mock-v5", source: "admin", title: "Still Small Voice", description: "When God speaks in a whisper — a devotional on hearing God's voice in the chaos and quieting your heart to listen.", scripture: "1 Kings 19:12", category: "Devotional Clips", seriesId: "Quiet Time", episode: "3", duration: "9:02", creator: "Daily Bread Ministries", tags: "devotional, prayer, stillness", status: "Published", videoName: "still-small-voice.mp4", videoUrl: "", thumbnailName: "forest-light.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-18" },
   { id: "mock-v6", source: "admin", title: "My Healing Testimony", description: "Sarah shares the miraculous story of how God healed her after years of chronic illness — a testimony of undeniable faith.", scripture: "Psalm 103:3", category: "Testimonies", seriesId: "", episode: "", duration: "15:50", creator: "Sarah M.", tags: "healing, testimony, miracle", status: "Published", videoName: "healing-testimony.mp4", videoUrl: "", thumbnailName: "praying-hands.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1510836217651-1a1b2f98d7de?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-20" },
   { id: "mock-v7", source: "admin", title: "Sermon on the Mount", description: "A visual Bible study through the Beatitudes — exploring what it means to live the Kingdom way.", scripture: "Matthew 5:3–12", category: "Bible Study Content", seriesId: "Red Letter Series", episode: "2", duration: "22:08", creator: "The Bible Project", tags: "sermon, beatitudes, jesus", status: "Published", videoName: "sermon-mount.mp4", videoUrl: "", thumbnailName: "bible-open.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1543286386-2e659306cd6c?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-22" },
-  { id: "mock-v8", source: "admin", title: "Grace Like Rain", description: "A cinematic worship visual experience set to original music — experience God's grace poured out in stunning imagery.", scripture: "Ephesians 2:8", category: "Faith Music Visuals", seriesId: "", episode: "", duration: "5:33", creator: "Hillsong Creative", tags: "grace, music, visual", status: "Published", videoName: "grace-like-rain.mp4", videoUrl: "", thumbnailName: "candles.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-24" },
+  { id: "mock-v8", source: "admin", title: "Grace Like Rain", description: "A cinematic worship visual experience set to original music — experience God's grace poured out in stunning imagery.", scripture: "Ephesians 2:8", category: "Faith Music Visuals", seriesId: "", episode: "", duration: "5:33", creator: "Hillsong Creative", tags: "grace, music, visual", status: "Published", featured: true, videoName: "grace-like-rain.mp4", videoUrl: "", thumbnailName: "candles.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-24" },
   { id: "mock-v9", source: "admin", title: "The Prodigal Son", description: "A short cinematic film retelling the parable of the prodigal son in a modern-day setting. A story of redemption and love.", scripture: "Luke 15:11–32", category: "Christian Short Films", seriesId: "Parables of Jesus", episode: "1", duration: "28:14", creator: "RedemptionFilms", tags: "prodigal, film, parable", status: "Published", videoName: "prodigal-son.mp4", videoUrl: "", thumbnailName: "church-interior.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-26" },
   { id: "mock-v10", source: "admin", title: "Praying for Your Nation", description: "Join thousands of believers in a prayer movement for national revival — intercede with scripture, worship, and bold faith.", scripture: "2 Chronicles 7:14", category: "Prayer Videos", seriesId: "Faith Journey", episode: "4", duration: "11:47", creator: "Awakening Prayer Network", tags: "prayer, nation, revival", status: "Published", videoName: "national-prayer.mp4", videoUrl: "", thumbnailName: "prayer-nature.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1499810631641-541e76d678a2?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-28" },
 ];
 
 const MOCK_SERIES: SeriesItem[] = [
-  { id: "mock-s1", title: "Faith Journey", description: "A 6-part series on the foundations of Christian faith — for believers at every stage of their walk.", posterName: "faith-journey.jpg", posterUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80", scriptureTheme: "Hebrews 11:1", category: "Sermons", status: "Published" },
-  { id: "mock-s2", title: "Genesis Unlocked", description: "Animated exploration of the book of Genesis — from creation to Joseph, brought to life in stunning detail.", posterName: "genesis.jpg", posterUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80", scriptureTheme: "Genesis 1:1", category: "Animated Bible Stories", status: "Published" },
-  { id: "mock-s3", title: "Red Letter Series", description: "Deep dives into the words of Jesus — exploring the Sermon on the Mount, parables, and teachings of Christ.", posterName: "red-letter.jpg", posterUrl: "https://images.unsplash.com/photo-1543286386-2e659306cd6c?w=400&q=80", scriptureTheme: "Matthew 5–7", category: "Bible Study Content", status: "Published" },
+  { id: "mock-s1", title: "Faith Journey", description: "A 6-part series on the foundations of Christian faith — for believers at every stage of their walk.", posterName: "faith-journey.jpg", posterUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80", scriptureTheme: "Hebrews 11:1", category: "Sermons", status: "Published", featured: true },
+  { id: "mock-s2", title: "Genesis Unlocked", description: "Animated exploration of the book of Genesis — from creation to Joseph, brought to life in stunning detail.", posterName: "genesis.jpg", posterUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80", scriptureTheme: "Genesis 1:1", category: "Animated Bible Stories", status: "Published", featured: false },
+  { id: "mock-s3", title: "Red Letter Series", description: "Deep dives into the words of Jesus — exploring the Sermon on the Mount, parables, and teachings of Christ.", posterName: "red-letter.jpg", posterUrl: "https://images.unsplash.com/photo-1543286386-2e659306cd6c?w=400&q=80", scriptureTheme: "Matthew 5–7", category: "Bible Study Content", status: "Published", featured: true },
 ];
 
 const MOCK_POSTS: CommunityPost[] = [
@@ -849,6 +852,56 @@ function HomeScreen() {
         ) : <EmptyState icon={Film} title="No videos in this category yet." body="Videos added to this category will appear here." action="Open Upload" onAction={() => go("upload")} />}
       </div>
 
+      {(() => {
+        const featuredVideos = publicVideos.filter((v) => v.featured);
+        if (!featuredVideos.length) return null;
+        return (
+          <>
+            <SectionHeader title="✦ Featured videos" action={`${featuredVideos.length} spotlighted`} />
+            <div className="featured-video-row">
+              {featuredVideos.map((video) => (
+                <button key={video.id} className="featured-video-card" onClick={() => openHomeVideo(video)}>
+                  {video.thumbnailUrl
+                    ? <img className="featured-thumb" src={video.thumbnailUrl} alt={video.title} />
+                    : <div className="featured-thumb featured-thumb-empty"><Film size={36} /></div>}
+                  <div className="featured-video-info">
+                    <span className="featured-badge">Featured</span>
+                    <h3 className="featured-title">{video.title}</h3>
+                    <p className="featured-meta">{video.creator} · {video.duration}</p>
+                    {video.scripture && <p className="featured-verse">✦ {video.scripture}</p>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        );
+      })()}
+
+      {(() => {
+        const featuredSeries = publicSeries.filter((s) => s.featured);
+        if (!featuredSeries.length) return null;
+        return (
+          <>
+            <SectionHeader title="✦ Featured series" action={`${featuredSeries.length} spotlighted`} />
+            <div className="featured-series-row">
+              {featuredSeries.map((item) => (
+                <button key={item.id} className="featured-series-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>
+                  {item.posterUrl
+                    ? <img className="featured-series-poster" src={item.posterUrl} alt={item.title} />
+                    : <div className="featured-series-poster featured-series-poster-empty"><Clapperboard size={32} /></div>}
+                  <div className="featured-series-info">
+                    <span className="featured-badge">Featured</span>
+                    <h3 className="featured-series-title">{item.title}</h3>
+                    {item.scriptureTheme && <p className="featured-verse">✦ {item.scriptureTheme}</p>}
+                    <p className="featured-meta">{publicVideos.filter((v) => v.seriesId === item.title).length} episodes</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        );
+      })()}
+
       <SectionHeader title="Published videos" action={`${publicVideos.length} live`} />
       {latest.length ? (
         <div className="horizontal-video-row published-row">
@@ -929,7 +982,7 @@ function WatchScreen() {
             <button className="secondary-button" onClick={() => toggleList(setLikes, likes, selected.id, likedIds.includes(selected.id) ? "Like removed." : "Video liked.")}><Heart size={17} /> {likedIds.includes(selected.id) ? "Liked" : "Like"}</button>
             <button className="secondary-button" onClick={() => toggleList(setSaved, saved, selected.id, savedIds.includes(selected.id) ? "Removed from saved." : "Saved.")}><Bookmark size={17} /> {savedIds.includes(selected.id) ? "Saved" : "Save"}</button>
             <button className="secondary-button" onClick={() => { navigator.clipboard?.writeText(`faithflix://video/${selected.id}`); notify("Mock video link copied."); }}>Share</button>
-            <button className="secondary-button" onClick={() => { setCommunityView("discussions"); go("community"); }}><MessageCircle size={17} /> Discuss</button>
+            <button className="secondary-button" onClick={() => { setCommunityView("feed"); go("community"); }}><MessageCircle size={17} /> Discuss</button>
             <button className="secondary-button" onClick={() => openVideo(previousVideo.id, "Previous video.")}>Previous</button>
             <button className="primary-button" onClick={() => openVideo(nextVideo.id, "Next video.")}>Next Video</button>
           </div>
@@ -1606,6 +1659,10 @@ function AdminVideos() {
       creator_ministry_name: video.creator,
       app_category: video.category,
       app_series_title: video.seriesId,
+      episode_number: video.episode,
+      duration: video.duration,
+      tags: video.tags,
+      featured: video.featured ?? false,
     }).eq("id", video.id);
     notify(error ? "Edits saved locally. DB sync failed: " + error.message : "Video edits saved.");
   };
@@ -1622,24 +1679,129 @@ function AdminVideos() {
     notify(error ? "Deleted locally. DB sync failed: " + error.message : "Video deleted.");
   };
   if (!platformVideos.length) return <EmptyState icon={Video} title="No platform videos uploaded yet." body="Only admin-created platform content is edited here. User videos and posts can be moderated in User Posts Monitor." action="Add Platform Video" onAction={() => setStudioView("upload")} />;
-  return <div className="content-grid">{platformVideos.map((video) => {
-    const isEditing = editingId === video.id;
-    return <article className="content-panel" key={video.id}><MediaThumb item={video} /><h3>{video.title}</h3><p>{video.description || "No description."}</p><InfoLine label="Status" value={video.status} />{isEditing && <><Field label="Title" value={video.title} onChange={(title) => update(video.id, { title })} /><Field label="Creator" value={video.creator} onChange={(creator) => update(video.id, { creator })} /><label>Description<textarea value={video.description} onChange={(event) => update(video.id, { description: event.target.value })} /></label><Field label="Scripture reference" value={video.scripture} onChange={(scripture) => update(video.id, { scripture })} /><Field label="Series" value={video.seriesId} onChange={(seriesId) => update(video.id, { seriesId })} /></>}<div className="button-row">{isEditing ? <button className="primary-button" onClick={finishEditing}><CheckCircle2 size={16} /> Done</button> : <button className="secondary-button" onClick={() => setEditingId(video.id)}><Edit3 size={16} /> Edit</button>}<button className="secondary-button" onClick={() => notify(video.videoUrl ? "Preview is available in the video manager card." : "No playable file URL in this session.")}><Eye size={16} /> Preview</button><button className="secondary-button" onClick={() => updateStatus(video.id, video.status === "Published" ? "Draft" : "Published")}>{video.status === "Published" ? <EyeOff size={16} /> : <Eye size={16} />} {video.status === "Published" ? "Unpublish" : "Publish"}</button><SelectButton value={video.status} options={["Draft", "Published", "Hidden"]} onChange={(status) => updateStatus(video.id, status as Status)} /><button className="secondary-button danger" onClick={() => deleteVideoAdmin(video.id)}><Trash2 size={16} /> Delete</button></div>{video.videoUrl && (isCloudflareStreamUrl(video.videoUrl) ? <iframe className="inline-video inline-video-frame" src={video.videoUrl} allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowFullScreen /> : <video className="inline-video" controls src={video.videoUrl} />)}</article>;
-  })}</div>;
+  return (
+    <div className="content-grid">
+      {platformVideos.map((video) => {
+        const isEditing = editingId === video.id;
+        return (
+          <article className="content-panel admin-video-card" key={video.id}>
+            <MediaThumb item={video} />
+            <div className="admin-card-meta">
+              <h3>{video.title}</h3>
+              <div className="admin-meta-row">
+                <span className={`status-badge status-${video.status.toLowerCase()}`}>{video.status}</span>
+                {video.featured && <span className="featured-badge-sm">&#10022; Featured</span>}
+                {video.creator && <span className="meta-chip">{video.creator}</span>}
+                {video.duration && <span className="meta-chip">&#9201; {video.duration}</span>}
+                {video.category && <span className="meta-chip">{video.category}</span>}
+                {video.seriesId && <span className="meta-chip">Series: {video.seriesId}</span>}
+              </div>
+              {video.description && <p className="admin-card-desc">{video.description}</p>}
+            </div>
+            {isEditing && (
+              <div className="admin-edit-form">
+                <Field label="Title" value={video.title} onChange={(title) => update(video.id, { title })} />
+                <Field label="Creator / Ministry" value={video.creator} onChange={(creator) => update(video.id, { creator })} />
+                <label>Description<textarea value={video.description} onChange={(e) => update(video.id, { description: e.target.value })} /></label>
+                <Field label="Scripture reference" value={video.scripture} onChange={(scripture) => update(video.id, { scripture })} />
+                <Select label="Category" value={video.category} onChange={(category) => update(video.id, { category })} options={["Sermons","Worship Videos","Testimonies","Bible Study Content","Devotional Clips","Animated Bible Stories","Gospel Messages","Faith Music Visuals","Christian Short Films","Prayer Videos","Scripture Reflections","Church Media"]} />
+                <Field label="Series title (blank = standalone)" value={video.seriesId} onChange={(seriesId) => update(video.id, { seriesId })} />
+                <Field label="Episode number" value={video.episode} onChange={(episode) => update(video.id, { episode })} />
+                <Field label="Duration (e.g. 12:34)" value={video.duration} onChange={(duration) => update(video.id, { duration })} />
+                <Field label="Tags (comma separated)" value={video.tags} onChange={(tags) => update(video.id, { tags })} />
+                <label className="admin-toggle-row">
+                  <input type="checkbox" checked={!!video.featured} onChange={(e) => update(video.id, { featured: e.target.checked })} />
+                  <span>&#10022; Featured &mdash; spotlight on home page</span>
+                </label>
+              </div>
+            )}
+            <div className="button-row">
+              {isEditing
+                ? <button className="primary-button" onClick={finishEditing}><CheckCircle2 size={16} /> Save Changes</button>
+                : <button className="secondary-button" onClick={() => setEditingId(video.id)}><Edit3 size={16} /> Edit All Details</button>}
+              <SelectButton value={video.status} options={["Draft", "Published", "Hidden"]} onChange={(s) => updateStatus(video.id, s as Status)} />
+              <button className="secondary-button danger" onClick={() => deleteVideoAdmin(video.id)}><Trash2 size={16} /> Delete</button>
+            </div>
+            {video.videoUrl && (isCloudflareStreamUrl(video.videoUrl)
+              ? <iframe className="inline-video inline-video-frame" src={video.videoUrl} allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowFullScreen />
+              : <video className="inline-video" controls src={video.videoUrl} />)}
+          </article>
+        );
+      })}
+    </div>
+  );
 }
 
 function AdminSeries() {
   const { series, setSeries, visibleCategories, notify } = useApp();
-  const [form, setForm] = React.useState({ title: "", description: "", posterName: "", posterUrl: "", scriptureTheme: "", category: visibleCategories[0]?.name ?? "", status: "Published" as Status });
+  const [form, setForm] = React.useState({ title: "", description: "", posterName: "", posterUrl: "", scriptureTheme: "", category: visibleCategories[0]?.name ?? "", status: "Published" as Status, featured: false });
   const [editingId, setEditingId] = React.useState("");
   const save = () => {
     if (!form.title) return notify("Add a series title.");
     setSeries([...series, { id: uid("series"), ...form }]);
-    setForm({ ...form, title: "", description: "", scriptureTheme: "" });
+    setForm({ ...form, title: "", description: "", scriptureTheme: "", featured: false });
     notify("Series saved.");
   };
   const update = (id: string, patch: Partial<SeriesItem>) => setSeries(series.map((item) => item.id === id ? { ...item, ...patch } : item));
-  return <><div className="form-card"><h2>Create series</h2><Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} /><label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label><FileField label="Poster image" onChange={(file) => setForm({ ...form, posterName: fileInfo(file).name, posterUrl: fileInfo(file).url })} /><Field label="Scripture theme" value={form.scriptureTheme} onChange={(scriptureTheme) => setForm({ ...form, scriptureTheme })} /><Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={visibleCategories.map((item) => item.name)} /><Select label="Status" value={form.status} onChange={(status) => setForm({ ...form, status: status as Status })} options={["Draft", "Published"]} /><button className="primary-button" onClick={save}>Create Series</button></div>{series.length ? <div className="content-grid">{series.map((item) => <article className="content-panel" key={item.id}><SeriesCard item={item} />{editingId === item.id && <><Field label="Title" value={item.title} onChange={(title) => update(item.id, { title })} /><Field label="Scripture theme" value={item.scriptureTheme} onChange={(scriptureTheme) => update(item.id, { scriptureTheme })} /></>}<div className="button-row"><button className="secondary-button" onClick={() => setEditingId(editingId === item.id ? "" : item.id)}>Edit</button><SelectButton value={item.status} options={["Draft", "Published", "Hidden"]} onChange={(status) => update(item.id, { status: status as Status })} /><button className="secondary-button danger" onClick={() => { setSeries(series.filter((seriesItem) => seriesItem.id !== item.id)); notify("Series deleted."); }}>Delete</button></div></article>)}</div> : <EmptyState icon={Clapperboard} title="No series created yet." body="Create a series above." action="Create series" onAction={() => notify("Use the form above.")} />}</>;
+  return (
+    <>
+      <div className="form-card">
+        <h2>Create series</h2>
+        <Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
+        <label>Description<textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
+        <FileField label="Poster image" onChange={(file) => setForm({ ...form, posterName: fileInfo(file).name, posterUrl: fileInfo(file).url })} />
+        <Field label="Scripture theme" value={form.scriptureTheme} onChange={(scriptureTheme) => setForm({ ...form, scriptureTheme })} />
+        <Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={visibleCategories.map((item) => item.name)} />
+        <Select label="Status" value={form.status} onChange={(status) => setForm({ ...form, status: status as Status })} options={["Draft", "Published"]} />
+        <label className="admin-toggle-row">
+          <input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} />
+          <span>&#10022; Featured &mdash; spotlight on home page</span>
+        </label>
+        <button className="primary-button" onClick={save}>Create Series</button>
+      </div>
+      {series.length ? (
+        <div className="content-grid">
+          {series.map((item) => (
+            <article className="content-panel admin-video-card" key={item.id}>
+              <SeriesCard item={item} />
+              <div className="admin-card-meta">
+                <div className="admin-meta-row">
+                  <span className={`status-badge status-${item.status.toLowerCase()}`}>{item.status}</span>
+                  {item.featured && <span className="featured-badge-sm">&#10022; Featured</span>}
+                  {item.category && <span className="meta-chip">{item.category}</span>}
+                  {item.scriptureTheme && <span className="meta-chip">{item.scriptureTheme}</span>}
+                </div>
+                {item.description && <p className="admin-card-desc">{item.description}</p>}
+              </div>
+              {editingId === item.id && (
+                <div className="admin-edit-form">
+                  <Field label="Title" value={item.title} onChange={(title) => update(item.id, { title })} />
+                  <label>Description<textarea value={item.description} onChange={(e) => update(item.id, { description: e.target.value })} /></label>
+                  <FileField label="Poster image" onChange={(file) => update(item.id, { posterName: fileInfo(file).name, posterUrl: fileInfo(file).url })} />
+                  <Field label="Scripture theme" value={item.scriptureTheme} onChange={(scriptureTheme) => update(item.id, { scriptureTheme })} />
+                  <Select label="Category" value={item.category} onChange={(category) => update(item.id, { category })} options={visibleCategories.map((c) => c.name)} />
+                  <Select label="Status" value={item.status} onChange={(status) => update(item.id, { status: status as Status })} options={["Draft", "Published", "Hidden"]} />
+                  <label className="admin-toggle-row">
+                    <input type="checkbox" checked={!!item.featured} onChange={(e) => update(item.id, { featured: e.target.checked })} />
+                    <span>&#10022; Featured &mdash; spotlight on home page</span>
+                  </label>
+                </div>
+              )}
+              <div className="button-row">
+                <button className="secondary-button" onClick={() => setEditingId(editingId === item.id ? "" : item.id)}>
+                  <Edit3 size={15} /> {editingId === item.id ? "Done" : "Edit All Details"}
+                </button>
+                <SelectButton value={item.status} options={["Draft", "Published", "Hidden"]} onChange={(status) => update(item.id, { status: status as Status })} />
+                <button className="secondary-button danger" onClick={() => { setSeries(series.filter((s) => s.id !== item.id)); notify("Series deleted."); }}>
+                  <Trash2 size={15} /> Delete
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : <EmptyState icon={Clapperboard} title="No series created yet." body="Create a series above." action="Create series" onAction={() => notify("Use the form above.")} />}
+    </>
+  );
 }
 
 function AdminCategories() {
@@ -1666,7 +1828,47 @@ function AdminReviewQueue() {
     }
     notify(`Upload marked ${status}.`);
   };
-  return uploads.length ? <div className="content-grid">{uploads.map((upload) => <article className="content-panel" key={upload.id}><MediaThumb item={upload} /><p className="eyebrow">{upload.status}</p><h3>{upload.title}</h3><p>{upload.description}</p><textarea placeholder="Admin note" value={notes[upload.id] ?? upload.adminNote} onChange={(event) => setNotes({ ...notes, [upload.id]: event.target.value })} /><div className="button-row"><button className="primary-button" onClick={() => decide(upload, "Approved")}>Approve</button><button className="secondary-button" onClick={() => decide(upload, "Rejected")}>Reject</button><button className="secondary-button" onClick={() => decide(upload, "Edits Requested")}>Request Edits</button><button className="secondary-button" onClick={() => notify(upload.videoUrl ? "Preview available in this card." : "No playable file URL in this session.")}>Preview</button></div>{upload.videoUrl && <video className="inline-video" controls src={upload.videoUrl} />}</article>)}</div> : <EmptyState icon={CheckCircle2} title="No uploads waiting for manual review." body="User submissions will appear here." action="Open Dashboard" onAction={() => notify("No pending review items.")} />;
+  return uploads.length ? (
+    <div className="content-grid">
+      {uploads.map((upload) => (
+        <article className="content-panel admin-video-card" key={upload.id}>
+          <MediaThumb item={upload} />
+          <div className="admin-card-meta">
+            <span className={`status-badge status-${upload.status.toLowerCase().replace(/ /g, "-")}`}>{upload.status}</span>
+            <h3>{upload.title}</h3>
+            <div className="admin-meta-row">
+              {upload.category && <span className="meta-chip">{upload.category}</span>}
+              {upload.testimonyType && <span className="meta-chip">{upload.testimonyType}</span>}
+              {upload.visibility && <span className="meta-chip">{upload.visibility}</span>}
+            </div>
+            {upload.description && <p className="admin-card-desc">{upload.description}</p>}
+            {upload.scripture && <p className="featured-verse">&#10022; {upload.scripture}</p>}
+          </div>
+          <div className="admin-edit-form">
+            <Field label="Title" value={notes[upload.id + "-title"] ?? upload.title} onChange={(v) => setNotes({ ...notes, [upload.id + "-title"]: v })} />
+            <label>Description<textarea value={notes[upload.id + "-desc"] ?? upload.description} onChange={(e) => setNotes({ ...notes, [upload.id + "-desc"]: e.target.value })} /></label>
+            <Field label="Scripture reference" value={notes[upload.id + "-scripture"] ?? upload.scripture} onChange={(v) => setNotes({ ...notes, [upload.id + "-scripture"]: v })} />
+            <Field label="Category" value={notes[upload.id + "-category"] ?? upload.category} onChange={(v) => setNotes({ ...notes, [upload.id + "-category"]: v })} />
+            <Field label="Tags" value={notes[upload.id + "-tags"] ?? upload.tags} onChange={(v) => setNotes({ ...notes, [upload.id + "-tags"]: v })} />
+            <label>Admin note<textarea placeholder="Notes for the user (optional)" value={notes[upload.id] ?? upload.adminNote} onChange={(e) => setNotes({ ...notes, [upload.id]: e.target.value })} /></label>
+          </div>
+          <div className="button-row">
+            <button className="primary-button" onClick={() => decide({
+              ...upload,
+              title: notes[upload.id + "-title"] ?? upload.title,
+              description: notes[upload.id + "-desc"] ?? upload.description,
+              scripture: notes[upload.id + "-scripture"] ?? upload.scripture,
+              category: notes[upload.id + "-category"] ?? upload.category,
+              tags: notes[upload.id + "-tags"] ?? upload.tags,
+            }, "Approved")}>Approve</button>
+            <button className="secondary-button" onClick={() => decide(upload, "Rejected")}>Reject</button>
+            <button className="secondary-button" onClick={() => decide(upload, "Edits Requested")}>Request Edits</button>
+          </div>
+          {upload.videoUrl && <video className="inline-video" controls src={upload.videoUrl} />}
+        </article>
+      ))}
+    </div>
+  ) : <EmptyState icon={CheckCircle2} title="No uploads waiting for manual review." body="User submissions will appear here." action="Open Dashboard" onAction={() => notify("No pending review items.")} />;
 }
 
 function AdminTakeDown() {
