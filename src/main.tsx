@@ -315,6 +315,7 @@ function App() {
   const [studioView, setStudioView] = React.useState<StudioView>("dashboard");
   const [communityView, setCommunityView] = React.useState<CommunityView>("feed");
   const [selectedVideoId, setSelectedVideoId] = React.useState("");
+  const [selectedSeriesId, setSelectedSeriesId] = React.useState("");
   const [selectedMessageUser, setSelectedMessageUser] = React.useState("");
   const [toast, setToast] = React.useState("");
   const [uploadProgress, setUploadProgress] = React.useState<UploadProgress>({ active: false, value: 0, label: "" });
@@ -459,6 +460,8 @@ function App() {
     setCommunityView,
     selectedVideoId,
     setSelectedVideoId,
+    selectedSeriesId,
+    setSelectedSeriesId,
     selectedMessageUser,
     setSelectedMessageUser,
     uploadProgress,
@@ -554,6 +557,8 @@ function buildContextShape() {
     setCommunityView: React.Dispatch<React.SetStateAction<CommunityView>>;
     selectedVideoId: string;
     setSelectedVideoId: React.Dispatch<React.SetStateAction<string>>;
+    selectedSeriesId: string;
+    setSelectedSeriesId: React.Dispatch<React.SetStateAction<string>>;
     selectedMessageUser: string;
     setSelectedMessageUser: React.Dispatch<React.SetStateAction<string>>;
     uploadProgress: UploadProgress;
@@ -723,7 +728,7 @@ function NavButton({ label, icon: Icon, active, onClick }: { label: string; icon
 }
 
 function HomeScreen() {
-  const { isAdmin, publicVideos, publicSeries, visibleCategories, go, setSelectedVideoId } = useApp();
+  const { isAdmin, publicVideos, publicSeries, visibleCategories, go, setSelectedVideoId, setSelectedSeriesId } = useApp();
   const [selectedCategory, setSelectedCategory] = React.useState(visibleCategories[0]?.name ?? "");
   const latest = publicVideos.slice(-10).reverse();
   const selectedCategoryVideos = publicVideos.filter((video) => video.category === selectedCategory);
@@ -792,7 +797,7 @@ function HomeScreen() {
       ) : <EmptyState icon={Film} title="No videos uploaded yet." body="Published admin and approved testimony videos will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
 
       <SectionHeader title="Published series" action={`${publicSeries.length} live`} />
-      {publicSeries.length ? <div className="horizontal-series-row">{publicSeries.map((item) => <SeriesCard key={item.id} item={item} />)}</div> : <EmptyState icon={Clapperboard} title="No series created yet." body="Published series will appear here after the admin creates them." action="Open Series" onAction={() => go("series")} />}
+      {publicSeries.length ? <div className="horizontal-series-row">{publicSeries.map((item) => <SeriesCard key={item.id} item={item} onClick={() => { setSelectedSeriesId(item.id); go("series"); }} />)}</div> : <EmptyState icon={Clapperboard} title="No series created yet." body="Published series will appear here after the admin creates them." action="Open Series" onAction={() => go("series")} />}
     </section>
   );
 }
@@ -878,23 +883,65 @@ function WatchScreen() {
 }
 
 function SeriesScreen() {
-  const { isAdmin, publicSeries, publicVideos, go, setSelectedVideoId } = useApp();
+  const { isAdmin, publicSeries, publicVideos, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId } = useApp();
+  const focusedSeries = selectedSeriesId ? publicSeries.find((s) => s.id === selectedSeriesId) : null;
+  const focusedEpisodes = focusedSeries ? publicVideos.filter((v) => v.seriesId === focusedSeries.title) : [];
+
+  if (focusedSeries) {
+    return (
+      <section className="screen series-detail-screen">
+        <button className="series-back-btn" onClick={() => setSelectedSeriesId("")}>
+          <ChevronRight size={18} style={{ transform: "rotate(180deg)" }} /> All Series
+        </button>
+        <div className="series-detail-hero">
+          {focusedSeries.posterUrl
+            ? <img className="series-detail-poster" src={focusedSeries.posterUrl} alt={focusedSeries.title} />
+            : <div className="series-detail-poster series-detail-poster-empty"><Clapperboard size={48} /></div>}
+          <div className="series-detail-meta">
+            <p className="eyebrow">{focusedSeries.category || "Series"}</p>
+            <h2 className="series-detail-title">{focusedSeries.title}</h2>
+            {focusedSeries.description && <p className="series-detail-desc">{focusedSeries.description}</p>}
+            {focusedSeries.scriptureTheme && <p className="series-detail-verse">✦ {focusedSeries.scriptureTheme}</p>}
+            <p className="series-detail-count">{focusedEpisodes.length} episode{focusedEpisodes.length !== 1 ? "s" : ""}</p>
+          </div>
+        </div>
+        <h3 className="series-episodes-heading">Episodes</h3>
+        {focusedEpisodes.length ? (
+          <div className="content-grid">
+            {focusedEpisodes.map((video, i) => (
+              <div key={video.id} className="series-episode-item">
+                <span className="episode-num">Ep {i + 1}</span>
+                <VideoCard video={video} onOpen={() => { setSelectedVideoId(video.id); go("watch"); }} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={Film} title="No episodes yet." body="Episodes assigned to this series will appear here once the admin adds them." action="Open Watch" onAction={() => go("watch")} />
+        )}
+      </section>
+    );
+  }
+
   return (
     <section className="screen">
-      <SectionIntro eyebrow="Series" title="Faith series" body="Swipe horizontally through each published series and its episodes." />
+      <SectionIntro eyebrow="Series" title="Faith series" body="Tap a series to see all its episodes." />
       {publicSeries.length ? (
-        <div className="series-swipe-area" aria-label="Published series carousel">
+        <div className="series-grid">
           {publicSeries.map((item) => {
-            const episodes = publicVideos.filter((video) => video.seriesId === item.title);
+            const count = publicVideos.filter((v) => v.seriesId === item.title).length;
             return (
-              <section className="series-lane" key={item.id}>
-                <SeriesCard item={item} />
-                <div className="episode-row">
-                  {episodes.length ? episodes.map((video) => (
-                    <VideoCard key={video.id} video={video} onOpen={() => { setSelectedVideoId(video.id); go("watch"); }} />
-                  )) : <EmptyState icon={Film} title="No episodes yet." body="Episodes assigned to this series will appear here." action="Open Watch" onAction={() => go("watch")} />}
+              <button key={item.id} className="series-grid-card" onClick={() => setSelectedSeriesId(item.id)} aria-label={`Open ${item.title}`}>
+                {item.posterUrl
+                  ? <img className="series-grid-poster" src={item.posterUrl} alt={item.title} />
+                  : <div className="series-grid-poster series-grid-poster-empty"><Clapperboard size={36} /></div>}
+                <div className="series-grid-info">
+                  <p className="eyebrow">{item.category || item.status}</p>
+                  <h3 className="series-grid-title">{item.title}</h3>
+                  {item.scriptureTheme && <p className="series-grid-verse">✦ {item.scriptureTheme}</p>}
+                  <p className="series-grid-count">{count} episode{count !== 1 ? "s" : ""}</p>
                 </div>
-              </section>
+                <ChevronRight size={18} className="series-grid-arrow" />
+              </button>
             );
           })}
         </div>
@@ -1667,8 +1714,10 @@ function VideoCard({ video, onOpen, extra }: { video: VideoItem; onOpen: () => v
   );
 }
 
-function SeriesCard({ item }: { item: SeriesItem }) {
-  return <article className="series-mini">{item.posterUrl ? <img className="poster" src={item.posterUrl} alt="" /> : <div className="poster empty"><Clapperboard size={32} /></div>}<div><p className="eyebrow">{item.status}</p><h3>{item.title}</h3><p>{item.description || item.scriptureTheme || item.category}</p></div></article>;
+function SeriesCard({ item, onClick }: { item: SeriesItem; onClick?: () => void }) {
+  const inner = <>{item.posterUrl ? <img className="poster" src={item.posterUrl} alt="" /> : <div className="poster empty"><Clapperboard size={32} /></div>}<div><p className="eyebrow">{item.status}</p><h3>{item.title}</h3><p>{item.description || item.scriptureTheme || item.category}</p></div></>;
+  if (onClick) return <button className="series-mini series-mini-btn" onClick={onClick} aria-label={`Open ${item.title}`}>{inner}</button>;
+  return <article className="series-mini">{inner}</article>;
 }
 
 function MediaThumb({ item }: { item: { thumbnailUrl?: string; thumbnailName?: string; title: string; cropRatio?: string } }) {
