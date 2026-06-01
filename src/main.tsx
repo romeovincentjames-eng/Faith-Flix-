@@ -1118,7 +1118,7 @@ function SeriesScreen() {
 }
 
 function UploadScreen() {
-  const { currentUser, isAdmin, visibleCategories, setUploads, uploads, videos, setVideos, setSelectedVideoId, setUploadProgress, notify, go, t } = useApp();
+  const { currentUser, isAdmin, visibleCategories, setUploads, setVideos, setSelectedVideoId, setCommunityView, setUploadProgress, notify, go, t } = useApp();
   const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: visibleCategories[0]?.name ?? "", testimonyType: "Testimony", visibility: "Public", tags: "", consent: false, rules: false, cropDimension: "9:16", cropRatio: "9 / 16" });
   const [videoFile, setVideoFile] = React.useState<File | null>(null);
   const [thumbFile, setThumbFile] = React.useState<File | null>(null);
@@ -1168,8 +1168,9 @@ function UploadScreen() {
         setVideos((current) => [...current.filter((item) => item.id !== savedVideo.id), savedVideo]);
         setSelectedVideoId(savedVideo.id);
         progress.done("Posted");
-        notify("Posted.");
-        go("watch");
+        notify("Posted. Video may take a minute to process.");
+        setCommunityView("shares");
+        go("community");
       } catch (error) {
         const message = error instanceof Error ? error.message : "Upload failed.";
         progress.fail("Upload failed");
@@ -1233,7 +1234,7 @@ function CommunitySharesScreen() {
         <Share2 size={28} className="community-shares-icon" />
         <div>
           <h3 className="community-shares-title">Community Shares</h3>
-          <p className="community-shares-body">Testimonies and videos shared by members of the Faith Flix community.</p>
+          <p className="community-shares-body">Testimonies and videos shared by members of the Faith Flix community. New videos can take a minute to finish processing.</p>
         </div>
       </div>
       {userVideos.length ? (
