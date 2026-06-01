@@ -180,6 +180,34 @@ async function uploadMediaFile(file: File | null, ownerId: string, folder: strin
   return { name: file.name, url: data.publicUrl };
 }
 
+function startUploadProgress(setUploadProgress: React.Dispatch<React.SetStateAction<UploadProgress>>, label: string) {
+  let value = 18;
+  let currentLabel = label;
+  setUploadProgress({ active: true, value, label });
+  const timer = window.setInterval(() => {
+    value = Math.min(92, value + (value < 52 ? 5 : value < 78 ? 3 : 1));
+    setUploadProgress({ active: true, value, label: currentLabel });
+  }, 800);
+
+  return {
+    step(nextLabel: string, nextValue: number) {
+      currentLabel = nextLabel;
+      value = Math.max(value, nextValue);
+      setUploadProgress({ active: true, value, label: nextLabel });
+    },
+    done(doneLabel: string) {
+      window.clearInterval(timer);
+      setUploadProgress({ active: true, value: 100, label: doneLabel });
+      window.setTimeout(() => setUploadProgress({ active: false, value: 0, label: "" }), 1200);
+    },
+    fail(failLabel: string) {
+      window.clearInterval(timer);
+      setUploadProgress({ active: true, value: 100, label: failLabel });
+      window.setTimeout(() => setUploadProgress({ active: false, value: 0, label: "" }), 3600);
+    },
+  };
+}
+
 function useStoredState<T>(key: string, initialValue: T) {
   const [value, setValue] = React.useState<T>(() => {
     const stored = localStorage.getItem(key);
@@ -786,39 +814,47 @@ function UploadScreen() {
     );
   }
 
-  const submit = async () => {
+  const submit = () => {
     if (!currentUser) return go("profile");
     if (!form.title || !form.consent || !form.rules) return notify("Add a title and confirm consent and content rules.");
     if (!videoFile) return notify("Choose a video file first.");
-    setUploadProgress({ active: true, value: 8, label: "Preparing upload" });
-    try {
-      setUploadProgress({ active: true, value: 18, label: "Uploading video" });
-      const video = await uploadMediaFile(videoFile, currentUser.id, "videos");
-      setUploadProgress({ active: true, value: 70, label: thumbFile ? "Uploading thumbnail" : "Saving post" });
-      const thumb = await uploadMediaFile(thumbFile, currentUser.id, "thumbnails");
-      setUploadProgress({ active: true, value: 88, label: "Publishing post" });
-      const uploadId = uid("upload");
-      const publicVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "user", title: form.title, description: form.description, scripture: form.scripture, category: form.category, seriesId: "", episode: "", duration: "", creator: currentUser.name, tags: form.tags, status: "Published", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: form.cropDimension, cropRatio: form.cropRatio };
-      const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, currentUser.id)).select("*").single();
-      if (error) throw error;
-      const savedVideo = videoFromDb(data as DbVideo);
-      setUploads([...uploads, { id: uploadId, userId: currentUser.id, ...form, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, status: "Approved", adminNote: "Published instantly." }]);
-      setVideos([...videos, savedVideo]);
-      setSelectedVideoId(savedVideo.id);
-      setForm({ ...form, title: "", description: "", scripture: "", tags: "", consent: false, rules: false });
-      setVideoFile(null);
-      setThumbFile(null);
-      setThumbPreview("");
-      setUploadProgress({ active: true, value: 100, label: "Posted" });
-      notify("Posted.");
-      go("watch");
-      window.setTimeout(() => setUploadProgress({ active: false, value: 0, label: "" }), 900);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload failed.";
-      setUploadProgress({ active: true, value: 100, label: "Upload failed" });
-      notify(message);
-      window.setTimeout(() => setUploadProgress({ active: false, value: 0, label: "" }), 3000);
-    }
+
+    const uploadUser = currentUser;
+    const uploadForm = { ...form };
+    const uploadVideoFile = videoFile;
+    const uploadThumbFile = thumbFile;
+    const progress = startUploadProgress(setUploadProgress, "Uploading in background");
+
+    setForm({ ...form, title: "", description: "", scripture: "", tags: "", consent: false, rules: false });
+    setVideoFile(null);
+    setThumbFile(null);
+    setThumbPreview("");
+    notify("Uploading in background. Keep the app open.");
+
+    void (async () => {
+      try {
+        progress.step("Uploading video", 24);
+        const video = await uploadMediaFile(uploadVideoFile, uploadUser.id, "videos");
+        progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving post", 78);
+        const thumb = await uploadMediaFile(uploadThumbFile, uploadUser.id, "thumbnails");
+        progress.step("Publishing post", 92);
+        const uploadId = uid("upload");
+        const publicVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "user", title: uploadForm.title, description: uploadForm.description, scripture: uploadForm.scripture, category: uploadForm.category, seriesId: "", episode: "", duration: "", creator: uploadUser.name, tags: uploadForm.tags, status: "Published", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: uploadForm.cropDimension, cropRatio: uploadForm.cropRatio };
+        const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, uploadUser.id)).select("*").single();
+        if (error) throw error;
+        const savedVideo = videoFromDb(data as DbVideo);
+        setUploads((current) => [...current, { id: uploadId, userId: uploadUser.id, ...uploadForm, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, status: "Approved", adminNote: "Published instantly." }]);
+        setVideos((current) => [...current.filter((item) => item.id !== savedVideo.id), savedVideo]);
+        setSelectedVideoId(savedVideo.id);
+        progress.done("Posted");
+        notify("Posted.");
+        go("watch");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Upload failed.";
+        progress.fail("Upload failed");
+        notify(message);
+      }
+    })();
   };
 
   return (
@@ -1181,37 +1217,45 @@ function AdminUpload() {
   const [videoFile, setVideoFile] = React.useState<File | null>(null);
   const [thumbFile, setThumbFile] = React.useState<File | null>(null);
   if (!isAdmin) return <EmptyState icon={ShieldCheck} title="Admin access required" body="Only admin accounts can upload platform videos." action="Log In" onAction={() => notify("Log in with the admin account from Profile.")} />;
-  const save = async (status: Status) => {
+  const save = (status: Status) => {
     if (!currentUser) return notify("Log in as admin first.");
     if (!form.title) return notify("Add a title first.");
     if (!videoFile) return notify("Choose a video file first.");
-    setUploadProgress({ active: true, value: 8, label: "Preparing upload" });
-    try {
-      setUploadProgress({ active: true, value: 18, label: "Uploading video" });
-      const video = await uploadMediaFile(videoFile, currentUser.id, "admin-videos");
-      setUploadProgress({ active: true, value: 70, label: thumbFile ? "Uploading thumbnail" : "Saving video" });
-      const thumb = await uploadMediaFile(thumbFile, currentUser.id, "admin-thumbnails");
-      setUploadProgress({ active: true, value: 88, label: "Publishing video" });
-      const platformVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "admin", ...form, status, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: "9:16", cropRatio: "9 / 16" };
-      const { data, error } = await supabase.from("videos").insert(videoToDb(platformVideo, currentUser.id)).select("*").single();
-      if (error) throw error;
-      const savedVideo = videoFromDb(data as DbVideo);
-      setVideos([...videos, savedVideo]);
-      setSelectedVideoId(savedVideo.id);
-      setForm({ ...form, title: "", description: "", scripture: "", tags: "", status });
-      setVideoFile(null);
-      setThumbFile(null);
-      setUploadProgress({ active: true, value: 100, label: status === "Published" ? "Published" : "Draft saved" });
-      notify(status === "Published" ? "Video published to the public app." : "Draft saved to manager.");
-      if (status === "Published") go("watch");
-      else setStudioView("videos");
-      window.setTimeout(() => setUploadProgress({ active: false, value: 0, label: "" }), 900);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload failed.";
-      setUploadProgress({ active: true, value: 100, label: "Upload failed" });
-      notify(message);
-      window.setTimeout(() => setUploadProgress({ active: false, value: 0, label: "" }), 3000);
-    }
+
+    const uploadUser = currentUser;
+    const uploadForm = { ...form };
+    const uploadVideoFile = videoFile;
+    const uploadThumbFile = thumbFile;
+    const progress = startUploadProgress(setUploadProgress, "Uploading in background");
+
+    setForm({ ...form, title: "", description: "", scripture: "", tags: "", status });
+    setVideoFile(null);
+    setThumbFile(null);
+    notify("Uploading in background. Keep the app open.");
+
+    void (async () => {
+      try {
+        progress.step("Uploading video", 24);
+        const video = await uploadMediaFile(uploadVideoFile, uploadUser.id, "admin-videos");
+        progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving video", 78);
+        const thumb = await uploadMediaFile(uploadThumbFile, uploadUser.id, "admin-thumbnails");
+        progress.step("Publishing video", 92);
+        const platformVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "admin", ...uploadForm, status, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: "9:16", cropRatio: "9 / 16" };
+        const { data, error } = await supabase.from("videos").insert(videoToDb(platformVideo, uploadUser.id)).select("*").single();
+        if (error) throw error;
+        const savedVideo = videoFromDb(data as DbVideo);
+        setVideos((current) => [...current.filter((item) => item.id !== savedVideo.id), savedVideo]);
+        setSelectedVideoId(savedVideo.id);
+        progress.done(status === "Published" ? "Published" : "Draft saved");
+        notify(status === "Published" ? "Video published to the public app." : "Draft saved to manager.");
+        if (status === "Published") go("watch");
+        else setStudioView("videos");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Upload failed.";
+        progress.fail("Upload failed");
+        notify(message);
+      }
+    })();
   };
   return <div className="form-card"><h2>Add platform video</h2><Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} /><label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label><Field label="Scripture reference" value={form.scripture} onChange={(scripture) => setForm({ ...form, scripture })} /><Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={visibleCategories.map((item) => item.name)} /><Select label="Series" value={form.seriesId} onChange={(seriesId) => setForm({ ...form, seriesId })} options={["", ...series.map((item) => item.title)]} /><Field label="Episode number" value={form.episode} onChange={(episode) => setForm({ ...form, episode })} /><Field label="Duration" value={form.duration} onChange={(duration) => setForm({ ...form, duration })} /><Field label="Creator / ministry name" value={form.creator} onChange={(creator) => setForm({ ...form, creator })} /><Field label="Tags" value={form.tags} onChange={(tags) => setForm({ ...form, tags })} /><Select label="Publish status" value={form.status} onChange={(status) => setForm({ ...form, status: status as Status })} options={["Draft", "Published", "Hidden"]} /><FileField label="Video file" onChange={setVideoFile} /><FileField label="Thumbnail" onChange={setThumbFile} /><div className="button-row"><button className="primary-button" onClick={() => save("Published")}>Publish Video</button><button className="secondary-button" onClick={() => save("Draft")}>Save as Draft</button></div></div>;
 }
