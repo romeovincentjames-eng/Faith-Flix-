@@ -166,16 +166,16 @@ const defaultCategories = [
 ].map((name, index) => ({ id: `cat-${index}`, name, hidden: false, custom: false }));
 
 const MOCK_VIDEOS: VideoItem[] = [
-  { id: "mock-v1", source: "admin", title: "Walking by Faith", description: "A powerful message on what it truly means to trust God in every season of life — even when you cannot see the path ahead.", scripture: "2 Corinthians 5:7", category: "Sermons", seriesId: "Faith Journey", episode: "1", duration: "12:34", creator: "Pastor James Rivers", tags: "faith, trust, walk", status: "Published", featured: false, videoName: "walking-by-faith.mp4", videoUrl: "", thumbnailName: "sunrise.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-10" },
-  { id: "mock-v2", source: "admin", title: "The Power of the Cross", description: "Discover the transforming power of the cross and what Jesus's sacrifice means for our lives today.", scripture: "1 Corinthians 1:18", category: "Gospel Messages", seriesId: "", episode: "", duration: "8:45", creator: "Faith Flix", tags: "cross, gospel, salvation", status: "Published", featured: true, videoName: "power-of-cross.mp4", videoUrl: "", thumbnailName: "cross-sunset.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-12" },
-  { id: "mock-v3", source: "admin", title: "Worship in Spirit and Truth", description: "A breathtaking worship experience that invites you into deeper connection with God through song, scripture, and stillness.", scripture: "John 4:24", category: "Worship Videos", seriesId: "", episode: "", duration: "18:20", creator: "Elevation Worship", tags: "worship, prayer, spirit", status: "Published", featured: true, videoName: "worship-spirit.mp4", videoUrl: "", thumbnailName: "worship.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1555685812-4b943f1cb0eb?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-14" },
-  { id: "mock-v4", source: "admin", title: "In the Beginning", description: "An animated retelling of Genesis chapter 1 — from darkness to the first breath of creation. Perfect for all ages.", scripture: "Genesis 1:1", category: "Animated Bible Stories", seriesId: "Genesis Unlocked", episode: "1", duration: "6:15", creator: "BibleVision Studios", tags: "creation, genesis, animated", status: "Published", videoName: "in-the-beginning.mp4", videoUrl: "", thumbnailName: "creation.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-16" },
-  { id: "mock-v5", source: "admin", title: "Still Small Voice", description: "When God speaks in a whisper — a devotional on hearing God's voice in the chaos and quieting your heart to listen.", scripture: "1 Kings 19:12", category: "Devotional Clips", seriesId: "Quiet Time", episode: "3", duration: "9:02", creator: "Daily Bread Ministries", tags: "devotional, prayer, stillness", status: "Published", videoName: "still-small-voice.mp4", videoUrl: "", thumbnailName: "forest-light.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-18" },
-  { id: "mock-v6", source: "admin", title: "My Healing Testimony", description: "Sarah shares the miraculous story of how God healed her after years of chronic illness — a testimony of undeniable faith.", scripture: "Psalm 103:3", category: "Testimonies", seriesId: "", episode: "", duration: "15:50", creator: "Sarah M.", tags: "healing, testimony, miracle", status: "Published", videoName: "healing-testimony.mp4", videoUrl: "", thumbnailName: "praying-hands.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1510836217651-1a1b2f98d7de?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-20" },
-  { id: "mock-v7", source: "admin", title: "Sermon on the Mount", description: "A visual Bible study through the Beatitudes — exploring what it means to live the Kingdom way.", scripture: "Matthew 5:3–12", category: "Bible Study Content", seriesId: "Red Letter Series", episode: "2", duration: "22:08", creator: "The Bible Project", tags: "sermon, beatitudes, jesus", status: "Published", videoName: "sermon-mount.mp4", videoUrl: "", thumbnailName: "bible-open.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1543286386-2e659306cd6c?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-22" },
-  { id: "mock-v8", source: "admin", title: "Grace Like Rain", description: "A cinematic worship visual experience set to original music — experience God's grace poured out in stunning imagery.", scripture: "Ephesians 2:8", category: "Faith Music Visuals", seriesId: "", episode: "", duration: "5:33", creator: "Hillsong Creative", tags: "grace, music, visual", status: "Published", featured: true, videoName: "grace-like-rain.mp4", videoUrl: "", thumbnailName: "candles.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-24" },
-  { id: "mock-v9", source: "admin", title: "The Prodigal Son", description: "A short cinematic film retelling the parable of the prodigal son in a modern-day setting. A story of redemption and love.", scripture: "Luke 15:11–32", category: "Christian Short Films", seriesId: "Parables of Jesus", episode: "1", duration: "28:14", creator: "RedemptionFilms", tags: "prodigal, film, parable", status: "Published", videoName: "prodigal-son.mp4", videoUrl: "", thumbnailName: "church-interior.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-26" },
-  { id: "mock-v10", source: "admin", title: "Praying for Your Nation", description: "Join thousands of believers in a prayer movement for national revival — intercede with scripture, worship, and bold faith.", scripture: "2 Chronicles 7:14", category: "Prayer Videos", seriesId: "Faith Journey", episode: "4", duration: "11:47", creator: "Awakening Prayer Network", tags: "prayer, nation, revival", status: "Published", videoName: "national-prayer.mp4", videoUrl: "", thumbnailName: "prayer-nature.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1499810631641-541e76d678a2?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-28" },
+  { id: "mock-v1", source: "admin", title: "Walking by Faith", description: "A powerful message on what it truly means to trust God in every season of life — even when you cannot see the path ahead.", scripture: "2 Corinthians 5:7", category: "Sermons", seriesId: "Faith Journey", episode: "1", duration: "12:34", creator: "Pastor James Rivers", tags: "faith, trust, walk", status: "Published", featured: false, videoName: "walking-by-faith.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", thumbnailName: "sunrise.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-10" },
+  { id: "mock-v2", source: "admin", title: "The Power of the Cross", description: "Discover the transforming power of the cross and what Jesus's sacrifice means for our lives today.", scripture: "1 Corinthians 1:18", category: "Gospel Messages", seriesId: "", episode: "", duration: "8:45", creator: "Faith Flix", tags: "cross, gospel, salvation", status: "Published", featured: true, videoName: "power-of-cross.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", thumbnailName: "cross-sunset.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-12" },
+  { id: "mock-v3", source: "admin", title: "Worship in Spirit and Truth", description: "A breathtaking worship experience that invites you into deeper connection with God through song, scripture, and stillness.", scripture: "John 4:24", category: "Worship Videos", seriesId: "", episode: "", duration: "18:20", creator: "Elevation Worship", tags: "worship, prayer, spirit", status: "Published", featured: true, videoName: "worship-spirit.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", thumbnailName: "worship.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1555685812-4b943f1cb0eb?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-14" },
+  { id: "mock-v4", source: "admin", title: "In the Beginning", description: "An animated retelling of Genesis chapter 1 — from darkness to the first breath of creation. Perfect for all ages.", scripture: "Genesis 1:1", category: "Animated Bible Stories", seriesId: "Genesis Unlocked", episode: "1", duration: "6:15", creator: "BibleVision Studios", tags: "creation, genesis, animated", status: "Published", videoName: "in-the-beginning.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", thumbnailName: "creation.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-16" },
+  { id: "mock-v5", source: "admin", title: "Still Small Voice", description: "When God speaks in a whisper — a devotional on hearing God's voice in the chaos and quieting your heart to listen.", scripture: "1 Kings 19:12", category: "Devotional Clips", seriesId: "Quiet Time", episode: "3", duration: "9:02", creator: "Daily Bread Ministries", tags: "devotional, prayer, stillness", status: "Published", videoName: "still-small-voice.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4", thumbnailName: "forest-light.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-18" },
+  { id: "mock-v6", source: "admin", title: "My Healing Testimony", description: "Sarah shares the miraculous story of how God healed her after years of chronic illness — a testimony of undeniable faith.", scripture: "Psalm 103:3", category: "Testimonies", seriesId: "", episode: "", duration: "15:50", creator: "Sarah M.", tags: "healing, testimony, miracle", status: "Published", videoName: "healing-testimony.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", thumbnailName: "praying-hands.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1510836217651-1a1b2f98d7de?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-20" },
+  { id: "mock-v7", source: "admin", title: "Sermon on the Mount", description: "A visual Bible study through the Beatitudes — exploring what it means to live the Kingdom way.", scripture: "Matthew 5:3–12", category: "Bible Study Content", seriesId: "Red Letter Series", episode: "2", duration: "22:08", creator: "The Bible Project", tags: "sermon, beatitudes, jesus", status: "Published", videoName: "sermon-mount.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", thumbnailName: "bible-open.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1543286386-2e659306cd6c?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-22" },
+  { id: "mock-v8", source: "admin", title: "Grace Like Rain", description: "A cinematic worship visual experience set to original music — experience God's grace poured out in stunning imagery.", scripture: "Ephesians 2:8", category: "Faith Music Visuals", seriesId: "", episode: "", duration: "5:33", creator: "Hillsong Creative", tags: "grace, music, visual", status: "Published", featured: true, videoName: "grace-like-rain.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", thumbnailName: "candles.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-24" },
+  { id: "mock-v9", source: "admin", title: "The Prodigal Son", description: "A short cinematic film retelling the parable of the prodigal son in a modern-day setting. A story of redemption and love.", scripture: "Luke 15:11–32", category: "Christian Short Films", seriesId: "Parables of Jesus", episode: "1", duration: "28:14", creator: "RedemptionFilms", tags: "prodigal, film, parable", status: "Published", videoName: "prodigal-son.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", thumbnailName: "church-interior.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-26" },
+  { id: "mock-v10", source: "admin", title: "Praying for Your Nation", description: "Join thousands of believers in a prayer movement for national revival — intercede with scripture, worship, and bold faith.", scripture: "2 Chronicles 7:14", category: "Prayer Videos", seriesId: "Faith Journey", episode: "4", duration: "11:47", creator: "Awakening Prayer Network", tags: "prayer, nation, revival", status: "Published", videoName: "national-prayer.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4", thumbnailName: "prayer-nature.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1499810631641-541e76d678a2?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-28" },
 ];
 
 const MOCK_SERIES: SeriesItem[] = [
@@ -917,6 +917,7 @@ function HomeScreen() {
 
 function WatchScreen() {
   const { publicVideos, selectedVideoId, setSelectedVideoId, saved, setSaved, likes, setLikes, currentUser, go, notify, comments, setComments, setCommunityView } = useApp();
+  const playerRef = React.useRef<HTMLDivElement>(null);
   const userPostVideos = publicVideos.filter((video) => video.source === "user");
   const selectedPublicVideo = publicVideos.find((video) => video.id === selectedVideoId);
   const feedVideos = selectedPublicVideo && selectedPublicVideo.source !== "user"
@@ -928,6 +929,17 @@ function WatchScreen() {
   const [comment, setComment] = React.useState("");
   const [touchStartX, setTouchStartX] = React.useState<number | null>(null);
   const actorId = currentUser?.id ?? "guest";
+
+  // Auto-fullscreen when selected video changes
+  React.useEffect(() => {
+    if (!selected?.id || !selected.videoUrl) return;
+    const el = playerRef.current;
+    if (!el) return;
+    const t = setTimeout(() => {
+      el.requestFullscreen?.().catch(() => {});
+    }, 150);
+    return () => clearTimeout(t);
+  }, [selected?.id]);
 
   if (!selected) {
     return <section className="screen"><SectionIntro eyebrow="Watch" title="Faith video feed" body="Faith videos from the community will play here in swipe style." /><EmptyState icon={Video} title="No videos yet" body="Published admin videos and approved member videos will appear here." action="Upload Video" onAction={() => go("upload")} /></section>;
@@ -946,12 +958,14 @@ function WatchScreen() {
     if (message) notify(message);
   };
 
-  const handleSwipeEnd = (x: number) => {
+  const handleTouchStart = (x: number) => setTouchStartX(x);
+
+  const handleTouchEnd = (x: number) => {
     if (touchStartX === null || feedVideos.length < 2) return;
     const distance = touchStartX - x;
     const threshold = 48;
-    if (distance > threshold) openVideo(nextVideo.id, "Next video.");
-    if (distance < -threshold) openVideo(previousVideo.id, "Previous video.");
+    if (distance > threshold) openVideo(nextVideo.id, "Next video →");
+    if (distance < -threshold) openVideo(previousVideo.id, "← Previous video");
     setTouchStartX(null);
   };
 
@@ -966,11 +980,41 @@ function WatchScreen() {
       <SectionIntro eyebrow="Watch" title={selected.title} body={`${selected.creator || "Faith member"} • ${selected.category}`} />
       <div className="player-layout">
         <div
+          ref={playerRef}
           className="video-placeholder with-media swipe-player"
-          onTouchStart={(event) => setTouchStartX(event.touches[0].clientX)}
-          onTouchEnd={(event) => handleSwipeEnd(event.changedTouches[0].clientX)}
+          onTouchStart={(e) => handleTouchStart(e.touches[0].clientX)}
+          onTouchEnd={(e) => handleTouchEnd(e.changedTouches[0].clientX)}
         >
-          {selected.videoUrl ? (isCloudflareStreamUrl(selected.videoUrl) ? <iframe className="feed-video feed-video-frame" data-video-id={selected.id} src={selected.videoUrl} allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowFullScreen /> : <video className="feed-video" data-video-id={selected.id} playsInline autoPlay muted loop src={selected.videoUrl} poster={selected.thumbnailUrl} onClick={(event) => event.currentTarget.paused ? event.currentTarget.play() : event.currentTarget.pause()} />) : <><Video size={58} /><h2>{selected.videoName || "Video file saved locally"}</h2><p>Video playback is available in this session when a browser file URL exists.</p></>}
+          {selected.videoUrl ? (
+            isCloudflareStreamUrl(selected.videoUrl) ? (
+              <iframe
+                className="feed-video feed-video-frame"
+                data-video-id={selected.id}
+                src={selected.videoUrl}
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                allowFullScreen
+              />
+            ) : (
+              <video
+                key={selected.id}
+                className="feed-video"
+                data-video-id={selected.id}
+                playsInline
+                autoPlay
+                src={selected.videoUrl}
+                poster={selected.thumbnailUrl}
+                onClick={(e) => e.currentTarget.paused ? e.currentTarget.play() : e.currentTarget.pause()}
+                onTouchStart={(e) => { e.stopPropagation(); handleTouchStart(e.touches[0].clientX); }}
+                onTouchEnd={(e) => { e.stopPropagation(); handleTouchEnd(e.changedTouches[0].clientX); }}
+              />
+            )
+          ) : (
+            <><Video size={58} /><h2>{selected.videoName || "Video file saved locally"}</h2><p>Video playback is available in this session when a browser file URL exists.</p></>
+          )}
+          {/* Fullscreen swipe hint overlay */}
+          <div className="fullscreen-swipe-hint">
+            <span>← Swipe to change video →</span>
+          </div>
         </div>
         <div className="detail-panel">
           <p>{selected.description || "No description added."}</p>
@@ -981,10 +1025,10 @@ function WatchScreen() {
           <div className="button-row">
             <button className="secondary-button" onClick={() => toggleList(setLikes, likes, selected.id, likedIds.includes(selected.id) ? "Like removed." : "Video liked.")}><Heart size={17} /> {likedIds.includes(selected.id) ? "Liked" : "Like"}</button>
             <button className="secondary-button" onClick={() => toggleList(setSaved, saved, selected.id, savedIds.includes(selected.id) ? "Removed from saved." : "Saved.")}><Bookmark size={17} /> {savedIds.includes(selected.id) ? "Saved" : "Save"}</button>
-            <button className="secondary-button" onClick={() => { navigator.clipboard?.writeText(`faithflix://video/${selected.id}`); notify("Mock video link copied."); }}>Share</button>
+            <button className="secondary-button" onClick={() => { navigator.clipboard?.writeText(`faithflix://video/${selected.id}`); notify("Link copied."); }}>Share</button>
             <button className="secondary-button" onClick={() => { setCommunityView("feed"); go("community"); }}><MessageCircle size={17} /> Discuss</button>
-            <button className="secondary-button" onClick={() => openVideo(previousVideo.id, "Previous video.")}>Previous</button>
-            <button className="primary-button" onClick={() => openVideo(nextVideo.id, "Next video.")}>Next Video</button>
+            <button className="secondary-button" onClick={() => openVideo(previousVideo.id)}>← Prev</button>
+            <button className="primary-button" onClick={() => openVideo(nextVideo.id)}>Next →</button>
           </div>
           <CommentBox targetId={selected.id} comments={videoComments} value={comment} setValue={setComment} />
         </div>
@@ -1276,8 +1320,7 @@ function CommunityScreen() {
         ))}
       </nav>
       <button className="comm-back-bar" onClick={() => go("home")} aria-label="Back to Faith Flix">
-        <ChevronRight size={16} style={{ transform: "rotate(180deg)" }} />
-        <span>Back to Faith Flix</span>
+        <ChevronRight size={18} style={{ transform: "rotate(180deg)" }} />
       </button>
     </div>
   );

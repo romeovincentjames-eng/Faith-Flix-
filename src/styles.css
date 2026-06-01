@@ -2319,33 +2319,32 @@ textarea:focus {
   animation: fade-up 0.28s ease both;
 }
 
-/* ── Community back bar ──────────────────────────────── */
+/* ── Community back bar — square icon button on right ── */
 .comm-back-bar {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: calc(40px + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  border: none;
-  background: rgba(5, 7, 14, 0.98);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  color: rgba(247, 251, 255, 0.45);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  right: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(14, 18, 32, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: grid;
+  place-items: center;
+  color: rgba(247, 251, 255, 0.6);
   cursor: pointer;
   z-index: 39;
-  transition: color 0.18s ease, background 0.18s ease;
+  transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .comm-back-bar:hover {
   color: #f6d27b;
-  background: rgba(246, 210, 123, 0.06);
+  border-color: rgba(246, 210, 123, 0.35);
+  background: rgba(246, 210, 123, 0.08);
+  transform: scale(1.06);
 }
 
 /* ════════════════════════════════════════════════════
@@ -2860,4 +2859,48 @@ textarea:focus {
   accent-color: #f6d27b;
   cursor: pointer;
   flex-shrink: 0;
+}
+
+/* ════════════════════════════════════════════════════
+   FULLSCREEN PLAYER SWIPE HINT
+   ════════════════════════════════════════════════════ */
+
+.fullscreen-swipe-hint {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(247, 251, 255, 0.4);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Show hint when player is fullscreen */
+:fullscreen .fullscreen-swipe-hint,
+:-webkit-full-screen .fullscreen-swipe-hint {
+  opacity: 1;
+}
+
+/* Fullscreen player fills the screen */
+:fullscreen .swipe-player,
+:-webkit-full-screen .swipe-player {
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+:fullscreen .feed-video,
+:-webkit-full-screen .feed-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
