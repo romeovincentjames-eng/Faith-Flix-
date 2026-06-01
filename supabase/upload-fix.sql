@@ -1,4 +1,5 @@
 -- Run this in Supabase SQL Editor to enable real Faith Flix video uploads.
+-- This is safe to run more than once.
 
 alter table public.videos add column if not exists app_category text;
 alter table public.videos add column if not exists app_series_title text;

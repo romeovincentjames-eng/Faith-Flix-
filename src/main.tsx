@@ -125,6 +125,7 @@ type CommunityPost = { id: string; userId: string; author: string; text: string;
 type PrayerRequest = { id: string; userId: string; title: string; text: string; visibility: string; actions: Record<string, string[]> };
 type FriendRequest = { id: string; fromId: string; toId: string; status: "pending" | "accepted" };
 type Message = { id: string; fromId: string; toId: string; text: string; createdAt: string };
+type UploadProgress = { active: boolean; value: number; label: string };
 
 const adminEmail = "romeovgalasso@gmail.com";
 const adminPassword = "Rvjg123100";
@@ -199,6 +200,7 @@ function App() {
   const [selectedVideoId, setSelectedVideoId] = React.useState("");
   const [selectedMessageUser, setSelectedMessageUser] = React.useState("");
   const [toast, setToast] = React.useState("");
+  const [uploadProgress, setUploadProgress] = React.useState<UploadProgress>({ active: false, value: 0, label: "" });
   const [pullStartY, setPullStartY] = React.useState<number | null>(null);
   const [isPullRefreshing, setIsPullRefreshing] = React.useState(false);
 
@@ -329,6 +331,8 @@ function App() {
     setSelectedVideoId,
     selectedMessageUser,
     setSelectedMessageUser,
+    uploadProgress,
+    setUploadProgress,
     users,
     setUsers,
     sessionId,
@@ -368,6 +372,7 @@ function App() {
     <AppContext.Provider value={app}>
       <div className="app-shell" onTouchStart={(event) => { if (window.scrollY <= 4) setPullStartY(event.touches[0].clientY); }} onTouchEnd={(event) => finishPullRefresh(event.changedTouches[0].clientY)}>
         {isPullRefreshing && <div className="pull-refresh">Refreshing...</div>}
+        {uploadProgress.active && <div className="upload-progress" role="status" aria-live="polite"><div><span>{uploadProgress.label}</span><strong>{uploadProgress.value}%</strong></div><progress value={uploadProgress.value} max={100} /></div>}
         <div className="ambient ambient-one" />
         <div className="ambient ambient-two" />
         <header className="topbar">
@@ -422,6 +427,8 @@ function buildContextShape() {
     setSelectedVideoId: React.Dispatch<React.SetStateAction<string>>;
     selectedMessageUser: string;
     setSelectedMessageUser: React.Dispatch<React.SetStateAction<string>>;
+    uploadProgress: UploadProgress;
+    setUploadProgress: React.Dispatch<React.SetStateAction<UploadProgress>>;
     users: Profile[];
     setUsers: React.Dispatch<React.SetStateAction<Profile[]>>;
     sessionId: string;
@@ -764,7 +771,7 @@ function SeriesScreen() {
 }
 
 function UploadScreen() {
-  const { currentUser, isAdmin, visibleCategories, setUploads, uploads, videos, setVideos, notify, go } = useApp();
+  const { currentUser, isAdmin, visibleCategories, setUploads, uploads, videos, setVideos, setSelectedVideoId, setUploadProgress, notify, go } = useApp();
   const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: visibleCategories[0]?.name ?? "", testimonyType: "Testimony", visibility: "Public", tags: "", consent: false, rules: false, cropDimension: "9:16", cropRatio: "9 / 16" });
   const [videoFile, setVideoFile] = React.useState<File | null>(null);
   const [thumbFile, setThumbFile] = React.useState<File | null>(null);
@@ -783,10 +790,13 @@ function UploadScreen() {
     if (!currentUser) return go("profile");
     if (!form.title || !form.consent || !form.rules) return notify("Add a title and confirm consent and content rules.");
     if (!videoFile) return notify("Choose a video file first.");
-    notify("Uploading video.");
+    setUploadProgress({ active: true, value: 8, label: "Preparing upload" });
     try {
+      setUploadProgress({ active: true, value: 18, label: "Uploading video" });
       const video = await uploadMediaFile(videoFile, currentUser.id, "videos");
+      setUploadProgress({ active: true, value: 70, label: thumbFile ? "Uploading thumbnail" : "Saving post" });
       const thumb = await uploadMediaFile(thumbFile, currentUser.id, "thumbnails");
+      setUploadProgress({ active: true, value: 88, label: "Publishing post" });
       const uploadId = uid("upload");
       const publicVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "user", title: form.title, description: form.description, scripture: form.scripture, category: form.category, seriesId: "", episode: "", duration: "", creator: currentUser.name, tags: form.tags, status: "Published", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: form.cropDimension, cropRatio: form.cropRatio };
       const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, currentUser.id)).select("*").single();
@@ -794,13 +804,20 @@ function UploadScreen() {
       const savedVideo = videoFromDb(data as DbVideo);
       setUploads([...uploads, { id: uploadId, userId: currentUser.id, ...form, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, status: "Approved", adminNote: "Published instantly." }]);
       setVideos([...videos, savedVideo]);
+      setSelectedVideoId(savedVideo.id);
       setForm({ ...form, title: "", description: "", scripture: "", tags: "", consent: false, rules: false });
       setVideoFile(null);
       setThumbFile(null);
       setThumbPreview("");
+      setUploadProgress({ active: true, value: 100, label: "Posted" });
       notify("Posted.");
+      go("watch");
+      window.setTimeout(() => setUploadProgress({ active: false, value: 0, label: "" }), 900);
     } catch (error) {
-      notify(error instanceof Error ? error.message : "Upload failed.");
+      const message = error instanceof Error ? error.message : "Upload failed.";
+      setUploadProgress({ active: true, value: 100, label: "Upload failed" });
+      notify(message);
+      window.setTimeout(() => setUploadProgress({ active: false, value: 0, label: "" }), 3000);
     }
   };
 
@@ -1159,7 +1176,7 @@ function AdminStudio() {
 }
 
 function AdminUpload() {
-  const { currentUser, isAdmin, videos, setVideos, visibleCategories, series, notify } = useApp();
+  const { currentUser, isAdmin, videos, setVideos, setSelectedVideoId, setStudioView, setUploadProgress, visibleCategories, series, notify, go } = useApp();
   const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: visibleCategories[0]?.name ?? "", seriesId: "", episode: "", duration: "", creator: "", tags: "", status: "Published" as Status });
   const [videoFile, setVideoFile] = React.useState<File | null>(null);
   const [thumbFile, setThumbFile] = React.useState<File | null>(null);
@@ -1168,20 +1185,32 @@ function AdminUpload() {
     if (!currentUser) return notify("Log in as admin first.");
     if (!form.title) return notify("Add a title first.");
     if (!videoFile) return notify("Choose a video file first.");
-    notify("Uploading video.");
+    setUploadProgress({ active: true, value: 8, label: "Preparing upload" });
     try {
+      setUploadProgress({ active: true, value: 18, label: "Uploading video" });
       const video = await uploadMediaFile(videoFile, currentUser.id, "admin-videos");
+      setUploadProgress({ active: true, value: 70, label: thumbFile ? "Uploading thumbnail" : "Saving video" });
       const thumb = await uploadMediaFile(thumbFile, currentUser.id, "admin-thumbnails");
+      setUploadProgress({ active: true, value: 88, label: "Publishing video" });
       const platformVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "admin", ...form, status, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: "9:16", cropRatio: "9 / 16" };
       const { data, error } = await supabase.from("videos").insert(videoToDb(platformVideo, currentUser.id)).select("*").single();
       if (error) throw error;
-      setVideos([...videos, videoFromDb(data as DbVideo)]);
+      const savedVideo = videoFromDb(data as DbVideo);
+      setVideos([...videos, savedVideo]);
+      setSelectedVideoId(savedVideo.id);
       setForm({ ...form, title: "", description: "", scripture: "", tags: "", status });
       setVideoFile(null);
       setThumbFile(null);
+      setUploadProgress({ active: true, value: 100, label: status === "Published" ? "Published" : "Draft saved" });
       notify(status === "Published" ? "Video published to the public app." : "Draft saved to manager.");
+      if (status === "Published") go("watch");
+      else setStudioView("videos");
+      window.setTimeout(() => setUploadProgress({ active: false, value: 0, label: "" }), 900);
     } catch (error) {
-      notify(error instanceof Error ? error.message : "Upload failed.");
+      const message = error instanceof Error ? error.message : "Upload failed.";
+      setUploadProgress({ active: true, value: 100, label: "Upload failed" });
+      notify(message);
+      window.setTimeout(() => setUploadProgress({ active: false, value: 0, label: "" }), 3000);
     }
   };
   return <div className="form-card"><h2>Add platform video</h2><Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} /><label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label><Field label="Scripture reference" value={form.scripture} onChange={(scripture) => setForm({ ...form, scripture })} /><Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={visibleCategories.map((item) => item.name)} /><Select label="Series" value={form.seriesId} onChange={(seriesId) => setForm({ ...form, seriesId })} options={["", ...series.map((item) => item.title)]} /><Field label="Episode number" value={form.episode} onChange={(episode) => setForm({ ...form, episode })} /><Field label="Duration" value={form.duration} onChange={(duration) => setForm({ ...form, duration })} /><Field label="Creator / ministry name" value={form.creator} onChange={(creator) => setForm({ ...form, creator })} /><Field label="Tags" value={form.tags} onChange={(tags) => setForm({ ...form, tags })} /><Select label="Publish status" value={form.status} onChange={(status) => setForm({ ...form, status: status as Status })} options={["Draft", "Published", "Hidden"]} /><FileField label="Video file" onChange={setVideoFile} /><FileField label="Thumbnail" onChange={setThumbFile} /><div className="button-row"><button className="primary-button" onClick={() => save("Published")}>Publish Video</button><button className="secondary-button" onClick={() => save("Draft")}>Save as Draft</button></div></div>;
