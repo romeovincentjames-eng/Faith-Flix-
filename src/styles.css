@@ -2322,29 +2322,76 @@ textarea:focus {
 /* ── Community back bar — square icon button on right ── */
 .comm-back-bar {
   position: fixed;
-  bottom: calc(72px + env(safe-area-inset-bottom));
-  right: 12px;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(14, 18, 32, 0.92);
+  bottom: calc(116px + env(safe-area-inset-bottom));
+  right: 14px;
+  height: 38px;
+  padding: 0 14px 0 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(246, 210, 123, 0.3);
+  background: rgba(14, 18, 32, 0.95);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  display: grid;
-  place-items: center;
-  color: rgba(247, 251, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(247, 251, 255, 0.75);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  z-index: 39;
+  z-index: 50;
   transition: color 0.18s ease, background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+.comm-back-bar::before {
+  content: '←';
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .comm-back-bar:hover {
   color: #f6d27b;
-  border-color: rgba(246, 210, 123, 0.35);
-  background: rgba(246, 210, 123, 0.08);
-  transform: scale(1.06);
+  border-color: rgba(246, 210, 123, 0.55);
+  background: rgba(246, 210, 123, 0.1);
+  transform: translateX(-2px);
+}
+
+/* ── Community Shares screen ─────────────────────── */
+.community-shares-screen {
+  padding: 8px 16px 16px;
+}
+
+.community-shares-intro {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0 14px;
+  border-bottom: 1px solid rgba(246, 210, 123, 0.1);
+  margin-bottom: 16px;
+}
+
+.community-shares-icon {
+  color: #f6d27b;
+  flex-shrink: 0;
+}
+
+.community-shares-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f7fbff;
+  margin: 0 0 4px;
+}
+
+.community-shares-body {
+  font-size: 0.82rem;
+  color: rgba(247, 251, 255, 0.5);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.community-shares-grid {
+  margin-top: 0;
 }
 
 /* ════════════════════════════════════════════════════

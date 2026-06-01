@@ -27,6 +27,7 @@ import {
   Plus,
   Search,
   Send,
+  Share2,
   ShieldCheck,
   Sparkles,
   Trash2,
@@ -51,7 +52,7 @@ type Page =
   | "admin-login"
   | "admin-studio"
   | "rules";
-type CommunityView = "feed" | "prayer" | "upload" | "groups" | "friends" | "messages";
+type CommunityView = "feed" | "prayer" | "upload" | "groups" | "friends" | "messages" | "shares";
 type StudioView = "dashboard" | "upload" | "videos" | "series" | "categories" | "reviews" | "takedown" | "rules";
 type Status = "Draft" | "Published" | "Hidden";
 type UploadStatus = "Pending Review" | "Approved" | "Rejected" | "Edits Requested";
@@ -774,8 +775,9 @@ function NavButton({ label, icon: Icon, active, onClick }: { label: string; icon
 function HomeScreen() {
   const { isAdmin, publicVideos, publicSeries, visibleCategories, go, setSelectedVideoId, setSelectedSeriesId, mainSearchQuery, t } = useApp();
   const [selectedCategory, setSelectedCategory] = React.useState(visibleCategories[0]?.name ?? "");
-  const latest = publicVideos.slice(-10).reverse();
-  const selectedCategoryVideos = publicVideos.filter((video) => video.category === selectedCategory);
+  const adminVideos = publicVideos.filter((v) => v.source === "admin");
+  const latest = adminVideos.slice(-10).reverse();
+  const selectedCategoryVideos = adminVideos.filter((video) => video.category === selectedCategory);
 
   React.useEffect(() => {
     if (!selectedCategory && visibleCategories[0]) setSelectedCategory(visibleCategories[0].name);
@@ -863,7 +865,7 @@ function HomeScreen() {
       </div>
 
       {(() => {
-        const featuredVideos = publicVideos.filter((v) => v.featured);
+        const featuredVideos = adminVideos.filter((v) => v.featured);
         if (!featuredVideos.length) return null;
         return (
           <>
@@ -912,12 +914,12 @@ function HomeScreen() {
         );
       })()}
 
-      <SectionHeader title={t("home.publishedVideos")} action={`${publicVideos.length} ${t("home.live")}`} />
+      <SectionHeader title={t("home.publishedVideos")} action={`${adminVideos.length} ${t("home.live")}`} />
       {latest.length ? (
         <div className="horizontal-video-row published-row">
           {latest.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} />)}
         </div>
-      ) : <EmptyState icon={Film} title="No videos uploaded yet." body="Published admin and approved testimony videos will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
+      ) : <EmptyState icon={Film} title="No videos uploaded yet." body="Published platform videos will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
 
       <SectionHeader title={t("home.publishedSeries")} action={`${publicSeries.length} ${t("home.live")}`} />
       {publicSeries.length ? <div className="horizontal-series-row">{publicSeries.map((item) => <SeriesCard key={item.id} item={item} onClick={() => { setSelectedSeriesId(item.id); go("series"); }} />)}</div> : <EmptyState icon={Clapperboard} title={t("series.noSeries")} body={t("series.noSeriesBodyHome")} action={t("nav.series")} onAction={() => go("series")} />}
@@ -1043,8 +1045,6 @@ function WatchScreen() {
           <CommentBox targetId={selected.id} comments={videoComments} value={comment} setValue={setComment} />
         </div>
       </div>
-      <SectionHeader title={t("watch.moreUserPosts")} action={`${userPostVideos.length} ${t("home.total")}`} />
-      <div className="content-grid">{userPostVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => setSelectedVideoId(video.id)} />)}</div>
     </section>
   );
 }
@@ -1223,12 +1223,37 @@ const COMM_STORIES = [
   { name: "Thomas R.", initials: "TR", color: "#c4b5fd" },
 ];
 
+function CommunitySharesScreen() {
+  const { publicVideos, setSelectedVideoId, go, t } = useApp();
+  const userVideos = publicVideos.filter((v) => v.source === "user");
+  const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
+  return (
+    <div className="community-shares-screen">
+      <div className="community-shares-intro">
+        <Share2 size={28} className="community-shares-icon" />
+        <div>
+          <h3 className="community-shares-title">Community Shares</h3>
+          <p className="community-shares-body">Testimonies and videos shared by members of the Faith Flix community.</p>
+        </div>
+      </div>
+      {userVideos.length ? (
+        <div className="content-grid community-shares-grid">
+          {userVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video.id)} />)}
+        </div>
+      ) : (
+        <EmptyState icon={Share2} title="No community shares yet" body="When members submit testimonies and videos they will appear here." action={t("hero.submitTestimony")} onAction={() => go("upload")} />
+      )}
+    </div>
+  );
+}
+
 function CommunityScreen() {
   const { communityView, setCommunityView, notify, go, commSearchQuery, setCommSearchQuery, t } = useApp();
   const [showCommSearch, setShowCommSearch] = React.useState(false);
   const tabs: { id: CommunityView; label: string; icon: React.ElementType }[] = [
     { id: "feed", label: t("comm.tab.feed"), icon: MessagesSquare },
     { id: "prayer", label: t("comm.tab.prayer"), icon: HeartHandshake },
+    { id: "shares", label: "Shares", icon: Share2 },
     { id: "upload", label: t("comm.tab.upload"), icon: Upload },
     { id: "groups", label: t("comm.tab.groups"), icon: Users },
     { id: "friends", label: t("comm.tab.friends"), icon: UserPlus },
@@ -1238,6 +1263,7 @@ function CommunityScreen() {
   const screenTitles: Record<CommunityView, string> = {
     feed: t("comm.title.feed"),
     prayer: t("comm.title.prayer"),
+    shares: "Community Shares",
     upload: t("comm.title.upload"),
     groups: t("comm.title.groups"),
     friends: t("comm.title.friends"),
@@ -1290,6 +1316,7 @@ function CommunityScreen() {
       <div className="community-body">
         {communityView === "feed" && <FaithFeed />}
         {communityView === "prayer" && <PrayerWall />}
+        {communityView === "shares" && <CommunitySharesScreen />}
         {communityView === "upload" && <UploadScreen />}
         {communityView === "groups" && (
           <div className="comm-groups-grid">
@@ -1330,7 +1357,7 @@ function CommunityScreen() {
         ))}
       </nav>
       <button className="comm-back-bar" onClick={() => go("home")} aria-label={t("comm.backToApp")}>
-        <ChevronRight size={18} style={{ transform: "rotate(180deg)" }} />
+        Main Menu
       </button>
     </div>
   );
