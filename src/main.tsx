@@ -48,7 +48,7 @@ type Page =
   | "admin-login"
   | "admin-studio"
   | "rules";
-type CommunityView = "feed" | "prayer" | "groups" | "discussions" | "friends" | "messages";
+type CommunityView = "feed" | "prayer" | "upload" | "groups" | "friends" | "messages";
 type StudioView = "dashboard" | "upload" | "videos" | "series" | "categories" | "reviews" | "takedown" | "rules";
 type Status = "Draft" | "Published" | "Hidden";
 type UploadStatus = "Pending Review" | "Approved" | "Rejected" | "Edits Requested";
@@ -441,6 +441,11 @@ function App() {
   };
 
   const go = (nextPage: Page, nextStudioView?: StudioView) => {
+    if (nextPage === "upload" && currentUser?.role !== "admin") {
+      setCommunityView("upload");
+      setPage("community");
+      return;
+    }
     if (nextStudioView) setStudioView(nextStudioView);
     setPage(nextPage);
   };
@@ -515,7 +520,7 @@ function App() {
           {page === "home" && <HomeScreen />}
           {page === "watch" && <WatchScreen />}
           {page === "series" && <SeriesScreen />}
-          {page === "upload" && <UploadScreen />}
+          {(page === "upload") && <CommunityScreen />}
           {page === "community" && <CommunityScreen />}
           {page === "saved" && <SavedScreen />}
           {page === "profile" && <ProfileScreen />}
@@ -524,12 +529,11 @@ function App() {
           {page === "rules" && <ContentRules />}
         </main>
 
-        <nav className="bottom-nav seven" aria-label="Primary navigation">
+        <nav className="bottom-nav six" aria-label="Primary navigation">
           <NavButton label="Home" icon={Home} active={page === "home"} onClick={() => go("home")} />
           <NavButton label="Watch" icon={Film} active={page === "watch"} onClick={() => go("watch")} />
           <NavButton label="Series" icon={Clapperboard} active={page === "series"} onClick={() => go("series")} />
-          <NavButton label="Upload" icon={Upload} active={page === "upload" || (page === "admin-studio" && studioView === "upload")} onClick={() => isAdmin ? go("admin-studio", "upload") : go("upload")} />
-          <NavButton label="Community" icon={MessagesSquare} active={page === "community"} onClick={() => go("community")} />
+          <NavButton label="Community" icon={MessagesSquare} active={page === "community" || page === "upload"} onClick={() => go("community")} />
           <NavButton label="Saved" icon={Bookmark} active={page === "saved"} onClick={() => go("saved")} />
           <NavButton label="Profile" icon={User} active={page === "profile" || page === "admin-login" || page === "admin-studio"} onClick={() => go("profile")} />
         </nav>
@@ -997,12 +1001,12 @@ function SavedScreen() {
 }
 
 const COMM_STORIES = [
-  { name: "Sarah M.", initials: "SM", color: "#a78bfa" },
+  { name: "Sarah M.", initials: "SM", color: "#f6d27b" },
   { name: "Pastor James", initials: "PJ", color: "#60a5fa" },
   { name: "Grace H.", initials: "GH", color: "#f472b6" },
   { name: "David K.", initials: "DK", color: "#34d399" },
   { name: "Maria L.", initials: "ML", color: "#fb923c" },
-  { name: "Thomas R.", initials: "TR", color: "#facc15" },
+  { name: "Thomas R.", initials: "TR", color: "#c4b5fd" },
 ];
 
 function CommunityScreen() {
@@ -1010,8 +1014,8 @@ function CommunityScreen() {
   const tabs: { id: CommunityView; label: string; icon: React.ElementType }[] = [
     { id: "feed", label: "Feed", icon: MessagesSquare },
     { id: "prayer", label: "Prayer", icon: HeartHandshake },
+    { id: "upload", label: "Share", icon: Upload },
     { id: "groups", label: "Groups", icon: Users },
-    { id: "discussions", label: "Discuss", icon: MessageCircle },
     { id: "friends", label: "Friends", icon: UserPlus },
     { id: "messages", label: "DMs", icon: Inbox },
   ];
@@ -1019,8 +1023,8 @@ function CommunityScreen() {
   const screenTitles: Record<CommunityView, string> = {
     feed: "Faith Feed",
     prayer: "Prayer Wall",
+    upload: "Share Faith",
     groups: "Bible Study",
-    discussions: "Discussions",
     friends: "Friends",
     messages: "Messages",
   };
@@ -1029,7 +1033,7 @@ function CommunityScreen() {
     <div className="community-app">
       <div className="community-topbar">
         <div className="community-brand">
-          <span className="community-brand-icon"><Cross size={16} /></span>
+          <span className="community-brand-icon"><Cross size={15} /></span>
           <span className="community-brand-name">{screenTitles[communityView]}</span>
         </div>
         <div className="community-topbar-actions">
@@ -1058,15 +1062,16 @@ function CommunityScreen() {
       <div className="community-body">
         {communityView === "feed" && <FaithFeed />}
         {communityView === "prayer" && <PrayerWall />}
+        {communityView === "upload" && <UploadScreen />}
         {communityView === "groups" && (
           <div className="comm-groups-grid">
             {[
-              { name: "Morning Devotions", members: 24, verse: "Psalm 143:8", color: "#a78bfa" },
+              { name: "Morning Devotions", members: 24, verse: "Psalm 143:8", color: "#f6d27b" },
               { name: "Romans Study", members: 18, verse: "Romans 8:28", color: "#60a5fa" },
               { name: "Youth Ministry", members: 31, verse: "Proverbs 22:6", color: "#34d399" },
               { name: "Worship & Prayer", members: 42, verse: "Psalm 100:1", color: "#fb923c" },
-              { name: "Apologetics", members: 11, verse: "1 Peter 3:15", color: "#f472b6" },
-              { name: "Missionaries", members: 7, verse: "Matthew 28:19", color: "#facc15" },
+              { name: "Apologetics", members: 11, verse: "1 Peter 3:15", color: "#c4b5fd" },
+              { name: "Missionaries", members: 7, verse: "Matthew 28:19", color: "#f472b6" },
             ].map((group) => (
               <button key={group.name} className="comm-group-card" onClick={() => notify(`${group.name} — joining coming soon!`)}>
                 <div className="comm-group-icon" style={{ background: group.color + "22", borderColor: group.color + "44" }}>
@@ -1079,7 +1084,6 @@ function CommunityScreen() {
             ))}
           </div>
         )}
-        {communityView === "discussions" && <DiscussionRooms />}
         {communityView === "friends" && <FriendsPanel />}
         {communityView === "messages" && <MessagesPanel />}
       </div>
@@ -1092,7 +1096,7 @@ function CommunityScreen() {
             onClick={() => setCommunityView(id)}
             aria-label={label}
           >
-            <Icon size={21} />
+            <Icon size={id === "upload" ? 23 : 21} />
             <span>{label}</span>
           </button>
         ))}
