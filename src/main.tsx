@@ -1987,6 +1987,7 @@ function SignupForm() {
   const { users, setUsers, setSessionId, notify, go, t } = useApp();
   const [form, setForm] = React.useState({ name: "", username: "", email: "", password: "", confirmPassword: "" });
   const [busy, setBusy] = React.useState(false);
+  const [confirmationEmail, setConfirmationEmail] = React.useState("");
 
   const submit = async () => {
     if (busy) return;
@@ -2000,7 +2001,10 @@ function SignupForm() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password: form.password,
-      options: { data: { name: form.name.trim(), username } },
+      options: {
+        data: { name: form.name.trim(), username },
+        emailRedirectTo: window.location.origin,
+      },
     });
     if (error || !data.user) {
       setBusy(false);
@@ -2014,12 +2018,28 @@ function SignupForm() {
       notify("Account created.");
       go("home");
     } else {
+      setConfirmationEmail(email);
       notify("Account created. Check your email to confirm before logging in.");
     }
     setBusy(false);
   };
 
-  return <div className="form-card"><h2>Create account</h2><Field label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} /><Field label="Username" value={form.username} onChange={(username) => setForm({ ...form, username })} /><Field label={t("profile.emailLabel")} type="email" value={form.email} onChange={(email) => setForm({ ...form, email })} /><Field label={t("profile.passwordLabel")} type="password" value={form.password} onChange={(password) => setForm({ ...form, password })} /><Field label="Confirm password" type="password" value={form.confirmPassword} onChange={(confirmPassword) => setForm({ ...form, confirmPassword })} /><button className="primary-button" onClick={submit} disabled={busy}>{busy ? "Creating..." : "Create Account"}</button></div>;
+  const resendConfirmation = async () => {
+    const email = confirmationEmail || form.email.trim();
+    if (!email) return notify("Enter your email first.");
+    setBusy(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setBusy(false);
+    if (error) return notify(error.message);
+    setConfirmationEmail(email);
+    notify("Confirmation email sent again.");
+  };
+
+  return <div className="form-card"><h2>Create account</h2><Field label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} /><Field label="Username" value={form.username} onChange={(username) => setForm({ ...form, username })} /><Field label={t("profile.emailLabel")} type="email" value={form.email} onChange={(email) => setForm({ ...form, email })} /><Field label={t("profile.passwordLabel")} type="password" value={form.password} onChange={(password) => setForm({ ...form, password })} /><Field label="Confirm password" type="password" value={form.confirmPassword} onChange={(confirmPassword) => setForm({ ...form, confirmPassword })} /><button className="primary-button" onClick={submit} disabled={busy}>{busy ? "Creating..." : "Create Account"}</button>{confirmationEmail && <button className="secondary-button" onClick={resendConfirmation} disabled={busy}>Resend confirmation email</button>}</div>;
 }
 
 function LoginForm() {
