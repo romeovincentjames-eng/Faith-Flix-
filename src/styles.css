@@ -2105,7 +2105,8 @@ select option {
 }
 
 .source-badge-series,
-.source-badge-category {
+.source-badge-category,
+.source-badge-scripture {
   color: #f6d27b;
   background: rgba(246, 210, 123, 0.12);
   border: 1px solid rgba(246, 210, 123, 0.42);

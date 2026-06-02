@@ -2519,8 +2519,9 @@ function PostCard({ post, comments, onToggle }: { post: CommunityPost; comments:
 }
 
 function VideoCard({ video, onOpen, onTitleOpen, extra }: { video: VideoItem; onOpen: () => void; onTitleOpen?: () => void; extra?: React.ReactNode }) {
-  const badgeText = video.seriesId?.trim() || video.category || "Faith Flix";
-  const badgeClass = video.seriesId ? "source-badge source-badge-series" : "source-badge source-badge-category";
+  const badgeText = video.scripture?.trim() || "Scripture not added";
+  const seriesText = video.seriesId?.trim() || video.category || "Faith Flix";
+  const badgeClass = "source-badge source-badge-scripture";
   return (
     <article className="content-panel video-card">
       <button className="media-button" onClick={onOpen} aria-label={`Play ${video.title}`}>
@@ -2540,7 +2541,7 @@ function VideoCard({ video, onOpen, onTitleOpen, extra }: { video: VideoItem; on
           <Clapperboard size={11} /> {badgeText}
         </span>
         <button className="video-title-button" onClick={onTitleOpen ?? onOpen}>{video.title}</button>
-        <p>{video.creator || "Faith Flix"}</p>
+        <p>{seriesText}</p>
       </div>
       {extra && <div className="button-row">{extra}</div>}
     </article>
@@ -2562,7 +2563,7 @@ function HomeSeriesCard({ item, episodeCount, onOpen }: { item: SeriesItem; epis
       <div className="home-series-info">
         <span className="thumb-cat-tag">{item.category || "Series"}</span>
         <h3>{item.title}</h3>
-        <p className="home-series-verse">{item.scriptureTheme ? <><span>&#10022;</span> {item.scriptureTheme}</> : `${episodeCount} episode${episodeCount !== 1 ? "s" : ""}`}</p>
+        <p className="home-series-verse">{episodeCount} episode{episodeCount !== 1 ? "s" : ""}</p>
       </div>
     </button>
   );
