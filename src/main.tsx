@@ -788,7 +788,7 @@ function App() {
           ) : (
             <>
               <button className="brand" onClick={() => go(isAdmin ? "admin-studio" : "home")} aria-label="Faith Flix home">
-                <span className="brand-mark"><img src="/brand-icon.png" alt="Faith Flix" className="brand-mark-img" /></span>
+                <span className="brand-mark"><Cross size={17} /></span>
                 <span>Faith Flix</span>
               </button>
               <div className="top-actions">
