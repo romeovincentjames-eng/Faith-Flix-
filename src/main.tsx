@@ -1654,7 +1654,10 @@ function playVideoFullscreen(video: VideoItem, notify: (message: string) => void
 
 function CommunitySharesScreen() {
   const { publicVideos, notify, go, t } = useApp();
+  const [selectedCategory, setSelectedCategory] = React.useState("All");
   const userVideos = publicVideos.filter((v) => v.source === "user");
+  const shareCategories = Array.from(new Set(userVideos.map((video) => video.category).filter(Boolean)));
+  const filteredVideos = selectedCategory === "All" ? userVideos : userVideos.filter((video) => video.category === selectedCategory);
   const openVideo = (video: VideoItem) => playVideoFullscreen(video, notify);
   return (
     <div className="community-shares-screen">
@@ -1665,9 +1668,17 @@ function CommunitySharesScreen() {
           <p className="community-shares-body">Testimonies and videos shared by members of the Faith Flix community. New videos can take a minute to finish processing.</p>
         </div>
       </div>
+      {userVideos.length > 0 && (
+        <div className="community-share-filter" aria-label="Filter community shares by category">
+          <button className={selectedCategory === "All" ? "community-share-pill active" : "community-share-pill"} onClick={() => setSelectedCategory("All")}>All</button>
+          {shareCategories.map((category) => (
+            <button className={selectedCategory === category ? "community-share-pill active" : "community-share-pill"} key={category} onClick={() => setSelectedCategory(category)}>{category}</button>
+          ))}
+        </div>
+      )}
       {userVideos.length ? (
         <div className="content-grid community-shares-grid">
-          {userVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video)} />)}
+          {filteredVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video)} />)}
         </div>
       ) : (
         <EmptyState icon={Share2} title="No community shares yet" body="When members submit testimonies and videos they will appear here." action={t("hero.submitTestimony")} onAction={() => go("upload")} />
