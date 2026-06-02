@@ -493,11 +493,20 @@ p {
   border: 1px solid rgba(255, 255, 255, 0.11);
   color: #f7fbff;
   background: rgba(255, 255, 255, 0.06);
-  white-space: nowrap;
 }
 
 .category-pill {
-  padding: 11px 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 170px;
+  min-height: 44px;
+  padding: 8px 14px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.05;
+  font-size: clamp(0.68rem, 2.8vw, 0.88rem);
 }
 
 .section-intro {
@@ -3188,15 +3197,21 @@ textarea:focus {
 }
 
 .category-grid-option {
-  min-height: 44px;
-  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 8px 12px;
   border-radius: 999px;
   color: #f7fbff;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.11);
   font-weight: 850;
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.05;
+  font-size: clamp(0.68rem, 2.7vw, 0.86rem);
 }
 
 .category-grid-option.active {
