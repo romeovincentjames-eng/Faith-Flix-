@@ -138,12 +138,6 @@ const adminEmail = "romeovgalasso@gmail.com";
 const adminPassword = "Rvjg123100";
 const mediaBucket = "faithflix-media";
 
-const TEST_USERS: Profile[] = [
-  { id: "test-user-1", role: "user", name: "Test User", username: "testuser", email: "testuser@faithflix.test", bio: "Testing the Faith Flix user flow.", favoriteScripture: "John 3:16", ministry: "Faith Flix Test" },
-  { id: "test-creator-1", role: "user", name: "Test Creator", username: "testcreator", email: "creator@faithflix.test", bio: "Testing posts, saves, and community features.", favoriteScripture: "Romans 8:28", ministry: "Creator Test" },
-  { id: "test-friend-1", role: "user", name: "Test Friend", username: "testfriend", email: "friend@faithflix.test", bio: "Testing friends and messages.", favoriteScripture: "Psalm 23", ministry: "Friend Test" },
-];
-
 const starterVideoIds = ["starter-jael", "starter-moses", "starter-elijah"];
 const starterSeriesIds = ["starter-ai-scripture-visuals"];
 
@@ -1542,7 +1536,6 @@ function ProfileScreen() {
           <SectionIntro eyebrow="Faith Flix" title="Sign in" body="Log in to post, save, upload, and manage your Faith Flix account." />
           <div className="button-row"><button className={mode === "login" ? "primary-button" : "secondary-button"} onClick={() => setMode("login")}>{t("profile.login")}</button><button className={mode === "signup" ? "primary-button" : "secondary-button"} onClick={() => setMode("signup")}>{t("profile.signup")}</button></div>
           {mode === "signup" ? <SignupForm /> : <LoginForm />}
-          <TestAccountButtons />
           <button className="text-button" onClick={() => go("home")}>Continue as guest</button>
         </div>
       </section>
@@ -1585,27 +1578,6 @@ function ProfileScreen() {
       </div>
       {!isAdmin && <MyUploads />}
     </section>
-  );
-}
-
-function TestAccountButtons() {
-  const { users, setUsers, setSessionId, go, notify } = useApp();
-  const enterAsTestUser = (testUser: Profile) => {
-    setUsers(upsertLocalUser(users, testUser));
-    setSessionId(testUser.id);
-    notify(`Logged in as ${testUser.name}.`);
-    go("home");
-  };
-
-  return (
-    <div className="test-account-panel">
-      <p>Test accounts</p>
-      <div className="test-account-grid">
-        {TEST_USERS.map((user) => (
-          <button className="secondary-button" key={user.id} onClick={() => enterAsTestUser(user)}>{user.name}</button>
-        ))}
-      </div>
-    </div>
   );
 }
 
