@@ -578,10 +578,8 @@ function App() {
       const authUser = data.session?.user;
       if (!authUser) return;
 
-      const { data: profile } = await supabase.from("profiles").select("*").eq("id", authUser.id).single();
-      if (!active || !profile) return;
-
-      const localUser = profileFromDb(profile as DbProfile, authUser.email || "");
+      const localUser = await getOrCreateUserProfile(authUser);
+      if (!active) return;
       setUsers((current) => upsertLocalUser(current, localUser));
       setSessionId(localUser.id);
       if (localUser.role === "admin") {
@@ -597,9 +595,8 @@ function App() {
         setSessionId("");
         return;
       }
-      void supabase.from("profiles").select("*").eq("id", session.user.id).single().then(({ data: profile }) => {
-        if (!active || !profile) return;
-        const localUser = profileFromDb(profile as DbProfile, session.user.email || "");
+      void getOrCreateUserProfile(session.user).then((localUser) => {
+        if (!active) return;
         setUsers((current) => upsertLocalUser(current, localUser));
         setSessionId(localUser.id);
       });
@@ -951,6 +948,12 @@ type DbProfile = {
   location: string | null;
 };
 
+type AuthProfileUser = {
+  id: string;
+  email?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+};
+
 function profileFromDb(profile: DbProfile, email: string): Profile {
   const fallback = email.split("@")[0];
   return {
@@ -965,6 +968,54 @@ function profileFromDb(profile: DbProfile, email: string): Profile {
     favoriteScripture: profile.favorite_scripture || "",
     ministry: profile.church_ministry_name || "",
     location: profile.location || "",
+  };
+}
+
+function profilePayloadFromAuth(authUser: AuthProfileUser) {
+  const email = authUser.email || "";
+  const fallback = email.split("@")[0] || "faithmember";
+  const name = typeof authUser.user_metadata?.name === "string" ? authUser.user_metadata.name : fallback;
+  const username = typeof authUser.user_metadata?.username === "string" && authUser.user_metadata.username.trim()
+    ? authUser.user_metadata.username.trim()
+    : fallback;
+
+  return {
+    id: authUser.id,
+    role: "user" as const,
+    name,
+    username,
+  };
+}
+
+async function getOrCreateUserProfile(authUser: AuthProfileUser) {
+  const email = authUser.email || "";
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", authUser.id).maybeSingle();
+  if (profile) return profileFromDb(profile as DbProfile, email);
+
+  const fallback = profilePayloadFromAuth(authUser);
+  const { data: created, error } = await supabase
+    .from("profiles")
+    .upsert(fallback)
+    .select("*")
+    .maybeSingle();
+
+  if (created) return profileFromDb(created as DbProfile, email);
+
+  if (error) {
+    const { data: retry } = await supabase
+      .from("profiles")
+      .upsert({ ...fallback, username: `${fallback.username}-${authUser.id.slice(0, 6)}` })
+      .select("*")
+      .maybeSingle();
+    if (retry) return profileFromDb(retry as DbProfile, email);
+  }
+
+  return {
+    id: authUser.id,
+    role: "user" as const,
+    name: fallback.name,
+    username: fallback.username,
+    email,
   };
 }
 
@@ -1934,40 +1985,33 @@ function ProfileScreen() {
 
 function SignupForm() {
   const { users, setUsers, setSessionId, notify, go, t } = useApp();
-  const [form, setForm] = React.useState({ name: "", username: "", email: "", password: "" });
+  const [form, setForm] = React.useState({ name: "", username: "", email: "", password: "", confirmPassword: "" });
   const [busy, setBusy] = React.useState(false);
 
   const submit = async () => {
-    if (!form.name || !form.email || !form.password) return notify("Name, email, and password are required.");
+    if (busy) return;
+    const email = form.email.trim();
+    const username = form.username.trim();
+    if (!form.name.trim() || !email || !form.password || !form.confirmPassword) return notify("Name, email, password, and confirm password are required.");
+    if (form.password.length < 6) return notify("Password needs at least 6 characters.");
+    if (form.password !== form.confirmPassword) return notify("Passwords do not match.");
+
     setBusy(true);
     const { data, error } = await supabase.auth.signUp({
-      email: form.email,
+      email,
       password: form.password,
-      options: { data: { name: form.name, username: form.username } },
+      options: { data: { name: form.name.trim(), username } },
     });
     if (error || !data.user) {
       setBusy(false);
       return notify(error?.message || "Signup failed.");
     }
 
-    const profilePayload = {
-      id: data.user.id,
-      role: "user" as const,
-      name: form.name,
-      username: form.username || form.email.split("@")[0],
-    };
-    const { error: profileError } = await supabase.from("profiles").upsert(profilePayload);
-    const localUser: Profile = {
-      id: data.user.id,
-      role: "user",
-      name: profilePayload.name,
-      username: profilePayload.username,
-      email: form.email,
-    };
-    setUsers(upsertLocalUser(users, localUser));
     if (data.session) {
-      setSessionId(data.user.id);
-      notify(profileError ? "Account created. Profile will sync after email confirmation." : "Account created.");
+      const localUser = await getOrCreateUserProfile(data.user);
+      setUsers(upsertLocalUser(users, localUser));
+      setSessionId(localUser.id);
+      notify("Account created.");
       go("home");
     } else {
       notify("Account created. Check your email to confirm before logging in.");
@@ -1975,7 +2019,7 @@ function SignupForm() {
     setBusy(false);
   };
 
-  return <div className="form-card"><h2>Create account</h2><Field label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} /><Field label="Username" value={form.username} onChange={(username) => setForm({ ...form, username })} /><Field label={t("profile.emailLabel")} type="email" value={form.email} onChange={(email) => setForm({ ...form, email })} /><Field label={t("profile.passwordLabel")} type="password" value={form.password} onChange={(password) => setForm({ ...form, password })} /><button className="primary-button" onClick={submit}>{busy ? "Creating..." : "Create Account"}</button></div>;
+  return <div className="form-card"><h2>Create account</h2><Field label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} /><Field label="Username" value={form.username} onChange={(username) => setForm({ ...form, username })} /><Field label={t("profile.emailLabel")} type="email" value={form.email} onChange={(email) => setForm({ ...form, email })} /><Field label={t("profile.passwordLabel")} type="password" value={form.password} onChange={(password) => setForm({ ...form, password })} /><Field label="Confirm password" type="password" value={form.confirmPassword} onChange={(confirmPassword) => setForm({ ...form, confirmPassword })} /><button className="primary-button" onClick={submit} disabled={busy}>{busy ? "Creating..." : "Create Account"}</button></div>;
 }
 
 function LoginForm() {
@@ -1991,12 +2035,7 @@ function LoginForm() {
       setBusy(false);
       return notify(error?.message || "Login failed.");
     }
-    const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
-    if (profileError || !profile) {
-      setBusy(false);
-      return notify("Login worked, but no profile exists yet.");
-    }
-    const localUser = profileFromDb(profile as DbProfile, data.user.email || email);
+    const localUser = await getOrCreateUserProfile(data.user);
     setUsers(upsertLocalUser(users, localUser));
     setSessionId(localUser.id);
     notify("Logged in.");
