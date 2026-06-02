@@ -701,6 +701,7 @@ function App() {
   }, [isAdmin, page]);
 
   const visiblePage = isAdmin ? "admin-studio" : page;
+  const isSignInPage = visiblePage === "profile" && !currentUser;
   const isCommunityShell = visiblePage === "community" || visiblePage === "upload";
   const topSearchValue = isCommunityShell ? commSearchQuery : mainSearchQuery;
   const setTopSearchValue = isCommunityShell ? setCommSearchQuery : setMainSearchQuery;
@@ -770,8 +771,8 @@ function App() {
         {uploadProgress.active && <div className="upload-progress" role="status" aria-live="polite"><div><span>{uploadProgress.label}</span><strong>{uploadProgress.value}%</strong></div><progress value={uploadProgress.value} max={100} /></div>}
         <div className="ambient ambient-one" />
         <div className="ambient ambient-two" />
-        <header className={`topbar${showMainSearch ? " topbar-search-open" : ""}`}>
-          {showMainSearch ? (
+        <header className={`topbar${showMainSearch && !isSignInPage ? " topbar-search-open" : ""}`}>
+          {showMainSearch && !isSignInPage ? (
             <div className="topbar-search-row">
               <Search size={17} className="topbar-search-icon" />
               <input
@@ -787,14 +788,14 @@ function App() {
             </div>
           ) : (
             <>
-              <button className="brand" onClick={() => go(isAdmin ? "admin-studio" : "home")} aria-label="Faith Flix home">
+              <button className="brand" onClick={() => { if (!isSignInPage) go(isAdmin ? "admin-studio" : "home"); }} aria-label="Faith Flix home">
                 <span className="brand-mark brand-mark-img-wrap"><img src="/brand-icon.png" alt="Faith Flix" className="brand-mark-img" /></span>
                 <span>Faith Flix</span>
               </button>
-              <div className="top-actions">
+              {!isSignInPage && <div className="top-actions">
                 <button className="icon-button" aria-label="Search" onClick={() => setShowMainSearch(true)}><Search size={19} /></button>
                 <button className="icon-button" aria-label="Notifications" onClick={() => notify(t("toast.noNotifications"))}><Bell size={19} /></button>
-              </div>
+              </div>}
             </>
           )}
         </header>
