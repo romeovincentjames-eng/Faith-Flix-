@@ -1543,7 +1543,7 @@ function SeriesScreen() {
       <div className="content-panel category-drop-panel active series-category-panel">
         <SectionHeader title={selectedCategory || "Category"} action={`${selectedCategorySeries.length} series`} />
         {selectedCategorySeries.length ? (
-          <div className="horizontal-series-row home-series-row category-series-home-row">
+          <div className="category-series-grid category-series-home-row">
             {selectedCategorySeries.map((item) => {
               const count = publicVideos.filter((video) => video.seriesId === item.title).length;
               return <HomeSeriesCard key={item.id} item={item} episodeCount={count} onOpen={() => setSelectedSeriesId(item.id)} />;

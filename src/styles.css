@@ -3734,10 +3734,14 @@ textarea:focus {
 }
 
 .category-series-grid {
-  max-height: min(32vh, 360px);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  max-height: min(36vh, 430px);
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
-  padding-right: 4px;
+  padding: 4px 4px 12px;
   scrollbar-width: none;
 }
 
@@ -3923,10 +3927,6 @@ textarea:focus {
 
 .category-series-home-row {
   margin-top: 8px;
-  padding: 4px 4px 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
 }
 
 .category-series-home-row::-webkit-scrollbar {
@@ -3934,5 +3934,6 @@ textarea:focus {
 }
 
 .category-series-home-row .home-series-card {
-  flex: 0 0 min(430px, 86vw);
+  width: 100%;
+  min-height: 138px;
 }
