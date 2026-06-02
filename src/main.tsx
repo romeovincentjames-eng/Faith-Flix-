@@ -2462,7 +2462,7 @@ function HomeSeriesCard({ item, episodeCount, onOpen }: { item: SeriesItem; epis
           : <div className="home-series-empty"><Clapperboard size={34} /></div>}
         <div className="home-series-overlay">
           <span className="thumb-play-btn"><Play size={18} /></span>
-          <span>{episodeCount} episode{episodeCount !== 1 ? "s" : ""}</span>
+          <span className="home-series-episode-text">{episodeCount} episode{episodeCount !== 1 ? "s" : ""}</span>
         </div>
       </div>
       <div className="home-series-info">

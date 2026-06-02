@@ -1008,38 +1008,46 @@ select option {
 
 .home-series-overlay {
   position: absolute;
-  inset: auto 7px 7px 7px;
-  display: flex;
+  inset: auto 6px 6px 6px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  gap: 5px;
+  gap: 6px;
   min-width: 0;
-  padding: 6px 7px;
+  padding: 5px 7px 5px 5px;
   border-radius: 999px;
-  color: #f7fbff;
-  background: rgba(0, 0, 0, 0.62);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-  font-size: 0.66rem;
-  font-weight: 900;
+  color: #10131a;
+  background: linear-gradient(135deg, rgba(255, 226, 154, 0.96), rgba(210, 169, 79, 0.94));
+  border: 1px solid rgba(255, 240, 190, 0.55);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(246, 210, 123, 0.12);
+  font-size: 0.65rem;
+  font-weight: 950;
   line-height: 1;
   white-space: nowrap;
 }
 
 .home-series-overlay .thumb-play-btn {
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
   opacity: 1;
   transform: none;
   box-shadow: none;
-  color: #10131a;
-  background: rgba(246, 210, 123, 0.92);
+  color: #f6d27b;
+  background: rgba(5, 8, 14, 0.88);
 }
 
 .home-series-overlay .thumb-play-btn svg {
   width: 13px;
   height: 13px;
+}
+
+.home-series-episode-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  letter-spacing: 0;
 }
 
 .home-series-info {
