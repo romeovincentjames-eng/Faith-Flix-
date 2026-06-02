@@ -1704,6 +1704,25 @@ select option {
 .swipe-player {
   touch-action: pan-y;
   user-select: none;
+  will-change: transform, opacity;
+}
+
+.swipe-player.swipe-slide-next {
+  animation: watch-slide-from-right 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.swipe-player.swipe-slide-previous {
+  animation: watch-slide-from-left 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes watch-slide-from-right {
+  from { opacity: 0.72; transform: translateX(42px) scale(0.985); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes watch-slide-from-left {
+  from { opacity: 0.72; transform: translateX(-42px) scale(0.985); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
 }
 
 .swipe-hint {

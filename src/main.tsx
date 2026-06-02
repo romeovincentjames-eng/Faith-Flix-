@@ -1220,6 +1220,7 @@ function WatchScreen() {
   const selected = feedVideos.find((video) => video.id === selectedVideoId) ?? feedVideos[0];
   const [comment, setComment] = React.useState("");
   const [touchStartX, setTouchStartX] = React.useState<number | null>(null);
+  const [slideDirection, setSlideDirection] = React.useState<"next" | "previous" | "">("");
   const actorId = currentUser?.id ?? "guest";
 
   // Auto-fullscreen when selected video changes
@@ -1244,9 +1245,14 @@ function WatchScreen() {
   const previousVideo = feedVideos[(selectedIndex - 1 + feedVideos.length) % feedVideos.length];
   const nextVideo = feedVideos[(selectedIndex + 1) % feedVideos.length];
 
-  const openVideo = (videoId: string, message?: string) => {
-    setSelectedVideoId(videoId);
-    setComment("");
+  const openVideo = (videoId: string, message?: string, direction: "next" | "previous" = "next") => {
+    setSlideDirection("");
+    window.requestAnimationFrame(() => {
+      setSlideDirection(direction);
+      setSelectedVideoId(videoId);
+      setComment("");
+      window.setTimeout(() => setSlideDirection(""), 320);
+    });
     if (message) notify(message);
   };
 
@@ -1256,8 +1262,8 @@ function WatchScreen() {
     if (touchStartX === null || feedVideos.length < 2) return;
     const distance = touchStartX - x;
     const threshold = 48;
-    if (distance > threshold) openVideo(nextVideo.id, "Next video →");
-    if (distance < -threshold) openVideo(previousVideo.id, "← Previous video");
+    if (distance > threshold) openVideo(nextVideo.id, "Next video →", "next");
+    if (distance < -threshold) openVideo(previousVideo.id, "← Previous video", "previous");
     setTouchStartX(null);
   };
 
@@ -1273,7 +1279,7 @@ function WatchScreen() {
       <div className="player-layout">
         <div
           ref={playerRef}
-          className="video-placeholder with-media swipe-player"
+          className={`video-placeholder with-media swipe-player ${slideDirection ? `swipe-slide-${slideDirection}` : ""}`}
           onTouchStart={(e) => handleTouchStart(e.touches[0].clientX)}
           onTouchEnd={(e) => handleTouchEnd(e.changedTouches[0].clientX)}
         >
@@ -1319,8 +1325,8 @@ function WatchScreen() {
             <button className="secondary-button" onClick={() => { if (!currentUser) { notify("Log in to save videos."); go("profile"); return; } toggleList(setSaved, saved, selected.id, savedIds.includes(selected.id) ? "Removed from saved." : "Saved to General."); }}><Bookmark size={17} /> {savedIds.includes(selected.id) ? "Saved" : "Save"}</button>
             <button className="secondary-button" onClick={() => { navigator.clipboard?.writeText(`faithflix://video/${selected.id}`); notify(t("toast.linkCopied")); }}>Share</button>
             <button className="secondary-button" onClick={() => { setCommunityView("feed"); go("community"); }}><MessageCircle size={17} /> Discuss</button>
-            <button className="secondary-button" onClick={() => openVideo(previousVideo.id)}>← Prev</button>
-            <button className="primary-button" onClick={() => openVideo(nextVideo.id)}>Next →</button>
+            <button className="secondary-button" onClick={() => openVideo(previousVideo.id, undefined, "previous")}>← Prev</button>
+            <button className="primary-button" onClick={() => openVideo(nextVideo.id, undefined, "next")}>Next →</button>
           </div>
           <CommentBox targetId={selected.id} comments={videoComments} value={comment} setValue={setComment} />
         </div>
