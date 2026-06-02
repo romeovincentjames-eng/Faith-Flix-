@@ -1111,11 +1111,13 @@ function SeriesScreen() {
           ))}
         </div>
       )}
-      <div className="category-grid category-top-row series-category-row">
-        {visibleCategories.map((category) => (
-          <button id={`series-category-button-${category.id}`} className={selectedCategory === category.name ? "category-pill active" : "category-pill"} key={category.id} onClick={() => chooseSeriesCategory(category)}>{category.name}</button>
-        ))}
-      </div>
+      {!showCategoryGrid && (
+        <div className="category-grid category-top-row series-category-row">
+          {visibleCategories.map((category) => (
+            <button id={`series-category-button-${category.id}`} className={selectedCategory === category.name ? "category-pill active" : "category-pill"} key={category.id} onClick={() => chooseSeriesCategory(category)}>{category.name}</button>
+          ))}
+        </div>
+      )}
       <div className="content-panel category-drop-panel active">
         <SectionHeader title={selectedCategory || "Category"} action={`${selectedCategoryVideos.length} videos`} />
         {selectedCategoryVideos.length ? (
