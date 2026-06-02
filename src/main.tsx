@@ -353,24 +353,36 @@ const USER_SERIES_MOCK_VIDEOS: VideoItem[] = USER_SERIES_MOCK.flatMap((series, i
   }))
 );
 
-const MOCK_WORSHIP_SONGS: WorshipSong[] = defaultCategories.slice(0, 12).map((category, index) => ({
-  id: `mock-song-${index}`,
-  title: ["Holy Morning", "Grace Anthem", "Living Water", "Kingdom Sound"][index % 4] + ` ${index + 1}`,
-  artist: ["Faith Room Worship", "Grace Walker", "David Chen", "Awakening Choir"][index % 4],
-  description: `Mock worship song for ${category.name}.`,
-  category: category.name,
-  duration: `${3 + (index % 4)}:${String(15 + index).padStart(2, "0")}`,
-  audioName: `${category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-worship.mp3`,
-  audioUrl: [
-    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-  ][index % 3],
-  coverName: `${category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-worship.jpg`,
-  coverUrl: categoryMockImages[index % categoryMockImages.length],
-  uploadedBy: ["Grace Walker", "David Chen", "Miriam Johnson", "Ruth Adeyemi"][index % 4],
-  createdAt: `2024-07-${String(index + 1).padStart(2, "0")}`,
-}));
+const MOCK_WORSHIP_SONGS: WorshipSong[] = [
+  {
+    id: "song-all-my-life",
+    title: "All My Life",
+    artist: "Romeo Galasso",
+    description: "Original worship song uploaded for Faith Flix.",
+    category: "Worship",
+    duration: "",
+    audioName: "all-my-life.mp3",
+    audioUrl: "/worship/all-my-life.mp3",
+    coverName: "faith-cross-background.png",
+    coverUrl: "/faith-cross-background.png",
+    uploadedBy: "Romeo Galasso",
+    createdAt: "2026-06-02",
+  },
+  {
+    id: "song-hear-the-father-say",
+    title: "Hear the Father Say",
+    artist: "Romeo Galasso",
+    description: "Original worship song uploaded for Faith Flix.",
+    category: "Worship",
+    duration: "",
+    audioName: "hear-the-father-say.mp3",
+    audioUrl: "/worship/hear-the-father-say.mp3",
+    coverName: "faith-cross-background.png",
+    coverUrl: "/faith-cross-background.png",
+    uploadedBy: "Romeo Galasso",
+    createdAt: "2026-06-02",
+  },
+];
 
 const ALL_MOCK_SERIES = mergeById(mergeById(MOCK_SERIES, CATEGORY_MOCK_SERIES), USER_SERIES_MOCK);
 const ALL_MOCK_VIDEOS = mergeById(mergeById(mergeById(mergeById(MOCK_VIDEOS, CATEGORY_MOCK_VIDEOS), CATEGORY_SERIES_MOCK_VIDEOS), COMMUNITY_SHARE_MOCK_VIDEOS), USER_SERIES_MOCK_VIDEOS);
@@ -630,6 +642,7 @@ function App() {
   const [mainSearchQuery, setMainSearchQuery] = React.useState("");
   const t = React.useCallback((key: string) => translate("en", key), []);
   const [commSearchQuery, setCommSearchQuery] = React.useState("");
+  const [worshipSearchQuery, setWorshipSearchQuery] = React.useState("");
   const [showMainSearch, setShowMainSearch] = React.useState(false);
 
   const notify = (message: string) => {
@@ -638,7 +651,7 @@ function App() {
   };
 
   React.useEffect(() => {
-    const demoVersion = "faithflix-demo-content-v7";
+    const demoVersion = "faithflix-demo-content-v8";
     if (localStorage.getItem(demoVersion)) return;
     setUsers((current) => mergeById(MOCK_USERS, current));
     setVideos((current) => mergeById(ALL_MOCK_VIDEOS, current));
@@ -650,7 +663,7 @@ function App() {
     setComments((current) => mergeById(MOCK_COMMENTS, current));
     setFriendRequests((current) => mergeById(MOCK_FRIEND_REQUESTS, current));
     setMessages((current) => mergeById(MOCK_MESSAGES, current));
-    setWorshipSongs((current) => mergeById(MOCK_WORSHIP_SONGS, current));
+    setWorshipSongs((current) => mergeById(MOCK_WORSHIP_SONGS, current.filter((song) => !song.id.startsWith("mock-song-"))));
     setSaved((current) => mergeRecordLists(MOCK_SAVED, current));
     setSavedLists((current) => ({ ...MOCK_SAVED_LISTS, ...current }));
     setLikes((current) => mergeRecordLists(MOCK_LIKES, current));
@@ -793,9 +806,10 @@ function App() {
   const visiblePage = isAdmin ? "admin-studio" : page;
   const isSignInPage = visiblePage === "profile" && !currentUser;
   const isCommunityShell = visiblePage === "community" || visiblePage === "upload";
-  const topSearchValue = isCommunityShell ? commSearchQuery : mainSearchQuery;
-  const setTopSearchValue = isCommunityShell ? setCommSearchQuery : setMainSearchQuery;
-  const topSearchPlaceholder = isCommunityShell ? "Search community..." : t("search.placeholder");
+  const isWorshipShell = visiblePage === "worship";
+  const topSearchValue = isCommunityShell ? commSearchQuery : isWorshipShell ? worshipSearchQuery : mainSearchQuery;
+  const setTopSearchValue = isCommunityShell ? setCommSearchQuery : isWorshipShell ? setWorshipSearchQuery : setMainSearchQuery;
+  const topSearchPlaceholder = isCommunityShell ? "Search community..." : isWorshipShell ? "Search worship music..." : t("search.placeholder");
 
   const app = {
     page,
@@ -812,6 +826,8 @@ function App() {
     setMainSearchQuery,
     commSearchQuery,
     setCommSearchQuery,
+    worshipSearchQuery,
+    setWorshipSearchQuery,
     selectedMessageUser,
     setSelectedMessageUser,
     selectedCommunityUser,
@@ -943,6 +959,8 @@ function buildContextShape() {
     setMainSearchQuery: React.Dispatch<React.SetStateAction<string>>;
     commSearchQuery: string;
     setCommSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+    worshipSearchQuery: string;
+    setWorshipSearchQuery: React.Dispatch<React.SetStateAction<string>>;
     selectedMessageUser: string;
     setSelectedMessageUser: React.Dispatch<React.SetStateAction<string>>;
     selectedCommunityUser: string;
@@ -1707,13 +1725,14 @@ function UserSeriesBuilder() {
 }
 
 function WorshipScreen() {
-  const { currentUser, worshipSongs, setWorshipSongs, visibleCategories, notify, go } = useApp();
-  const [selectedCategory, setSelectedCategory] = React.useState("All");
-  const [form, setForm] = React.useState({ title: "", artist: "", description: "", category: visibleCategories[0]?.name ?? "", duration: "" });
+  const { currentUser, worshipSongs, setWorshipSongs, visibleCategories, worshipSearchQuery, notify, go } = useApp();
+  const [form, setForm] = React.useState({ title: "", artist: "", description: "", category: visibleCategories[0]?.name ?? "Worship", duration: "" });
   const [audioFile, setAudioFile] = React.useState<File | null>(null);
   const [coverFile, setCoverFile] = React.useState<File | null>(null);
-  const categories = Array.from(new Set(worshipSongs.map((song) => song.category).filter(Boolean)));
-  const filteredSongs = selectedCategory === "All" ? worshipSongs : worshipSongs.filter((song) => song.category === selectedCategory);
+  const songQuery = worshipSearchQuery.trim().toLowerCase();
+  const filteredSongs = songQuery
+    ? worshipSongs.filter((song) => [song.title, song.artist, song.description, song.uploadedBy].join(" ").toLowerCase().includes(songQuery))
+    : worshipSongs;
 
   const uploadSong = () => {
     if (!currentUser) return go("profile");
@@ -1744,16 +1763,13 @@ function WorshipScreen() {
 
   return (
     <section className="screen worship-screen">
-      <SectionIntro eyebrow="Worship" title="Worship music" body="Stream worship songs and let members upload original worship music for the community." />
-      <div className="worship-filter" aria-label="Filter worship songs by category">
-        <button className={selectedCategory === "All" ? "community-share-pill active" : "community-share-pill"} onClick={() => setSelectedCategory("All")}>All</button>
-        {categories.map((category) => <button key={category} className={selectedCategory === category ? "community-share-pill active" : "community-share-pill"} onClick={() => setSelectedCategory(category)}>{category}</button>)}
-      </div>
+      <SectionIntro eyebrow="Worship" title="Worship music" body="Stream Romeo's worship songs and let members upload original worship music for the community." />
       <div className="worship-layout">
         <div>
           <SectionHeader title="Now streaming" action={filteredSongs.length + " songs"} />
           <div className="worship-song-list">
-            {filteredSongs.map((song) => <article className="content-panel worship-song-card" key={song.id}>{song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="worship-cover-empty"><Music2 size={28} /></div>}<div><p className="eyebrow">{song.category}</p><h3>{song.title}</h3><p>{song.artist} • {song.duration || "New"}</p>{song.audioUrl && <audio controls src={song.audioUrl} />}</div></article>)}
+            {filteredSongs.map((song) => <article className="content-panel worship-song-card" key={song.id}>{song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="worship-cover-empty"><Music2 size={28} /></div>}<div><p className="eyebrow">{song.uploadedBy || "Worship"}</p><h3>{song.title}</h3><p>{song.artist} • {song.duration || "Original"}</p>{song.audioUrl && <audio controls src={song.audioUrl} />}</div></article>)}
+            {filteredSongs.length === 0 && <EmptyState icon={Music2} title="No songs found" body="Try searching a different song or artist." action="" onAction={() => {}} />}
           </div>
         </div>
         <div className="form-card worship-upload-card">
@@ -1761,7 +1777,6 @@ function WorshipScreen() {
           <Field label="Song title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
           <Field label="Artist / worship team" value={form.artist} onChange={(artist) => setForm({ ...form, artist })} />
           <label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
-          <Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={visibleCategories.map((item) => item.name)} />
           <Field label="Duration" value={form.duration} onChange={(duration) => setForm({ ...form, duration })} />
           <FileField label="Audio file" onChange={setAudioFile} />
           <FileField label="Cover image" onChange={setCoverFile} />
