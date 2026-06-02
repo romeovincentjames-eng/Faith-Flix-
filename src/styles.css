@@ -795,7 +795,8 @@ select option {
 
 .nav-button.active {
   color: #f6d27b;
-  background: rgba(246, 210, 123, 0.1);
+  background: linear-gradient(180deg, rgba(246, 210, 123, 0.18), rgba(246, 210, 123, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(246, 210, 123, 0.12), 0 10px 22px rgba(0, 0, 0, 0.24);
 }
 
 @media (min-width: 760px) {
@@ -2228,7 +2229,19 @@ select option {
   box-shadow: 0 4px 20px rgba(210, 169, 79, 0.42);
 }
 
-/* ── Nav button glow dot ────────────────────────────── */
+/* ── Nav button active highlight ───────────────────── */
+.nav-button.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 18%;
+  right: 18%;
+  height: 2.5px;
+  border-radius: 0 0 5px 5px;
+  background: linear-gradient(90deg, transparent, #f6d27b, transparent);
+  box-shadow: 0 0 14px rgba(246, 210, 123, 0.85);
+}
+
 .nav-button.active::after {
   content: '';
   position: absolute;
@@ -2244,6 +2257,7 @@ select option {
 
 .nav-button {
   position: relative;
+  overflow: hidden;
 }
 
 /* ── Hero halo pulse ────────────────────────────────── */
