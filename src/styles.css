@@ -936,8 +936,8 @@ select option {
 
 .home-series-card {
   display: grid;
-  grid-template-columns: 86px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 13px;
   min-height: 146px;
   padding: 12px;
   overflow: hidden;
@@ -1018,21 +1018,27 @@ select option {
   display: grid;
   align-content: center;
   min-width: 0;
-  gap: 8px;
+  gap: 9px;
   padding: 2px 2px 2px 0;
 }
 
 .home-series-info .thumb-cat-tag {
   max-width: 100%;
   width: fit-content;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  line-height: 1.05;
+  padding: 4px 8px;
 }
 
 .home-series-info h3 {
   margin: 0;
   max-width: 100%;
   overflow-wrap: anywhere;
-  font-size: 1rem;
-  line-height: 1.16;
+  font-size: 1.02rem;
+  line-height: 1.14;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -1044,16 +1050,21 @@ select option {
   color: rgba(247, 251, 255, 0.72);
   font-size: 0.78rem;
   line-height: 1.32;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
   overflow-wrap: anywhere;
+}
+
+.home-series-info .home-series-verse {
+  color: rgba(246, 210, 123, 0.88);
+  font-style: italic;
+}
+
+.home-series-info .home-series-verse span {
+  color: #f6d27b;
 }
 
 @media (max-width: 560px) {
   .home-series-card {
-    grid-template-columns: 78px minmax(0, 1fr);
+    grid-template-columns: 86px minmax(0, 1fr);
     min-height: 136px;
     gap: 10px;
     padding: 10px;
@@ -1734,7 +1745,7 @@ select option {
   }
 
   .horizontal-series-row {
-    grid-auto-columns: minmax(210px, 72vw);
+    grid-auto-columns: minmax(250px, 78vw);
   }
 }
 

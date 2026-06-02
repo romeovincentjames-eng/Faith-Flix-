@@ -2212,7 +2212,7 @@ function HomeSeriesCard({ item, episodeCount, onOpen }: { item: SeriesItem; epis
       <div className="home-series-info">
         <span className="thumb-cat-tag">{item.category || "Series"}</span>
         <h3>{item.title}</h3>
-        <p>{item.description || item.scriptureTheme || "Faith Flix series"}</p>
+        <p className="home-series-verse">{item.scriptureTheme ? <><span>&#10022;</span> {item.scriptureTheme}</> : `${episodeCount} episode${episodeCount !== 1 ? "s" : ""}`}</p>
       </div>
     </button>
   );
