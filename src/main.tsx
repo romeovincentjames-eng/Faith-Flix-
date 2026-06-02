@@ -2555,9 +2555,8 @@ function HomeSeriesCard({ item, episodeCount, onOpen }: { item: SeriesItem; epis
         {item.posterUrl
           ? <img src={item.posterUrl} alt={item.title} />
           : <div className="home-series-empty"><Clapperboard size={34} /></div>}
-        <div className="home-series-overlay">
+        <div className="home-series-overlay" aria-hidden="true">
           <span className="thumb-play-btn"><Play size={18} /></span>
-          <span className="home-series-episode-text">{episodeCount} episode{episodeCount !== 1 ? "s" : ""}</span>
         </div>
       </div>
       <div className="home-series-info">

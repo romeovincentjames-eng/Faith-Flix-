@@ -1012,38 +1012,32 @@ select option {
 
 .home-series-overlay {
   position: absolute;
-  inset: auto 6px 6px 6px;
+  left: 10px;
+  bottom: 10px;
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  padding: 5px 7px 5px 5px;
+  place-items: center;
+  width: 46px;
+  height: 46px;
   border-radius: 999px;
   color: #10131a;
-  background: linear-gradient(135deg, rgba(255, 226, 154, 0.96), rgba(210, 169, 79, 0.94));
-  border: 1px solid rgba(255, 240, 190, 0.55);
+  background: linear-gradient(135deg, rgba(255, 226, 154, 0.98), rgba(210, 169, 79, 0.96));
+  border: 1px solid rgba(255, 240, 190, 0.6);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(246, 210, 123, 0.12);
-  font-size: 0.65rem;
-  font-weight: 950;
-  line-height: 1;
-  white-space: nowrap;
 }
 
 .home-series-overlay .thumb-play-btn {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
+  width: 28px;
+  height: 28px;
   opacity: 1;
   transform: none;
   box-shadow: none;
   color: #f6d27b;
-  background: rgba(5, 8, 14, 0.88);
+  background: rgba(5, 8, 14, 0.9);
 }
 
 .home-series-overlay .thumb-play-btn svg {
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
 }
 
 .home-series-episode-text {
