@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { translate } from "./i18n";
 import {
   Bell,
+  BookOpen,
   Bookmark,
   CheckCircle2,
   ChevronRight,
@@ -2656,7 +2657,7 @@ function VideoCard({ video, onOpen, onTitleOpen, extra }: { video: VideoItem; on
       </button>
       <div className="video-card-body">
         <span className={badgeClass} title={badgeText}>
-          <Clapperboard size={11} /> {badgeText}
+          <BookOpen size={11} /> {badgeText}
         </span>
         <button className="video-title-button" onClick={onTitleOpen ?? onOpen}>{video.title}</button>
         <p>{seriesText}</p>
