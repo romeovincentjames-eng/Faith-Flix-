@@ -1823,7 +1823,8 @@ function AdminLogin() {
 }
 
 function AdminStudio() {
-  const { isAdmin, go, studioView, setStudioView, videos, series, categories, uploads, signOut, t } = useApp();
+  const { isAdmin, go, studioView, setStudioView, videos, setVideos, series, categories, uploads, posts, setPosts, prayers, setPrayers, signOut, notify, t } = useApp();
+  const [adminQuery, setAdminQuery] = React.useState("");
   if (!isAdmin) return <section className="screen"><EmptyState icon={ShieldCheck} title="Admin access required" body="Log in with an admin account to manage content." action="Log In" onAction={() => go("profile")} /></section>;
   const tabs: { id: StudioView; label: string; icon: React.ElementType }[] = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -1833,10 +1834,43 @@ function AdminStudio() {
     { id: "categories", label: "Edit Categories", icon: Film },
     { id: "takedown", label: "Public Content Monitor", icon: EyeOff },
   ];
+  const q = adminQuery.trim().toLowerCase();
+  type AdminSearchResult = { id: string; type: string; title: string; detail: string; action: string; onOpen: () => void; onRemove?: () => void | Promise<void> };
+  const matches: AdminSearchResult[] = q ? [
+    ...videos.filter((item) => [item.title, item.description, item.category, item.seriesId, item.creator, item.scripture, item.tags, item.status, item.source].join(" ").toLowerCase().includes(q)).map((item) => ({ id: item.id, type: item.source === "user" ? "User video" : "Platform video", title: item.title, detail: [item.category, item.creator, item.status].filter(Boolean).join(" • "), action: item.source === "admin" ? "Edit video" : "Take down", onOpen: () => item.source === "admin" ? setStudioView("videos") : setStudioView("takedown"), onRemove: item.source === "user" ? async () => { setVideos(videos.map((video) => video.id === item.id ? { ...video, status: "Hidden" } : video)); await supabase.from("videos").update({ status: "hidden" }).eq("id", item.id); notify("User video taken down."); } : undefined })),
+    ...series.filter((item) => [item.title, item.description, item.category, item.scriptureTheme, item.status].join(" ").toLowerCase().includes(q)).map((item) => ({ id: item.id, type: "Series", title: item.title, detail: [item.category, item.status].filter(Boolean).join(" • "), action: "Edit series", onOpen: () => setStudioView("series") })),
+    ...categories.filter((item) => [item.name, item.hidden ? "hidden" : "visible"].join(" ").toLowerCase().includes(q)).map((item) => ({ id: item.id, type: "Category", title: item.name, detail: item.hidden ? "Hidden" : "Visible", action: "Edit category", onOpen: () => setStudioView("categories") })),
+    ...uploads.filter((item) => [item.title, item.description, item.category, item.scripture, item.tags, item.status].join(" ").toLowerCase().includes(q)).map((item) => ({ id: item.id, type: "User upload", title: item.title, detail: [item.category, item.status].filter(Boolean).join(" • "), action: "Review upload", onOpen: () => setStudioView("takedown") })),
+    ...posts.filter((item) => [item.author, item.text, item.scripture, item.reports.length ? "reported" : ""].join(" ").toLowerCase().includes(q)).map((item) => ({ id: item.id, type: "User post", title: item.author, detail: item.text, action: "Monitor post", onOpen: () => setStudioView("takedown"), onRemove: () => { setPosts(posts.filter((post) => post.id !== item.id)); notify("User post removed."); } })),
+    ...prayers.filter((item) => [item.title, item.text, item.visibility].join(" ").toLowerCase().includes(q)).map((item) => ({ id: item.id, type: "Prayer", title: item.title, detail: item.text, action: "Monitor prayer", onOpen: () => setStudioView("takedown"), onRemove: () => { setPrayers(prayers.filter((prayer) => prayer.id !== item.id)); notify("Prayer request removed."); } })),
+  ].slice(0, 24) : [];
   return (
     <section className="screen">
       <SectionIntro eyebrow="Admin Studio" title="Content editor" body="Post and edit platform videos, manage series and categories, and take down public content when needed." />
       <div className="button-row"><button className="secondary-button" onClick={signOut}>Sign Out</button></div>
+      <div className="admin-search-panel">
+        <Search size={18} />
+        <input value={adminQuery} onChange={(event) => setAdminQuery(event.target.value)} placeholder="Search videos, user posts, prayers, series, categories..." />
+        {adminQuery && <button className="icon-button" aria-label="Clear admin search" onClick={() => setAdminQuery("")}><X size={16} /></button>}
+      </div>
+      {q && (
+        <div className="admin-search-results">
+          <SectionHeader title="Search results" action={matches.length + " found"} />
+          {matches.length ? matches.map((item) => (
+            <article className="admin-search-result" key={item.type + "-" + item.id}>
+              <div>
+                <p className="eyebrow">{item.type}</p>
+                <h3>{item.title}</h3>
+                {item.detail && <p>{item.detail}</p>}
+              </div>
+              <div className="button-row">
+                <button className="secondary-button" onClick={item.onOpen}>{item.action}</button>
+                {item.onRemove && <button className="secondary-button danger" onClick={item.onRemove}><Trash2 size={15} /> Remove</button>}
+              </div>
+            </article>
+          )) : <EmptyState icon={Search} title="No admin results found." body="Try a title, category, creator, scripture, user name, or status." action="Clear Search" onAction={() => setAdminQuery("")} />}
+        </div>
+      )}
       <div className="segmented-row">{tabs.map(({ id, label, icon: Icon }) => <button key={id} className={studioView === id ? "segment active" : "segment"} onClick={() => setStudioView(id)}><Icon size={17} />{label}</button>)}</div>
       {studioView === "dashboard" && <div className="feature-grid"><StatCard label="Platform videos" value={videos.filter((item) => item.source === "admin").length} /><StatCard label="Series" value={series.length} /><StatCard label="Categories" value={categories.length} /><StatCard label="Uploads waiting" value={uploads.filter((item) => item.status === "Pending Review").length} /></div>}
       {studioView === "upload" && <AdminUpload />}
