@@ -1828,6 +1828,7 @@ function ProfileScreen() {
       .update({
         name: patch.name,
         username: patch.username,
+        birthday: patch.birthday,
         bio: patch.bio,
         favorite_scripture: patch.favoriteScripture,
         church_ministry_name: patch.ministry,
@@ -1847,6 +1848,7 @@ function ProfileScreen() {
         <Field label={t("profile.bioLabel")} value={currentUser.bio ?? ""} onChange={(bio) => update({ bio })} />
         <Field label={t("profile.scriptureLabel")} value={currentUser.favoriteScripture ?? ""} onChange={(favoriteScripture) => update({ favoriteScripture })} />
         <Field label={t("profile.churchLabel")} value={currentUser.ministry ?? ""} onChange={(ministry) => update({ ministry })} />
+        <Field label="Birthday" type="date" value={currentUser.birthday ?? ""} onChange={(birthday) => update({ birthday })} />
         <Field label={t("profile.locationLabel")} value={currentUser.location ?? ""} onChange={(location) => update({ location })} />
         <FileField label={t("profile.imageLabel")} onChange={(file) => update({ image: fileInfo(file).name })} />
         <div className="button-row">
@@ -1862,7 +1864,7 @@ function ProfileScreen() {
 
 function SignupForm() {
   const { users, setUsers, setSessionId, notify, go, t } = useApp();
-  const [form, setForm] = React.useState({ name: "", username: "", email: "", password: "", birthday: "", image: "" });
+  const [form, setForm] = React.useState({ name: "", username: "", email: "", password: "" });
   const [busy, setBusy] = React.useState(false);
 
   const submit = async () => {
@@ -1883,8 +1885,6 @@ function SignupForm() {
       role: "user" as const,
       name: form.name,
       username: form.username || form.email.split("@")[0],
-      birthday: form.birthday || null,
-      profile_image_url: form.image || null,
     };
     const { error: profileError } = await supabase.from("profiles").upsert(profilePayload);
     const localUser: Profile = {
@@ -1893,8 +1893,6 @@ function SignupForm() {
       name: profilePayload.name,
       username: profilePayload.username,
       email: form.email,
-      birthday: form.birthday,
-      image: form.image,
     };
     setUsers(upsertLocalUser(users, localUser));
     if (data.session) {
@@ -1907,7 +1905,7 @@ function SignupForm() {
     setBusy(false);
   };
 
-  return <div className="form-card"><h2>Create account</h2><Field label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} /><Field label="Username" value={form.username} onChange={(username) => setForm({ ...form, username })} /><Field label={t("profile.emailLabel")} type="email" value={form.email} onChange={(email) => setForm({ ...form, email })} /><Field label={t("profile.passwordLabel")} type="password" value={form.password} onChange={(password) => setForm({ ...form, password })} /><Field label="Birthday" type="date" value={form.birthday} onChange={(birthday) => setForm({ ...form, birthday })} /><FileField label="Optional profile image" onChange={(file) => setForm({ ...form, image: fileInfo(file).name })} /><button className="primary-button" onClick={submit}>{busy ? "Creating..." : "Create Account"}</button></div>;
+  return <div className="form-card"><h2>Create account</h2><Field label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} /><Field label="Username" value={form.username} onChange={(username) => setForm({ ...form, username })} /><Field label={t("profile.emailLabel")} type="email" value={form.email} onChange={(email) => setForm({ ...form, email })} /><Field label={t("profile.passwordLabel")} type="password" value={form.password} onChange={(password) => setForm({ ...form, password })} /><button className="primary-button" onClick={submit}>{busy ? "Creating..." : "Create Account"}</button></div>;
 }
 
 function LoginForm() {
