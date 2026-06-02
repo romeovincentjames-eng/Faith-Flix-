@@ -222,6 +222,33 @@ const CATEGORY_MOCK_VIDEOS: VideoItem[] = defaultCategories.map((category, index
   createdAt: `2024-03-${String(index + 1).padStart(2, "0")}`,
 }));
 
+const COMMUNITY_SHARE_MOCK_VIDEOS: VideoItem[] = defaultCategories.map((category, index) => ({
+  id: `mock-share-video-${index}`,
+  source: "user",
+  title: `${category.name} Community Share`,
+  description: `Mock community share for ${category.name} so the Shares filter has content in this category.`,
+  scripture: ["Psalm 34:8", "Philippians 4:13", "John 3:16", "Proverbs 3:5"][index % 4],
+  category: category.name,
+  seriesId: "",
+  episode: "",
+  duration: `${1 + (index % 4)}:${String(20 + index).padStart(2, "0")}`,
+  creator: ["Grace Walker", "David Chen", "Miriam Johnson", "Pastor Samuel", "Ruth Adeyemi"][index % 5],
+  tags: `community, share, ${category.name.toLowerCase()}`,
+  status: "Published",
+  featured: false,
+  videoName: `${category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-community-share.mp4`,
+  videoUrl: [
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
+    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+  ][index % 3],
+  thumbnailName: `${category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-community.jpg`,
+  thumbnailUrl: categoryMockImages[(index + 3) % categoryMockImages.length],
+  cropDimension: ["9:16", "4:5", "1:1"][index % 3],
+  cropRatio: ["9 / 16", "4 / 5", "1 / 1"][index % 3],
+  createdAt: `2024-05-${String((index % 25) + 1).padStart(2, "0")}`,
+}));
+
 const MOCK_SERIES: SeriesItem[] = [
   { id: "mock-s1", title: "Faith Journey", description: "A 6-part series on the foundations of Christian faith for believers at every stage of their walk.", posterName: "faith-journey.jpg", posterUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80", scriptureTheme: "Hebrews 11:1", category: "Sermons", status: "Published", featured: true },
   { id: "mock-s2", title: "Genesis Unlocked", description: "Animated exploration of Genesis from creation to Joseph, brought to life in stunning detail.", posterName: "genesis.jpg", posterUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80", scriptureTheme: "Genesis 1:1", category: "Animated Bible Stories", status: "Published", featured: false },
@@ -284,7 +311,7 @@ const CATEGORY_SERIES_MOCK_VIDEOS: VideoItem[] = CATEGORY_MOCK_SERIES.flatMap((s
 );
 
 const ALL_MOCK_SERIES = mergeById(MOCK_SERIES, CATEGORY_MOCK_SERIES);
-const ALL_MOCK_VIDEOS = mergeById(mergeById(MOCK_VIDEOS, CATEGORY_MOCK_VIDEOS), CATEGORY_SERIES_MOCK_VIDEOS);
+const ALL_MOCK_VIDEOS = mergeById(mergeById(mergeById(MOCK_VIDEOS, CATEGORY_MOCK_VIDEOS), CATEGORY_SERIES_MOCK_VIDEOS), COMMUNITY_SHARE_MOCK_VIDEOS);
 
 const MOCK_POSTS: CommunityPost[] = [
   { id: "mock-p1", userId: "mock-user1", author: "Grace Walker", text: "God has been so faithful this week. After months of waiting, my prayers were answered in the most unexpected way. Never stop trusting Him!", scripture: "Psalm 27:14", imageName: "sunrise-testimony.jpg", imageUrl: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800&q=80", likes: ["a", "b", "c", "d"], saves: ["a"], reports: [] },
@@ -548,7 +575,7 @@ function App() {
   };
 
   React.useEffect(() => {
-    const demoVersion = "faithflix-demo-content-v5";
+    const demoVersion = "faithflix-demo-content-v6";
     if (localStorage.getItem(demoVersion)) return;
     setUsers((current) => mergeById(MOCK_USERS, current));
     setVideos((current) => mergeById(ALL_MOCK_VIDEOS, current));
