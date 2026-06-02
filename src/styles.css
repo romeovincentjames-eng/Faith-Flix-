@@ -2083,13 +2083,28 @@ select option {
   align-items: center;
   gap: 4px;
   width: fit-content;
-  padding: 2px 8px;
+  max-width: 100%;
+  padding: 3px 9px;
   margin-bottom: 3px;
-  border-radius: 6px;
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+  border-radius: 999px;
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.035em;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.source-badge svg {
+  flex: 0 0 auto;
+}
+
+.source-badge-series {
+  color: #f7fbff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(246, 210, 123, 0.34);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .source-badge-official {
