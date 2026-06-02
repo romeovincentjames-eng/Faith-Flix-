@@ -1,7 +1,7 @@
 import React from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
-import { LANGUAGES, LangCode, translate } from "./i18n";
+import { translate } from "./i18n";
 import {
   Bell,
   Bookmark,
@@ -14,7 +14,6 @@ import {
   Eye,
   EyeOff,
   Film,
-  Globe,
   Heart,
   HeartHandshake,
   Home,
@@ -49,6 +48,7 @@ type Page =
   | "community"
   | "saved"
   | "profile"
+  | "forgot-password"
   | "admin-login"
   | "admin-studio"
   | "rules";
@@ -196,10 +196,10 @@ const MOCK_POSTS: CommunityPost[] = [
 ];
 
 const MOCK_PRAYERS: PrayerRequest[] = [
-  { id: "mock-pr1", userId: "mock-user1", title: "Healing for my mother", text: "My mother was diagnosed with cancer last month. I'm believing God for her complete healing. Please stand in agreement with me in prayer.", visibility: "Public", actions: { "I prayed": ["a", "b", "c"], "Amen": ["a", "b", "c", "d"], "Praying for you": ["a", "b"] } },
-  { id: "mock-pr2", userId: "mock-user2", title: "Job breakthrough needed", text: "I've been unemployed for 6 months and my family is struggling. Trusting God's provision but could use prayer warriors standing with me.", visibility: "Public", actions: { "I prayed": ["a", "b"], "Amen": ["a", "b", "c"], "Praying for you": ["a", "b", "c"] } },
-  { id: "mock-pr3", userId: "mock-user3", title: "Praise report — answered prayer!", text: "Six months ago I posted here asking for prayer about my marriage. Today I'm thrilled to share — we went to counseling, God restored our marriage, and we are closer than ever!", visibility: "Public", actions: { "Praise God": ["a", "b", "c", "d", "e"], "Answered": ["a", "b", "c"], "Amen": ["a", "b", "c", "d", "e", "f"] } },
-  { id: "mock-pr4", userId: "mock-user4", title: "Peace for anxiety", text: "Going through a difficult season of anxiety and fear. I know God hasn't given me a spirit of fear, but I need prayer to walk in that truth daily.", visibility: "Public", actions: { "I prayed": ["a", "b", "c"], "Praying for you": ["a", "b", "c", "d"] } },
+  { id: "mock-pr1", userId: "mock-user1", title: "Healing for my mother", text: "My mother was diagnosed with cancer last month. I'm believing God for her complete healing. Please stand in agreement with me in prayer.", visibility: "Public", actions: {} },
+  { id: "mock-pr2", userId: "mock-user2", title: "Job breakthrough needed", text: "I've been unemployed for 6 months and my family is struggling. Trusting God's provision but could use prayer warriors standing with me.", visibility: "Public", actions: {} },
+  { id: "mock-pr3", userId: "mock-user3", title: "Praise report — answered prayer!", text: "Six months ago I posted here asking for prayer about my marriage. Today I'm thrilled to share — we went to counseling, God restored our marriage, and we are closer than ever!", visibility: "Public", actions: {} },
+  { id: "mock-pr4", userId: "mock-user4", title: "Peace for anxiety", text: "Going through a difficult season of anxiety and fear. I know God hasn't given me a spirit of fear, but I need prayer to walk in that truth daily.", visibility: "Public", actions: {} },
 ];
 
 function uid(prefix: string) {
@@ -317,7 +317,7 @@ function useStoredState<T>(key: string, initialValue: T) {
 }
 
 function App() {
-  const [page, setPage] = React.useState<Page>("home");
+  const [page, setPage] = React.useState<Page>("profile");
   const [studioView, setStudioView] = React.useState<StudioView>("dashboard");
   const [communityView, setCommunityView] = React.useState<CommunityView>("feed");
   const [selectedVideoId, setSelectedVideoId] = React.useState("");
@@ -342,8 +342,7 @@ function App() {
   const [friendRequests, setFriendRequests] = useStoredState<FriendRequest[]>("faithflix-friends", []);
   const [messages, setMessages] = useStoredState<Message[]>("faithflix-messages", []);
   const [mainSearchQuery, setMainSearchQuery] = React.useState("");
-  const [lang, setLang] = useStoredState<LangCode>("faithflix-lang", "en");
-  const t = React.useCallback((key: string) => translate(lang, key), [lang]);
+  const t = React.useCallback((key: string) => translate("en", key), []);
   const [commSearchQuery, setCommSearchQuery] = React.useState("");
   const [showMainSearch, setShowMainSearch] = React.useState(false);
 
@@ -451,7 +450,7 @@ function App() {
   const signOut = () => {
     void supabase.auth.signOut();
     setSessionId("");
-    setPage("home");
+    setPage("profile");
     notify(t("profile.signedOut"));
   };
 
@@ -528,8 +527,6 @@ function App() {
     setMessages,
     notify,
     signOut,
-    lang,
-    setLang,
     t,
   };
 
@@ -577,12 +574,13 @@ function App() {
           {page === "community" && <CommunityScreen />}
           {page === "saved" && <SavedScreen />}
           {page === "profile" && <ProfileScreen />}
+          {page === "forgot-password" && <ForgotPasswordScreen />}
           {page === "admin-login" && <AdminLogin />}
           {page === "admin-studio" && <AdminStudio />}
           {page === "rules" && <ContentRules />}
         </main>
 
-        {page !== "community" && page !== "upload" && (
+        {page !== "community" && page !== "upload" && !(page === "profile" && !currentUser) && !(page === "forgot-password" && !currentUser) && (
           <nav className="bottom-nav six" aria-label="Primary navigation">
             <NavButton label={t("nav.home")} icon={Home} active={page === "home"} onClick={() => go("home")} />
             <NavButton label={t("nav.watch")} icon={Film} active={page === "watch"} onClick={() => go("watch")} />
@@ -652,8 +650,6 @@ function buildContextShape() {
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
     notify: (message: string) => void;
     signOut: () => void;
-    lang: LangCode;
-    setLang: React.Dispatch<React.SetStateAction<LangCode>>;
     t: (key: string) => string;
   };
 }
@@ -845,15 +841,9 @@ function NavButton({ label, icon: Icon, active, onClick }: { label: string; icon
 }
 
 function HomeScreen() {
-  const { isAdmin, publicVideos, publicSeries, visibleCategories, go, setSelectedVideoId, setSelectedSeriesId, mainSearchQuery, t } = useApp();
-  const [selectedCategory, setSelectedCategory] = React.useState(visibleCategories[0]?.name ?? "");
+  const { isAdmin, publicVideos, publicSeries, go, setSelectedVideoId, setSelectedSeriesId, mainSearchQuery, t } = useApp();
   const adminVideos = publicVideos.filter((v) => v.source === "admin");
   const latest = adminVideos.slice(-10).reverse();
-  const selectedCategoryVideos = adminVideos.filter((video) => video.category === selectedCategory);
-
-  React.useEffect(() => {
-    if (!selectedCategory && visibleCategories[0]) setSelectedCategory(visibleCategories[0].name);
-  }, [selectedCategory, visibleCategories]);
 
   const openHomeVideo = (video: VideoItem) => {
     flushSync(() => {
@@ -869,17 +859,10 @@ function HomeScreen() {
     });
   };
 
-  const chooseHomeCategory = (category: CategoryItem) => {
-    setSelectedCategory(category.name);
-    window.requestAnimationFrame(() => {
-      document.getElementById(`home-category-button-${category.id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-    });
-  };
-
   const q = mainSearchQuery.trim().toLowerCase();
   if (q) {
     const matchVideos = publicVideos.filter((v) => [v.title, v.description, v.category, v.seriesId].join(" ").toLowerCase().includes(q));
-    const matchSeries = publicSeries.filter((s) => [s.title, s.description, s.category, s.scriptureTheme].join(" ").toLowerCase().includes(q));
+    const matchSeries = publicSeries.filter((seriesItem) => [seriesItem.title, seriesItem.description, seriesItem.category, seriesItem.scriptureTheme].join(" ").toLowerCase().includes(q));
     return (
       <section className="screen search-results-screen">
         <div className="search-results-header">
@@ -898,7 +881,7 @@ function HomeScreen() {
         {matchSeries.length > 0 && (
           <>
             <SectionHeader title={t("search.series")} action={`${matchSeries.length} ${t("home.found")}`} />
-            <div className="series-grid">{matchSeries.map((item) => <button key={item.id} className="series-grid-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>{item.posterUrl ? <img className="series-grid-poster" src={item.posterUrl} alt={item.title} /> : <div className="series-grid-poster series-grid-poster-empty"><Clapperboard size={36} /></div>}<div className="series-grid-info"><p className="eyebrow">{item.category || item.status}</p><h3 className="series-grid-title">{item.title}</h3>{item.scriptureTheme && <p className="series-grid-verse">✦ {item.scriptureTheme}</p>}</div><ChevronRight size={18} className="series-grid-arrow" /></button>)}</div>
+            <div className="series-grid">{matchSeries.map((item) => <button key={item.id} className="series-grid-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>{item.posterUrl ? <img className="series-grid-poster" src={item.posterUrl} alt={item.title} /> : <div className="series-grid-poster series-grid-poster-empty"><Clapperboard size={36} /></div>}<div className="series-grid-info"><p className="eyebrow">{item.category || item.status}</p><h3 className="series-grid-title">{item.title}</h3>{item.scriptureTheme && <p className="series-grid-verse">&#10022; {item.scriptureTheme}</p>}</div><ChevronRight size={18} className="series-grid-arrow" /></button>)}</div>
           </>
         )}
       </section>
@@ -907,8 +890,14 @@ function HomeScreen() {
 
   return (
     <section className="screen">
-      <div className="hero">
-        <div className="hero-media"><div className="hero-image-frame"><img src="/faith-hero-cross.png" alt="Glowing cross in a forest" /></div></div>
+      <SectionHeader title={t("home.publishedVideos")} action={`${adminVideos.length} ${t("home.live")}`} />
+      {latest.length ? (
+        <div className="horizontal-video-row published-row home-stream-row">
+          {latest.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} />)}
+        </div>
+      ) : <EmptyState icon={Film} title="No videos uploaded yet." body="Published platform videos will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
+
+      <div className="hero compact-hero">
         <div className="hero-copy">
           <p className="eyebrow">{t("brand.tagline")}</p>
           <h1>Faith Flix</h1>
@@ -919,79 +908,6 @@ function HomeScreen() {
           </div>
         </div>
       </div>
-
-      <SectionHeader title={t("home.categories")} action={`${visibleCategories.length} ${t("home.visible")}`} />
-      <div className="category-grid category-top-row">
-        {visibleCategories.map((category) => (
-          <button id={`home-category-button-${category.id}`} className={selectedCategory === category.name ? "category-pill active" : "category-pill"} key={category.id} onClick={() => chooseHomeCategory(category)}>{category.name}</button>
-        ))}
-      </div>
-
-      <div className="content-panel category-drop-panel active">
-        <SectionHeader title={selectedCategory || "Category"} action={`${selectedCategoryVideos.length} videos`} />
-        {selectedCategoryVideos.length ? (
-          <div className="horizontal-video-row centered-video-row">
-            {selectedCategoryVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} />)}
-          </div>
-        ) : <EmptyState icon={Film} title={t("watch.noVideosInCategory")} body={t("watch.noVideosInCategoryBody")} action="Open Upload" onAction={() => go("upload")} />}
-      </div>
-
-      {(() => {
-        const featuredVideos = adminVideos.filter((v) => v.featured);
-        if (!featuredVideos.length) return null;
-        return (
-          <>
-            <SectionHeader title={t("home.featuredVideos")} action={`${featuredVideos.length} ${t("home.spotlighted")}`} />
-            <div className="featured-video-row">
-              {featuredVideos.map((video) => (
-                <button key={video.id} className="featured-video-card" onClick={() => openHomeVideo(video)}>
-                  {video.thumbnailUrl
-                    ? <img className="featured-thumb" src={video.thumbnailUrl} alt={video.title} />
-                    : <div className="featured-thumb featured-thumb-empty"><Film size={36} /></div>}
-                  <div className="featured-video-info">
-                    <span className="featured-badge">Featured</span>
-                    <h3 className="featured-title">{video.title}</h3>
-                    <p className="featured-meta">{video.creator} · {video.duration}</p>
-                    {video.scripture && <p className="featured-verse">✦ {video.scripture}</p>}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </>
-        );
-      })()}
-
-      {(() => {
-        const featuredSeries = publicSeries.filter((s) => s.featured);
-        if (!featuredSeries.length) return null;
-        return (
-          <>
-            <SectionHeader title={t("home.featuredSeries")} action={`${featuredSeries.length} ${t("home.spotlighted")}`} />
-            <div className="featured-series-row">
-              {featuredSeries.map((item) => (
-                <button key={item.id} className="featured-series-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>
-                  {item.posterUrl
-                    ? <img className="featured-series-poster" src={item.posterUrl} alt={item.title} />
-                    : <div className="featured-series-poster featured-series-poster-empty"><Clapperboard size={32} /></div>}
-                  <div className="featured-series-info">
-                    <span className="featured-badge">Featured</span>
-                    <h3 className="featured-series-title">{item.title}</h3>
-                    {item.scriptureTheme && <p className="featured-verse">✦ {item.scriptureTheme}</p>}
-                    <p className="featured-meta">{publicVideos.filter((v) => v.seriesId === item.title).length} episodes</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </>
-        );
-      })()}
-
-      <SectionHeader title={t("home.publishedVideos")} action={`${adminVideos.length} ${t("home.live")}`} />
-      {latest.length ? (
-        <div className="horizontal-video-row published-row">
-          {latest.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} />)}
-        </div>
-      ) : <EmptyState icon={Film} title="No videos uploaded yet." body="Published platform videos will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
 
       <SectionHeader title={t("home.publishedSeries")} action={`${publicSeries.length} ${t("home.live")}`} />
       {publicSeries.length ? <div className="horizontal-series-row">{publicSeries.map((item) => <SeriesCard key={item.id} item={item} onClick={() => { setSelectedSeriesId(item.id); go("series"); }} />)}</div> : <EmptyState icon={Clapperboard} title={t("series.noSeries")} body={t("series.noSeriesBodyHome")} action={t("nav.series")} onAction={() => go("series")} />}
@@ -1122,9 +1038,15 @@ function WatchScreen() {
 }
 
 function SeriesScreen() {
-  const { isAdmin, publicSeries, publicVideos, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId, t } = useApp();
+  const { isAdmin, publicSeries, publicVideos, visibleCategories, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId, t } = useApp();
+  const [selectedCategory, setSelectedCategory] = React.useState(visibleCategories[0]?.name ?? "");
   const focusedSeries = selectedSeriesId ? publicSeries.find((s) => s.id === selectedSeriesId) : null;
   const focusedEpisodes = focusedSeries ? publicVideos.filter((v) => v.seriesId === focusedSeries.title) : [];
+  const selectedCategoryVideos = publicVideos.filter((video) => video.source === "admin" && video.category === selectedCategory);
+
+  React.useEffect(() => {
+    if (!selectedCategory && visibleCategories[0]) setSelectedCategory(visibleCategories[0].name);
+  }, [selectedCategory, visibleCategories]);
 
   if (focusedSeries) {
     return (
@@ -1140,7 +1062,7 @@ function SeriesScreen() {
             <p className="eyebrow">{focusedSeries.category || "Series"}</p>
             <h2 className="series-detail-title">{focusedSeries.title}</h2>
             {focusedSeries.description && <p className="series-detail-desc">{focusedSeries.description}</p>}
-            {focusedSeries.scriptureTheme && <p className="series-detail-verse">✦ {focusedSeries.scriptureTheme}</p>}
+            {focusedSeries.scriptureTheme && <p className="series-detail-verse">&#10022; {focusedSeries.scriptureTheme}</p>}
             <p className="series-detail-count">{focusedEpisodes.length} episode{focusedEpisodes.length !== 1 ? "s" : ""}</p>
           </div>
         </div>
@@ -1164,6 +1086,22 @@ function SeriesScreen() {
   return (
     <section className="screen">
       <SectionIntro eyebrow={t("series.eyebrow")} title={t("series.title")} body={t("series.body")} />
+
+      <SectionHeader title={t("home.categories")} action={`${visibleCategories.length} ${t("home.visible")}`} />
+      <div className="category-grid category-top-row series-category-row">
+        {visibleCategories.map((category) => (
+          <button id={`series-category-button-${category.id}`} className={selectedCategory === category.name ? "category-pill active" : "category-pill"} key={category.id} onClick={() => setSelectedCategory(category.name)}>{category.name}</button>
+        ))}
+      </div>
+      <div className="content-panel category-drop-panel active">
+        <SectionHeader title={selectedCategory || "Category"} action={`${selectedCategoryVideos.length} videos`} />
+        {selectedCategoryVideos.length ? (
+          <div className="horizontal-video-row centered-video-row">
+            {selectedCategoryVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => { setSelectedVideoId(video.id); go("watch"); }} />)}
+          </div>
+        ) : <EmptyState icon={Film} title={t("watch.noVideosInCategory")} body={t("watch.noVideosInCategoryBody")} action="Open Upload" onAction={() => go("upload")} />}
+      </div>
+
       {publicSeries.length ? (
         <div className="series-grid">
           {publicSeries.map((item) => {
@@ -1176,7 +1114,7 @@ function SeriesScreen() {
                 <div className="series-grid-info">
                   <p className="eyebrow">{item.category || item.status}</p>
                   <h3 className="series-grid-title">{item.title}</h3>
-                  {item.scriptureTheme && <p className="series-grid-verse">✦ {item.scriptureTheme}</p>}
+                  {item.scriptureTheme && <p className="series-grid-verse">&#10022; {item.scriptureTheme}</p>}
                   <p className="series-grid-count">{count} episode{count !== 1 ? "s" : ""}</p>
                 </div>
                 <ChevronRight size={18} className="series-grid-arrow" />
@@ -1481,23 +1419,12 @@ function FaithFeed() {
 function PrayerWall() {
   const { currentUser, prayers, setPrayers, notify, commSearchQuery, t } = useApp();
   const [form, setForm] = React.useState({ title: "", text: "", visibility: "Public" });
-  const actions = ["I prayed", "Praying for you", "Amen", "Praise God", "Answered"];
-  const actor = currentUser?.id ?? "guest";
-
   const create = () => {
     if (!currentUser) return notify("Create an account before posting prayer requests.");
     if (!form.title || !form.text) return notify("Add a title and request.");
     setPrayers([{ id: uid("prayer"), userId: currentUser.id, ...form, actions: {} }, ...prayers]);
     setForm({ title: "", text: "", visibility: "Public" });
     notify("Prayer request posted.");
-  };
-
-  const tap = (id: string, action: string) => {
-    setPrayers(prayers.map((prayer) => {
-      if (prayer.id !== id) return prayer;
-      const list = prayer.actions[action] ?? [];
-      return { ...prayer, actions: { ...prayer.actions, [action]: list.includes(actor) ? list.filter((item) => item !== actor) : [...list, actor] } };
-    }));
   };
 
   return (
@@ -1514,7 +1441,7 @@ function PrayerWall() {
           : prayers;
         if (commSearchQuery && filtered.length === 0) return <EmptyState icon={Search} title="No prayers match your search." body="Try a different keyword." action="" onAction={() => {}} />;
         if (filtered.length === 0) return <EmptyState icon={HeartHandshake} title={t("comm.noPrayer")} body={t("comm.noPrayerBody")} action={t("comm.usePrayerForm")} onAction={() => notify(t("comm.usePrayerForm"))} />;
-        return <>{filtered.map((prayer) => <article className="content-panel" key={prayer.id}><p className="eyebrow">{prayer.visibility}</p><h3>{prayer.title}</h3><p>{prayer.text}</p><div className="button-row">{actions.map((action) => <button className="secondary-button" key={action} onClick={() => tap(prayer.id, action)}>{action} {(prayer.actions[action] ?? []).length}</button>)}</div></article>)}</>;
+        return <>{filtered.map((prayer) => <article className="content-panel prayer-card" key={prayer.id}><p className="eyebrow">{prayer.visibility}</p><h3>{prayer.title}</h3><p>{prayer.text}</p></article>)}</>;
       })()}
     </>
   );
@@ -1575,14 +1502,17 @@ function MessagesPanel() {
 
 function ProfileScreen() {
   const { currentUser, users, setUsers, setSessionId, isAdmin, signOut, go, notify, t } = useApp();
-  const [mode, setMode] = React.useState<"signup" | "login">("signup");
+  const [mode, setMode] = React.useState<"signup" | "login">("login");
 
   if (!currentUser) {
     return (
-      <section className="screen">
-        <SectionIntro eyebrow={t("profile.eyebrow")} title={t("profile.joinTitle")} body={t("profile.joinBody")} />
-        <div className="button-row"><button className={mode === "signup" ? "primary-button" : "secondary-button"} onClick={() => setMode("signup")}>{t("profile.signup")}</button><button className={mode === "login" ? "primary-button" : "secondary-button"} onClick={() => setMode("login")}>{t("profile.login")}</button></div>
-        {mode === "signup" ? <SignupForm /> : <LoginForm />}
+      <section className="screen auth-screen">
+        <div className="auth-card">
+          <SectionIntro eyebrow="Faith Flix" title="Sign in" body="Log in to post, save, upload, and manage your Faith Flix account." />
+          <div className="button-row"><button className={mode === "login" ? "primary-button" : "secondary-button"} onClick={() => setMode("login")}>{t("profile.login")}</button><button className={mode === "signup" ? "primary-button" : "secondary-button"} onClick={() => setMode("signup")}>{t("profile.signup")}</button></div>
+          {mode === "signup" ? <SignupForm /> : <LoginForm />}
+          <button className="text-button" onClick={() => go("home")}>Continue as guest</button>
+        </div>
       </section>
     );
   }
@@ -1621,34 +1551,8 @@ function ProfileScreen() {
           <button className="secondary-button" onClick={() => { setSessionId(currentUser.id); notify(t("profile.profileSaved")); }}>{t("profile.saveProfile")}</button>
         </div>
       </div>
-      <LanguagePicker />
       {!isAdmin && <MyUploads />}
     </section>
-  );
-}
-
-function LanguagePicker() {
-  const { lang, setLang, t } = useApp();
-  return (
-    <div className="lang-picker-section">
-      <div className="lang-picker-header">
-        <Globe size={16} />
-        <span>{t("profile.language")}</span>
-      </div>
-      <p className="lang-picker-sub">{t("profile.selectLanguage")}</p>
-      <div className="lang-grid">
-        {LANGUAGES.map((l) => (
-          <button
-            key={l.code}
-            className={`lang-option${lang === l.code ? " lang-option-active" : ""}`}
-            onClick={() => setLang(l.code)}
-          >
-            <span className="lang-flag">{l.flag}</span>
-            <span className="lang-name">{l.name}</span>
-          </button>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -1728,7 +1632,35 @@ function LoginForm() {
     setBusy(false);
   };
 
-  return <div className="form-card"><h2>Login</h2><Field label="Email" value={email} onChange={setEmail} /><Field label="Password" type="password" value={password} onChange={setPassword} /><button className="primary-button" onClick={login}>{busy ? "Logging in..." : "Log In"}</button></div>;
+  return <div className="form-card"><h2>Login</h2><Field label="Email" value={email} onChange={setEmail} /><Field label="Password" type="password" value={password} onChange={setPassword} /><button className="text-button inline-text-button" onClick={() => go("forgot-password")}>Forgot password?</button><button className="primary-button" onClick={login}>{busy ? "Logging in..." : "Log In"}</button></div>;
+}
+
+function ForgotPasswordScreen() {
+  const { go, notify } = useApp();
+  const [email, setEmail] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+
+  const sendReset = async () => {
+    if (!email.trim()) return notify("Enter your email first.");
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin });
+    setBusy(false);
+    if (error) return notify(error.message);
+    notify("Password reset email sent.");
+  };
+
+  return (
+    <section className="screen auth-screen">
+      <div className="auth-card">
+        <SectionIntro eyebrow="Account help" title="Reset password" body="Enter your email and Faith Flix will send a password reset link." />
+        <div className="form-card">
+          <Field label="Email" type="email" value={email} onChange={setEmail} />
+          <button className="primary-button" onClick={sendReset}>{busy ? "Sending..." : "Send Reset Link"}</button>
+          <button className="secondary-button" onClick={() => go("profile")}>Back to Sign In</button>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function AdminLogin() {
