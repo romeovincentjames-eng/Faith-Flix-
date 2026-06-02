@@ -905,12 +905,9 @@ function HomeScreen() {
 
   return (
     <section className="screen">
-      <div className="hero compact-hero home-title-hero">
-        <div className="hero-copy">
-          <p className="eyebrow">{t("brand.tagline")}</p>
-          <h1>Faith Flix</h1>
-          <p>{t("brand.description")}</p>
-        </div>
+      <div className="home-logo-strip" aria-label="Faith Flix">
+        <span className="home-logo-mark"><Sparkles size={18} /></span>
+        <span>Faith Flix</span>
       </div>
 
       <SectionHeader title={t("home.publishedVideos")} action={`${adminVideos.length} ${t("home.live")}`} />

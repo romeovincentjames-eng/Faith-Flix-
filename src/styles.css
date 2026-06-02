@@ -17,7 +17,7 @@ body {
   min-height: 100vh;
   background:
     linear-gradient(180deg, rgba(2, 4, 9, 0.56), rgba(2, 4, 9, 0.9)),
-    url("/faith-app-background.jpg") center / cover fixed,
+    url("/faith-cross-background.png") center / cover fixed,
     #05070d;
 }
 
@@ -241,6 +241,32 @@ button {
 
 .home-stream-row {
   margin-top: -4px;
+}
+
+.home-logo-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  padding: 8px 12px 8px 8px;
+  border-radius: 999px;
+  color: #f7fbff;
+  background: rgba(5, 8, 14, 0.64);
+  border: 1px solid rgba(246, 210, 123, 0.22);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(16px);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.home-logo-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  color: #10131a;
+  background: #f6d27b;
 }
 
 .prayer-card {
@@ -3170,4 +3196,46 @@ textarea:focus {
   color: #10131a;
   background: #f6d27b;
   border-color: #f6d27b;
+}
+
+
+/* rounder Faith Flix surfaces */
+.content-panel,
+.form-card,
+.empty-state,
+.launch-card,
+.account-card,
+.notice,
+.auth-card,
+.category-drop-panel,
+.category-grid-expanded,
+.series-grid-card,
+.video-card,
+.file-drop,
+.crop-preview-card,
+.photo-crop-tool,
+.admin-edit-form {
+  border-radius: 26px;
+}
+
+.primary-button,
+.secondary-button,
+.segment,
+.select-button,
+.category-pill,
+.category-grid-option,
+.icon-button,
+.brand-mark,
+.nav-button {
+  border-radius: 999px;
+}
+
+.thumb-wrap,
+.poster,
+.series-grid-poster,
+.featured-thumb,
+.featured-series-poster,
+.inline-video,
+.video-placeholder {
+  border-radius: 24px;
 }
