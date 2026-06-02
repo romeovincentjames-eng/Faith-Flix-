@@ -1085,6 +1085,12 @@ function HomeScreen() {
   const adminVideos = publicVideos.filter((v) => v.source === "admin");
   const latest = adminVideos.slice(-10).reverse();
 
+
+  const openHomeVideoNormal = (video: VideoItem) => {
+    setSelectedVideoId(video.id);
+    go("watch");
+  };
+
   const openHomeVideo = (video: VideoItem) => {
     flushSync(() => {
       setSelectedVideoId(video.id);
@@ -1115,7 +1121,7 @@ function HomeScreen() {
         {matchVideos.length > 0 && (
           <>
             <SectionHeader title={t("search.videos")} action={`${matchVideos.length} ${t("home.found")}`} />
-            <div className="content-grid">{matchVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} />)}</div>
+            <div className="content-grid">{matchVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} onTitleOpen={() => openHomeVideoNormal(video)} />)}</div>
           </>
         )}
         {matchSeries.length > 0 && (
@@ -1133,7 +1139,7 @@ function HomeScreen() {
       <SectionHeader title={t("home.publishedVideos")} action={`${adminVideos.length} ${t("home.live")}`} />
       {latest.length ? (
         <div className="horizontal-video-row published-row home-stream-row">
-          {latest.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} />)}
+          {latest.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} onTitleOpen={() => openHomeVideoNormal(video)} />)}
         </div>
       ) : <EmptyState icon={Film} title="No videos uploaded yet." body="Published platform videos will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
 
@@ -2512,7 +2518,7 @@ function PostCard({ post, comments, onToggle }: { post: CommunityPost; comments:
   );
 }
 
-function VideoCard({ video, onOpen, extra }: { video: VideoItem; onOpen: () => void; extra?: React.ReactNode }) {
+function VideoCard({ video, onOpen, onTitleOpen, extra }: { video: VideoItem; onOpen: () => void; onTitleOpen?: () => void; extra?: React.ReactNode }) {
   const badgeText = video.seriesId?.trim() || video.category || "Faith Flix";
   const badgeClass = video.seriesId ? "source-badge source-badge-series" : "source-badge source-badge-category";
   return (
@@ -2533,7 +2539,7 @@ function VideoCard({ video, onOpen, extra }: { video: VideoItem; onOpen: () => v
         <span className={badgeClass} title={badgeText}>
           <Clapperboard size={11} /> {badgeText}
         </span>
-        <h3>{video.title}</h3>
+        <button className="video-title-button" onClick={onTitleOpen ?? onOpen}>{video.title}</button>
         <p>{video.creator || "Faith Flix"}</p>
       </div>
       {extra && <div className="button-row">{extra}</div>}
