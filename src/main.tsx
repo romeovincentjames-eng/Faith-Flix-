@@ -1514,23 +1514,10 @@ function SeriesScreen() {
       <div className="content-panel category-drop-panel active series-category-panel">
         <SectionHeader title={selectedCategory || "Category"} action={`${selectedCategorySeries.length} series`} />
         {selectedCategorySeries.length ? (
-          <div className="series-grid category-series-grid">
+          <div className="horizontal-series-row home-series-row category-series-home-row">
             {selectedCategorySeries.map((item) => {
               const count = publicVideos.filter((video) => video.seriesId === item.title).length;
-              return (
-                <button key={item.id} className="series-grid-card" onClick={() => setSelectedSeriesId(item.id)} aria-label={`Open ${item.title}`}>
-                  {item.posterUrl
-                    ? <img className="series-grid-poster" src={item.posterUrl} alt={item.title} />
-                    : <div className="series-grid-poster series-grid-poster-empty"><Clapperboard size={36} /></div>}
-                  <div className="series-grid-info">
-                    <p className="eyebrow">{item.category || item.status}</p>
-                    <h3 className="series-grid-title">{item.title}</h3>
-                    {item.scriptureTheme && <p className="series-grid-verse">&#10022; {item.scriptureTheme}</p>}
-                    <p className="series-grid-count">{count} episode{count !== 1 ? "s" : ""}</p>
-                  </div>
-                  <ChevronRight size={18} className="series-grid-arrow" />
-                </button>
-              );
+              return <HomeSeriesCard key={item.id} item={item} episodeCount={count} onOpen={() => setSelectedSeriesId(item.id)} />;
             })}
           </div>
         ) : <EmptyState icon={Clapperboard} title="No series in this category yet." body="Series assigned to this category will appear here." action="Choose Category" onAction={() => setShowCategoryGrid(true)} />}

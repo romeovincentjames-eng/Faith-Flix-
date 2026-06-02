@@ -3867,3 +3867,19 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+.category-series-home-row {
+  margin-top: 8px;
+  padding: 4px 4px 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.category-series-home-row::-webkit-scrollbar {
+  display: none;
+}
+
+.category-series-home-row .home-series-card {
+  flex: 0 0 min(430px, 86vw);
+}
