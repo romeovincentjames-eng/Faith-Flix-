@@ -866,6 +866,34 @@ select option {
   gap: 14px;
 }
 
+.saved-list-create {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 14px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.saved-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.saved-list-section {
+  display: grid;
+  gap: 12px;
+}
+
+@media (max-width: 560px) {
+  .saved-list-create {
+    grid-template-columns: 1fr;
+  }
+}
+
 .content-panel,
 .series-mini {
   border: 1px solid rgba(255, 255, 255, 0.09);

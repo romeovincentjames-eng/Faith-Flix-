@@ -132,6 +132,7 @@ type CommunityPost = { id: string; userId: string; author: string; text: string;
 type PrayerRequest = { id: string; userId: string; title: string; text: string; visibility: string; actions: Record<string, string[]> };
 type FriendRequest = { id: string; fromId: string; toId: string; status: "pending" | "accepted" };
 type Message = { id: string; fromId: string; toId: string; text: string; createdAt: string };
+type SavedList = { id: string; name: string; videoIds: string[] };
 type UploadProgress = { active: boolean; value: number; label: string };
 
 const adminEmail = "romeovgalasso@gmail.com";
@@ -282,8 +283,14 @@ const MOCK_MESSAGES: Message[] = [
 ];
 
 const MOCK_SAVED: Record<string, string[]> = {
-  guest: ["mock-v2", "mock-v7", "mock-u1"],
-  "mock-user1": ["mock-v1", "mock-v10", "mock-u2"],
+  "mock-user1": ["mock-v1", "mock-v2", "mock-u1"],
+};
+
+const MOCK_SAVED_LISTS: Record<string, SavedList[]> = {
+  "mock-user1": [
+    { id: "mock-list-worship", name: "Worship", videoIds: ["mock-v3", "mock-v8"] },
+    { id: "mock-list-study", name: "Bible Study", videoIds: ["mock-v7", "mock-v4"] },
+  ],
 };
 
 const MOCK_LIKES: Record<string, string[]> = {
@@ -461,6 +468,7 @@ function App() {
   const [categories, setCategories] = useStoredState<CategoryItem[]>("faithflix-categories", defaultCategories);
   const [uploads, setUploads] = useStoredState<UserUpload[]>("faithflix-user-uploads", MOCK_UPLOADS);
   const [saved, setSaved] = useStoredState<Record<string, string[]>>("faithflix-saved", MOCK_SAVED);
+  const [savedLists, setSavedLists] = useStoredState<Record<string, SavedList[]>>("faithflix-saved-lists", MOCK_SAVED_LISTS);
   const [likes, setLikes] = useStoredState<Record<string, string[]>>("faithflix-likes", MOCK_LIKES);
   const [comments, setComments] = useStoredState<CommentItem[]>("faithflix-comments", MOCK_COMMENTS);
   const [posts, setPosts] = useStoredState<CommunityPost[]>("faithflix-posts", MOCK_POSTS);
@@ -491,9 +499,10 @@ function App() {
     setFriendRequests((current) => mergeById(MOCK_FRIEND_REQUESTS, current));
     setMessages((current) => mergeById(MOCK_MESSAGES, current));
     setSaved((current) => mergeRecordLists(MOCK_SAVED, current));
+    setSavedLists((current) => ({ ...MOCK_SAVED_LISTS, ...current }));
     setLikes((current) => mergeRecordLists(MOCK_LIKES, current));
     localStorage.setItem(demoVersion, "loaded");
-  }, [setUsers, setVideos, setSeries, setCategories, setUploads, setPosts, setPrayers, setComments, setFriendRequests, setMessages, setSaved, setLikes]);
+  }, [setUsers, setVideos, setSeries, setCategories, setUploads, setPosts, setPrayers, setComments, setFriendRequests, setMessages, setSaved, setSavedLists, setLikes]);
 
   const currentUser = users.find((user) => user.id === sessionId);
   const isAdmin = currentUser?.role === "admin";
@@ -671,6 +680,8 @@ function App() {
     setUploads,
     saved,
     setSaved,
+    savedLists,
+    setSavedLists,
     likes,
     setLikes,
     comments,
@@ -794,6 +805,8 @@ function buildContextShape() {
     setUploads: React.Dispatch<React.SetStateAction<UserUpload[]>>;
     saved: Record<string, string[]>;
     setSaved: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
+    savedLists: Record<string, SavedList[]>;
+    setSavedLists: React.Dispatch<React.SetStateAction<Record<string, SavedList[]>>>;
     likes: Record<string, string[]>;
     setLikes: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
     comments: CommentItem[];
@@ -1178,7 +1191,7 @@ function WatchScreen() {
           <InfoLine label={t("info.duration")} value={selected.duration || t("info.notSet")} />
           <div className="button-row">
             <button className="secondary-button" onClick={() => toggleList(setLikes, likes, selected.id, likedIds.includes(selected.id) ? "Like removed." : "Video liked.")}><Heart size={17} /> {likedIds.includes(selected.id) ? "Liked" : "Like"}</button>
-            <button className="secondary-button" onClick={() => toggleList(setSaved, saved, selected.id, savedIds.includes(selected.id) ? "Removed from saved." : "Saved.")}><Bookmark size={17} /> {savedIds.includes(selected.id) ? "Saved" : "Save"}</button>
+            <button className="secondary-button" onClick={() => { if (!currentUser) { notify("Log in to save videos."); go("profile"); return; } toggleList(setSaved, saved, selected.id, savedIds.includes(selected.id) ? "Removed from saved." : "Saved to General."); }}><Bookmark size={17} /> {savedIds.includes(selected.id) ? "Saved" : "Save"}</button>
             <button className="secondary-button" onClick={() => { navigator.clipboard?.writeText(`faithflix://video/${selected.id}`); notify(t("toast.linkCopied")); }}>Share</button>
             <button className="secondary-button" onClick={() => { setCommunityView("feed"); go("community"); }}><MessageCircle size={17} /> Discuss</button>
             <button className="secondary-button" onClick={() => openVideo(previousVideo.id)}>← Prev</button>
@@ -1364,13 +1377,77 @@ function UploadScreen() {
 }
 
 function SavedScreen() {
-  const { currentUser, saved, videos, setSaved, go, notify, t } = useApp();
-  const actorId = currentUser?.id ?? "guest";
-  const savedVideos = videos.filter((video) => (saved[actorId] ?? []).includes(video.id));
+  const { currentUser, saved, savedLists, videos, setSaved, setSavedLists, setSelectedVideoId, go, notify, t } = useApp();
+  const [listName, setListName] = React.useState("");
+
+  if (!currentUser) {
+    return (
+      <section className="screen">
+        <SectionIntro eyebrow={t("saved.eyebrow")} title={t("saved.title")} body="Log in to save videos and build your own lists." />
+        <EmptyState icon={Bookmark} title="No saved videos for guests." body="Saved videos are only kept for logged-in accounts." action="Log In" onAction={() => go("profile")} />
+      </section>
+    );
+  }
+
+  const actorId = currentUser.id;
+  const generalIds = saved[actorId] ?? [];
+  const userLists = savedLists[actorId] ?? [];
+  const generalVideos = videos.filter((video) => generalIds.includes(video.id));
+  const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
+
+  const createList = () => {
+    const name = listName.trim();
+    if (!name) return notify("Name your list first.");
+    if (userLists.some((list) => list.name.toLowerCase() === name.toLowerCase())) return notify("That list already exists.");
+    setSavedLists({ ...savedLists, [actorId]: [...userLists, { id: uid("saved-list"), name, videoIds: [] }] });
+    setListName("");
+    notify("List created.");
+  };
+
+  const addToList = (listId: string, videoId: string) => {
+    setSavedLists({ ...savedLists, [actorId]: userLists.map((list) => list.id === listId ? { ...list, videoIds: Array.from(new Set([...list.videoIds, videoId])) } : list) });
+    notify("Added to list.");
+  };
+
+  const removeFromGeneral = (videoId: string) => {
+    setSaved({ ...saved, [actorId]: generalIds.filter((id) => id !== videoId) });
+    notify("Removed from General.");
+  };
+
+  const removeFromList = (listId: string, videoId: string) => {
+    setSavedLists({ ...savedLists, [actorId]: userLists.map((list) => list.id === listId ? { ...list, videoIds: list.videoIds.filter((id) => id !== videoId) } : list) });
+    notify("Removed from list.");
+  };
+
+  const deleteList = (listId: string) => {
+    setSavedLists({ ...savedLists, [actorId]: userLists.filter((list) => list.id !== listId) });
+    notify("List deleted.");
+  };
+
   return (
-    <section className="screen">
-      <SectionIntro eyebrow={t("saved.eyebrow")} title={t("saved.title")} body={t("saved.body")} />
-      {savedVideos.length ? <div className="content-grid">{savedVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => go("watch")} extra={<button className="secondary-button" onClick={() => { setSaved({ ...saved, [actorId]: (saved[actorId] ?? []).filter((id) => id !== video.id) }); notify("Removed from saved."); }}>Remove</button>} />)}</div> : <EmptyState icon={Bookmark} title="No saved content yet." body="Save a published video from Watch to build your library." action="Open Watch" onAction={() => go("watch")} />}
+    <section className="screen saved-library-screen">
+      <SectionIntro eyebrow={t("saved.eyebrow")} title={t("saved.title")} body="Saved videos go to General automatically. Create your own lists to organize them." />
+      <div className="saved-list-create">
+        <Field label="New list name" value={listName} onChange={setListName} />
+        <button className="primary-button" onClick={createList}>Create List</button>
+      </div>
+
+      <SectionHeader title="General" action={generalVideos.length + " saved"} />
+      {generalVideos.length ? (
+        <div className="content-grid">
+          {generalVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video.id)} extra={<div className="saved-card-actions"><button className="secondary-button" onClick={() => removeFromGeneral(video.id)}>Remove</button>{userLists.map((list) => <button className="secondary-button" key={list.id} onClick={() => addToList(list.id, video.id)}>Add to {list.name}</button>)}</div>} />)}
+        </div>
+      ) : <EmptyState icon={Bookmark} title="No saved videos yet." body="When you save a video, it will appear in General." action="Open Watch" onAction={() => go("watch")} />}
+
+      {userLists.map((list) => {
+        const listVideos = videos.filter((video) => list.videoIds.includes(video.id));
+        return (
+          <div className="saved-list-section" key={list.id}>
+            <SectionHeader title={list.name} action={listVideos.length + " videos"} />
+            {listVideos.length ? <div className="content-grid">{listVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video.id)} extra={<button className="secondary-button" onClick={() => removeFromList(list.id, video.id)}>Remove from {list.name}</button>} />)}</div> : <div className="content-panel"><p className="muted">Add videos from General to fill this list.</p><button className="secondary-button danger" onClick={() => deleteList(list.id)}>Delete List</button></div>}
+          </div>
+        );
+      })}
     </section>
   );
 }
