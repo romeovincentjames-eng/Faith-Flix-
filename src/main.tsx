@@ -2443,7 +2443,8 @@ function PostCard({ post, comments, onToggle }: { post: CommunityPost; comments:
 }
 
 function VideoCard({ video, onOpen, extra }: { video: VideoItem; onOpen: () => void; extra?: React.ReactNode }) {
-  const badgeText = video.seriesId?.trim() || (video.source === "user" ? "Community" : "Official");
+  const badgeText = video.seriesId?.trim() || video.category || "Faith Flix";
+  const badgeClass = video.seriesId ? "source-badge source-badge-series" : "source-badge source-badge-category";
   return (
     <article className="content-panel video-card">
       <button className="media-button" onClick={onOpen} aria-label={`Play ${video.title}`}>
@@ -2459,8 +2460,8 @@ function VideoCard({ video, onOpen, extra }: { video: VideoItem; onOpen: () => v
         </div>
       </button>
       <div className="video-card-body">
-        <span className={video.seriesId ? "source-badge source-badge-series" : video.source === "user" ? "source-badge source-badge-community" : "source-badge source-badge-official"} title={badgeText}>
-          {video.seriesId ? <><Clapperboard size={11} /> {badgeText}</> : video.source === "user" ? <><Users size={11} /> {badgeText}</> : <><ShieldCheck size={11} /> {badgeText}</>}
+        <span className={badgeClass} title={badgeText}>
+          <Clapperboard size={11} /> {badgeText}
         </span>
         <h3>{video.title}</h3>
         <p>{video.creator || "Faith Flix"}</p>
