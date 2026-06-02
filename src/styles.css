@@ -797,8 +797,8 @@ select option {
 
 .nav-button.active {
   color: #f6d27b;
-  background: linear-gradient(180deg, rgba(246, 210, 123, 0.18), rgba(246, 210, 123, 0.08));
-  box-shadow: inset 0 0 0 1px rgba(246, 210, 123, 0.12), 0 10px 22px rgba(0, 0, 0, 0.24);
+  background: transparent;
+  box-shadow: none;
 }
 
 @media (min-width: 760px) {
@@ -2252,18 +2252,6 @@ select option {
   box-shadow: 0 0 14px rgba(246, 210, 123, 0.85);
 }
 
-.nav-button.active::after {
-  content: '';
-  position: absolute;
-  bottom: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  border-radius: 999px;
-  background: #f6d27b;
-  box-shadow: 0 0 6px rgba(246, 210, 123, 0.7);
-}
 
 .nav-button {
   position: relative;
