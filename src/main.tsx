@@ -168,13 +168,13 @@ const defaultCategories = [
 
 const MOCK_VIDEOS: VideoItem[] = [
   { id: "mock-v1", source: "admin", title: "Walking by Faith", description: "A powerful message on what it truly means to trust God in every season of life, even when you cannot see the path ahead.", scripture: "2 Corinthians 5:7", category: "Sermons", seriesId: "Faith Journey", episode: "1", duration: "12:34", creator: "Pastor James Rivers", tags: "faith, trust, walk", status: "Published", featured: false, videoName: "walking-by-faith.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", thumbnailName: "sunrise.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-10" },
-  { id: "mock-v2", source: "admin", title: "The Power of the Cross", description: "Discover the transforming power of the cross and what Jesus's sacrifice means for our lives today.", scripture: "1 Corinthians 1:18", category: "Gospel Messages", seriesId: "", episode: "", duration: "8:45", creator: "Faith Flix", tags: "cross, gospel, salvation", status: "Published", featured: true, videoName: "power-of-cross.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", thumbnailName: "cross-sunset.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-12" },
-  { id: "mock-v3", source: "admin", title: "Worship in Spirit and Truth", description: "A worship experience that invites deeper connection with God through song and scripture.", scripture: "John 4:24", category: "Worship Videos", seriesId: "", episode: "", duration: "18:20", creator: "Elevation Worship", tags: "worship, spirit", status: "Published", featured: true, videoName: "worship-spirit.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", thumbnailName: "worship.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1555685812-4b943f1cb0eb?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-14" },
+  { id: "mock-v2", source: "admin", title: "The Power of the Cross", description: "Discover the transforming power of the cross and what Jesus's sacrifice means for our lives today.", scripture: "1 Corinthians 1:18", category: "Gospel Messages", seriesId: "Gospel Messages Origins", episode: "1", duration: "8:45", creator: "Faith Flix", tags: "cross, gospel, salvation", status: "Published", featured: true, videoName: "power-of-cross.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", thumbnailName: "cross-sunset.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-12" },
+  { id: "mock-v3", source: "admin", title: "Worship in Spirit and Truth", description: "A worship experience that invites deeper connection with God through song and scripture.", scripture: "John 4:24", category: "Worship Videos", seriesId: "Worship Videos Origins", episode: "1", duration: "18:20", creator: "Elevation Worship", tags: "worship, spirit", status: "Published", featured: true, videoName: "worship-spirit.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", thumbnailName: "worship.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1555685812-4b943f1cb0eb?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-14" },
   { id: "mock-v4", source: "admin", title: "In the Beginning", description: "An animated retelling of Genesis chapter 1 from darkness to the first breath of creation.", scripture: "Genesis 1:1", category: "Animated Bible Stories", seriesId: "Genesis Unlocked", episode: "1", duration: "6:15", creator: "BibleVision Studios", tags: "creation, genesis", status: "Published", videoName: "in-the-beginning.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", thumbnailName: "creation.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-16" },
   { id: "mock-v5", source: "admin", title: "Still Small Voice", description: "A devotional on hearing God's voice in the chaos and quieting your heart to listen.", scripture: "1 Kings 19:12", category: "Devotional Clips", seriesId: "Quiet Time", episode: "3", duration: "9:02", creator: "Daily Bread Ministries", tags: "devotional, stillness", status: "Published", videoName: "still-small-voice.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4", thumbnailName: "forest-light.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-18" },
-  { id: "mock-v6", source: "admin", title: "My Healing Testimony", description: "Sarah shares the story of how God healed her after years of chronic illness.", scripture: "Psalm 103:3", category: "Testimonies", seriesId: "", episode: "", duration: "15:50", creator: "Sarah M.", tags: "healing, testimony", status: "Published", videoName: "healing-testimony.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", thumbnailName: "praying-hands.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1510836217651-1a1b2f98d7de?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-20" },
+  { id: "mock-v6", source: "admin", title: "My Healing Testimony", description: "Sarah shares the story of how God healed her after years of chronic illness.", scripture: "Psalm 103:3", category: "Testimonies", seriesId: "Testimonies Origins", episode: "1", duration: "15:50", creator: "Sarah M.", tags: "healing, testimony", status: "Published", videoName: "healing-testimony.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", thumbnailName: "praying-hands.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1510836217651-1a1b2f98d7de?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-20" },
   { id: "mock-v7", source: "admin", title: "Sermon on the Mount", description: "A visual Bible study through the Beatitudes and the Kingdom way.", scripture: "Matthew 5:3-12", category: "Bible Study Content", seriesId: "Red Letter Series", episode: "2", duration: "22:08", creator: "The Bible Project", tags: "sermon, beatitudes", status: "Published", videoName: "sermon-mount.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", thumbnailName: "bible-open.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1543286386-2e659306cd6c?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-22" },
-  { id: "mock-v8", source: "admin", title: "Grace Like Rain", description: "A cinematic worship visual experience set to original music about God's grace.", scripture: "Ephesians 2:8", category: "Faith Music Visuals", seriesId: "", episode: "", duration: "5:33", creator: "Hillsong Creative", tags: "grace, music", status: "Published", featured: true, videoName: "grace-like-rain.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", thumbnailName: "candles.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-24" },
+  { id: "mock-v8", source: "admin", title: "Grace Like Rain", description: "A cinematic worship visual experience set to original music about God's grace.", scripture: "Ephesians 2:8", category: "Faith Music Visuals", seriesId: "Faith Music Visuals Origins", episode: "1", duration: "5:33", creator: "Hillsong Creative", tags: "grace, music", status: "Published", featured: true, videoName: "grace-like-rain.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", thumbnailName: "candles.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-24" },
   { id: "mock-v9", source: "admin", title: "The Prodigal Son", description: "A short cinematic film retelling the parable of the prodigal son in a modern setting.", scripture: "Luke 15:11-32", category: "Christian Short Films", seriesId: "Parables of Jesus", episode: "1", duration: "28:14", creator: "RedemptionFilms", tags: "prodigal, film", status: "Published", videoName: "prodigal-son.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", thumbnailName: "church-interior.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-26" },
   { id: "mock-u1", source: "user", title: "God Helped Me Forgive", description: "A personal testimony about forgiveness after years of bitterness.", scripture: "Colossians 3:13", category: "Testimonies", seriesId: "", episode: "", duration: "2:12", creator: "Grace Walker", tags: "forgiveness, testimony", status: "Published", videoName: "forgiveness-testimony.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", thumbnailName: "forgiveness.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-02-05" },
   { id: "mock-u2", source: "user", title: "Morning Scripture Walk", description: "A short reflection recorded during a morning walk with Psalm 23.", scripture: "Psalm 23:1", category: "Devotional Clips", seriesId: "", episode: "", duration: "1:44", creator: "David Chen", tags: "devotional, psalm", status: "Published", videoName: "morning-scripture.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4", thumbnailName: "morning-walk.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=500&q=80", cropDimension: "4:5", cropRatio: "4 / 5", createdAt: "2024-02-07" },
@@ -201,8 +201,8 @@ const CATEGORY_MOCK_VIDEOS: VideoItem[] = defaultCategories.map((category, index
   description: `Demo content for the ${category.name} category so you can see how this section looks with videos loaded.`,
   scripture: ["Psalm 119:105", "Romans 8:28", "Isaiah 41:10", "Matthew 5:16"][index % 4],
   category: category.name,
-  seriesId: index % 4 === 0 ? "Faith Journey" : "",
-  episode: index % 4 === 0 ? String((index % 6) + 1) : "",
+  seriesId: category.name + " Origins",
+  episode: String((index % 6) + 1),
   duration: `${6 + (index % 12)}:${String(10 + index).padStart(2, "0")}`,
   creator: "Faith Flix Demo",
   tags: `demo, ${category.name.toLowerCase()}`,
@@ -489,6 +489,14 @@ function useStoredState<T>(key: string, initialValue: T) {
   return [value, setValue] as const;
 }
 
+function professionalSeriesTitle(video: Pick<VideoItem, "seriesId" | "category">) {
+  return video.seriesId?.trim() || (video.category ? video.category + " Origins" : "Faith Journey");
+}
+
+function alignProfessionalVideoWithSeries<T extends Pick<VideoItem, "source" | "seriesId" | "category">>(video: T): T {
+  return video.source === "admin" ? { ...video, seriesId: professionalSeriesTitle(video) } : video;
+}
+
 function App() {
   const [page, setPage] = React.useState<Page>(() => {
     const savedPage = sessionStorage.getItem("faithflix-refresh-page") as Page | null;
@@ -538,7 +546,7 @@ function App() {
   };
 
   React.useEffect(() => {
-    const demoVersion = "faithflix-demo-content-v4";
+    const demoVersion = "faithflix-demo-content-v5";
     if (localStorage.getItem(demoVersion)) return;
     setUsers((current) => mergeById(MOCK_USERS, current));
     setVideos((current) => mergeById(ALL_MOCK_VIDEOS, current));
@@ -559,7 +567,7 @@ function App() {
   const currentUser = users.find((user) => user.id === sessionId);
   const isAdmin = currentUser?.role === "admin";
   const visibleCategories = uniqueCategoriesByName(categories).filter((category) => !category.hidden && !isPrayerCategoryName(category.name));
-  const publicVideos = videos.filter((video) => video.status === "Published" && !isPrayerVideo(video));
+  const publicVideos = videos.filter((video) => video.status === "Published" && !isPrayerVideo(video)).map(alignProfessionalVideoWithSeries);
   const publicSeries = series.filter((item) => item.status === "Published");
 
   React.useEffect(() => {
@@ -1005,24 +1013,25 @@ function videoFromDb(video: DbVideo): VideoItem {
 }
 
 function videoToDb(video: Omit<VideoItem, "id" | "createdAt">, createdBy: string) {
+  const alignedVideo = alignProfessionalVideoWithSeries(video);
   return {
     source: video.source,
     title: video.title,
-    description: video.description,
-    scripture_reference: video.scripture,
-    episode_number: video.episode,
-    duration: video.duration,
-    creator_ministry_name: video.creator,
-    tags: video.tags,
+    description: alignedVideo.description,
+    scripture_reference: alignedVideo.scripture,
+    episode_number: alignedVideo.episode,
+    duration: alignedVideo.duration,
+    creator_ministry_name: alignedVideo.creator,
+    tags: alignedVideo.tags,
     video_url: video.videoUrl || null,
     thumbnail_url: video.thumbnailUrl || null,
     status: statusToDb(video.status),
     created_by: createdBy,
-    app_category: video.category,
-    app_series_title: video.seriesId,
+    app_category: alignedVideo.category,
+    app_series_title: alignedVideo.seriesId,
     crop_dimension: video.cropDimension || "9:16",
     crop_ratio: video.cropRatio || "9 / 16",
-    featured: video.featured ?? false,
+    featured: alignedVideo.featured ?? false,
   };
 }
 
@@ -2029,14 +2038,21 @@ function AdminStudio() {
 
 function AdminUpload() {
   const { currentUser, isAdmin, videos, setVideos, setSelectedVideoId, setStudioView, setUploadProgress, visibleCategories, series, notify, go, t } = useApp();
-  const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: visibleCategories[0]?.name ?? "", seriesId: "", episode: "", duration: "", creator: "", tags: "", status: "Published" as Status });
+  const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: visibleCategories[0]?.name ?? "", seriesId: series.find((item) => item.category === (visibleCategories[0]?.name ?? ""))?.title ?? series[0]?.title ?? "", episode: "", duration: "", creator: "", tags: "", status: "Published" as Status });
   const [videoFile, setVideoFile] = React.useState<File | null>(null);
   const [thumbFile, setThumbFile] = React.useState<File | null>(null);
+  const categorySeries = series.filter((item) => item.category === form.category);
+  const seriesOptions = categorySeries.length ? categorySeries.map((item) => item.title) : series.map((item) => item.title);
+  React.useEffect(() => {
+    if (!seriesOptions.length || seriesOptions.includes(form.seriesId)) return;
+    setForm((current) => ({ ...current, seriesId: seriesOptions[0] }));
+  }, [form.category, form.seriesId, seriesOptions.join("|")]);
   if (!isAdmin) return <EmptyState icon={ShieldCheck} title="Admin access required" body="Only admin accounts can upload platform videos." action="Log In" onAction={() => notify("Log in with the admin account from Profile.")} />;
   const save = (status: Status) => {
     if (!currentUser) return notify("Log in as admin first.");
     if (!form.title) return notify("Add a title first.");
     if (!videoFile) return notify("Choose a video file first.");
+    if (!form.seriesId) return notify("Choose a series for this professional video.");
 
     const uploadUser = currentUser;
     const uploadForm = { ...form };
@@ -2075,13 +2091,13 @@ function AdminUpload() {
       }
     })();
   };
-  return <div className="form-card"><h2>Add platform video</h2><Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} /><label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label><Field label="Scripture reference" value={form.scripture} onChange={(scripture) => setForm({ ...form, scripture })} /><Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={visibleCategories.map((item) => item.name)} /><Select label="Series" value={form.seriesId} onChange={(seriesId) => setForm({ ...form, seriesId })} options={["", ...series.map((item) => item.title)]} /><Field label="Episode number" value={form.episode} onChange={(episode) => setForm({ ...form, episode })} /><Field label="Duration" value={form.duration} onChange={(duration) => setForm({ ...form, duration })} /><Field label="Creator / ministry name" value={form.creator} onChange={(creator) => setForm({ ...form, creator })} /><Field label="Tags" value={form.tags} onChange={(tags) => setForm({ ...form, tags })} /><Select label="Publish status" value={form.status} onChange={(status) => setForm({ ...form, status: status as Status })} options={["Draft", "Published", "Hidden"]} /><FileField label="Video file" onChange={setVideoFile} /><FileField label="Thumbnail" onChange={setThumbFile} /><div className="button-row"><button className="primary-button" onClick={() => save("Published")}>Publish Video</button><button className="secondary-button" onClick={() => save("Draft")}>Save as Draft</button></div></div>;
+  return <div className="form-card"><h2>Add platform video</h2><Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} /><label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label><Field label="Scripture reference" value={form.scripture} onChange={(scripture) => setForm({ ...form, scripture })} /><Select label="Category" value={form.category} onChange={(category) => { const nextSeries = series.find((item) => item.category === category)?.title ?? series[0]?.title ?? ""; setForm({ ...form, category, seriesId: nextSeries }); }} options={visibleCategories.map((item) => item.name)} /><Select label="Series" value={form.seriesId} onChange={(seriesId) => setForm({ ...form, seriesId })} options={seriesOptions} /><Field label="Episode number" value={form.episode} onChange={(episode) => setForm({ ...form, episode })} /><Field label="Duration" value={form.duration} onChange={(duration) => setForm({ ...form, duration })} /><Field label="Creator / ministry name" value={form.creator} onChange={(creator) => setForm({ ...form, creator })} /><Field label="Tags" value={form.tags} onChange={(tags) => setForm({ ...form, tags })} /><Select label="Publish status" value={form.status} onChange={(status) => setForm({ ...form, status: status as Status })} options={["Draft", "Published", "Hidden"]} /><FileField label="Video file" onChange={setVideoFile} /><FileField label="Thumbnail" onChange={setThumbFile} /><div className="button-row"><button className="primary-button" onClick={() => save("Published")}>Publish Video</button><button className="secondary-button" onClick={() => save("Draft")}>Save as Draft</button></div></div>;
 }
 
 function AdminVideos() {
-  const { videos, setVideos, notify, setStudioView, t } = useApp();
+  const { videos, setVideos, visibleCategories, series, notify, setStudioView, t } = useApp();
   const [editingId, setEditingId] = React.useState("");
-  const platformVideos = videos.filter((video) => video.source === "admin");
+  const platformVideos = videos.filter((video) => video.source === "admin").map(alignProfessionalVideoWithSeries);
   const update = (id: string, patch: Partial<VideoItem>) =>
     setVideos(videos.map((video) => video.id === id ? { ...video, ...patch } : video));
 
@@ -2089,18 +2105,20 @@ function AdminVideos() {
     const video = videos.find((v) => v.id === editingId);
     setEditingId("");
     if (!video) { notify("Video edits saved."); return; }
+    const alignedVideo = alignProfessionalVideoWithSeries(video);
+    setVideos((current) => current.map((item) => item.id === alignedVideo.id ? alignedVideo : item));
     const { error } = await supabase.from("videos").update({
-      title: video.title,
-      description: video.description,
-      scripture_reference: video.scripture,
-      creator_ministry_name: video.creator,
-      app_category: video.category,
-      app_series_title: video.seriesId,
-      episode_number: video.episode,
-      duration: video.duration,
-      tags: video.tags,
-      featured: video.featured ?? false,
-    }).eq("id", video.id);
+      title: alignedVideo.title,
+      description: alignedVideo.description,
+      scripture_reference: alignedVideo.scripture,
+      creator_ministry_name: alignedVideo.creator,
+      app_category: alignedVideo.category,
+      app_series_title: alignedVideo.seriesId,
+      episode_number: alignedVideo.episode,
+      duration: alignedVideo.duration,
+      tags: alignedVideo.tags,
+      featured: alignedVideo.featured ?? false,
+    }).eq("id", alignedVideo.id);
     notify(error ? "Edits saved locally. DB sync failed: " + error.message : "Video edits saved.");
   };
 
@@ -2120,6 +2138,8 @@ function AdminVideos() {
     <div className="content-grid">
       {platformVideos.map((video) => {
         const isEditing = editingId === video.id;
+        const editSeriesOptions = series.filter((item) => item.category === video.category).map((item) => item.title);
+        const availableSeriesOptions = editSeriesOptions.length ? editSeriesOptions : series.map((item) => item.title);
         return (
           <article className="content-panel admin-video-card" key={video.id}>
             <MediaThumb item={video} />
@@ -2141,8 +2161,8 @@ function AdminVideos() {
                 <Field label="Creator / Ministry" value={video.creator} onChange={(creator) => update(video.id, { creator })} />
                 <label>Description<textarea value={video.description} onChange={(e) => update(video.id, { description: e.target.value })} /></label>
                 <Field label="Scripture reference" value={video.scripture} onChange={(scripture) => update(video.id, { scripture })} />
-                <Select label="Category" value={video.category} onChange={(category) => update(video.id, { category })} options={["Sermons","Worship Videos","Testimonies","Bible Study Content","Devotional Clips","Animated Bible Stories","Gospel Messages","Faith Music Visuals","Christian Short Films","Scripture Reflections","Church Media"]} />
-                <Field label="Series title (blank = standalone)" value={video.seriesId} onChange={(seriesId) => update(video.id, { seriesId })} />
+                <Select label="Category" value={video.category} onChange={(category) => { const nextSeries = series.find((item) => item.category === category)?.title ?? video.seriesId; update(video.id, { category, seriesId: nextSeries }); }} options={visibleCategories.map((item) => item.name)} />
+                <Select label="Series" value={video.seriesId || availableSeriesOptions[0] || ""} onChange={(seriesId) => update(video.id, { seriesId })} options={availableSeriesOptions} />
                 <Field label="Episode number" value={video.episode} onChange={(episode) => update(video.id, { episode })} />
                 <Field label="Duration (e.g. 12:34)" value={video.duration} onChange={(duration) => update(video.id, { duration })} />
                 <Field label="Tags (comma separated)" value={video.tags} onChange={(tags) => update(video.id, { tags })} />
