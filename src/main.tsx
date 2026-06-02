@@ -890,27 +890,20 @@ function HomeScreen() {
 
   return (
     <section className="screen">
+      <div className="hero compact-hero home-title-hero">
+        <div className="hero-copy">
+          <p className="eyebrow">{t("brand.tagline")}</p>
+          <h1>Faith Flix</h1>
+          <p>{t("brand.description")}</p>
+        </div>
+      </div>
+
       <SectionHeader title={t("home.publishedVideos")} action={`${adminVideos.length} ${t("home.live")}`} />
       {latest.length ? (
         <div className="horizontal-video-row published-row home-stream-row">
           {latest.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} />)}
         </div>
       ) : <EmptyState icon={Film} title="No videos uploaded yet." body="Published platform videos will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
-
-      <div className="hero compact-hero">
-        <div className="hero-copy">
-          <p className="eyebrow">{t("brand.tagline")}</p>
-          <h1>Faith Flix</h1>
-          <p>{t("brand.description")}</p>
-          <div className="hero-actions">
-            <button className="primary-button" onClick={() => go("watch")}>{t("hero.openWatch")}</button>
-            <button className="secondary-button" onClick={() => go("upload")}>{t("hero.submitTestimony")}</button>
-          </div>
-        </div>
-      </div>
-
-      <SectionHeader title={t("home.publishedSeries")} action={`${publicSeries.length} ${t("home.live")}`} />
-      {publicSeries.length ? <div className="horizontal-series-row">{publicSeries.map((item) => <SeriesCard key={item.id} item={item} onClick={() => { setSelectedSeriesId(item.id); go("series"); }} />)}</div> : <EmptyState icon={Clapperboard} title={t("series.noSeries")} body={t("series.noSeriesBodyHome")} action={t("nav.series")} onAction={() => go("series")} />}
     </section>
   );
 }
