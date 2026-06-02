@@ -3793,3 +3793,77 @@ textarea:focus {
   gap: 8px;
   margin: 18px 0;
 }
+
+
+.worship-screen .section-intro {
+  max-width: 760px;
+}
+
+.worship-filter {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 4px 0 18px;
+}
+
+.worship-filter::-webkit-scrollbar {
+  display: none;
+}
+
+.worship-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.worship-song-list {
+  display: grid;
+  gap: 12px;
+}
+
+.worship-song-card {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.worship-song-card img,
+.worship-cover-empty {
+  width: 86px;
+  aspect-ratio: 1;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
+.worship-cover-empty {
+  display: grid;
+  place-items: center;
+  color: #f6d27b;
+  background: rgba(246, 210, 123, 0.12);
+  border: 1px solid rgba(246, 210, 123, 0.24);
+}
+
+.worship-song-card h3,
+.worship-song-card p {
+  margin: 0 0 4px;
+}
+
+.worship-song-card audio {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.user-series-builder {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+@media (max-width: 860px) {
+  .worship-layout {
+    grid-template-columns: 1fr;
+  }
+}

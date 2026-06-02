@@ -23,6 +23,7 @@ import {
   Lock,
   MessageCircle,
   MessagesSquare,
+  Music2,
   Play,
   Plus,
   Search,
@@ -47,13 +48,14 @@ type Page =
   | "series"
   | "upload"
   | "community"
+  | "worship"
   | "saved"
   | "profile"
   | "forgot-password"
   | "admin-login"
   | "admin-studio"
   | "rules";
-type CommunityView = "feed" | "prayer" | "upload" | "groups" | "friends" | "messages" | "shares";
+type CommunityView = "feed" | "prayer" | "upload" | "groups" | "friends" | "messages";
 type StudioView = "dashboard" | "upload" | "videos" | "series" | "categories" | "reviews" | "takedown" | "rules";
 type Status = "Draft" | "Published" | "Hidden";
 type UploadStatus = "Pending Review" | "Approved" | "Rejected" | "Edits Requested";
@@ -135,6 +137,7 @@ type FriendRequest = { id: string; fromId: string; toId: string; status: "pendin
 type Message = { id: string; fromId: string; toId: string; text: string; createdAt: string };
 type SavedList = { id: string; name: string; videoIds: string[] };
 type UploadProgress = { active: boolean; value: number; label: string };
+type WorshipSong = { id: string; title: string; artist: string; description: string; category: string; duration: string; audioName: string; audioUrl?: string; coverName: string; coverUrl?: string; uploadedBy: string; createdAt: string };
 
 const adminEmail = "romeovgalasso@gmail.com";
 const adminPassword = "Rvjg123100";
@@ -310,8 +313,67 @@ const CATEGORY_SERIES_MOCK_VIDEOS: VideoItem[] = CATEGORY_MOCK_SERIES.flatMap((s
   }))
 );
 
-const ALL_MOCK_SERIES = mergeById(MOCK_SERIES, CATEGORY_MOCK_SERIES);
-const ALL_MOCK_VIDEOS = mergeById(mergeById(mergeById(MOCK_VIDEOS, CATEGORY_MOCK_VIDEOS), CATEGORY_SERIES_MOCK_VIDEOS), COMMUNITY_SHARE_MOCK_VIDEOS);
+const USER_SERIES_MOCK: SeriesItem[] = defaultCategories.map((category, index) => ({
+  id: `mock-user-series-${index}`,
+  title: `${category.name} Community Series`,
+  description: `Mock user-created series for ${category.name}.`,
+  posterName: `${category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-community-series.jpg`,
+  posterUrl: seriesMockImages[index % seriesMockImages.length],
+  scriptureTheme: ["Psalm 96:1", "Romans 12:2", "Matthew 28:19"][index % 3],
+  category: category.name,
+  status: "Published" as Status,
+  featured: index % 5 === 0,
+}));
+
+const USER_SERIES_MOCK_VIDEOS: VideoItem[] = USER_SERIES_MOCK.flatMap((series, index) =>
+  [1, 2].map((episodeNumber) => ({
+    id: `mock-user-series-video-${index}-${episodeNumber}`,
+    source: "user" as const,
+    title: `${series.title} Episode ${episodeNumber}`,
+    description: `Community-made episode ${episodeNumber} for ${series.title}.`,
+    scripture: series.scriptureTheme,
+    category: series.category,
+    seriesId: series.title,
+    episode: String(episodeNumber),
+    duration: `${3 + (index % 6)}:${String(episodeNumber * 13).padStart(2, "0")}`,
+    creator: ["Grace Walker", "David Chen", "Miriam Johnson", "Pastor Samuel", "Ruth Adeyemi"][index % 5],
+    tags: `community series, ${series.category.toLowerCase()}`,
+    status: "Published" as Status,
+    featured: false,
+    videoName: `${series.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${episodeNumber}.mp4`,
+    videoUrl: [
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
+    ][episodeNumber - 1],
+    thumbnailName: `${series.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${episodeNumber}.jpg`,
+    thumbnailUrl: series.posterUrl,
+    cropDimension: "9:16",
+    cropRatio: "9 / 16",
+    createdAt: `2024-06-${String((index % 25) + 1).padStart(2, "0")}`,
+  }))
+);
+
+const MOCK_WORSHIP_SONGS: WorshipSong[] = defaultCategories.slice(0, 12).map((category, index) => ({
+  id: `mock-song-${index}`,
+  title: ["Holy Morning", "Grace Anthem", "Living Water", "Kingdom Sound"][index % 4] + ` ${index + 1}`,
+  artist: ["Faith Room Worship", "Grace Walker", "David Chen", "Awakening Choir"][index % 4],
+  description: `Mock worship song for ${category.name}.`,
+  category: category.name,
+  duration: `${3 + (index % 4)}:${String(15 + index).padStart(2, "0")}`,
+  audioName: `${category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-worship.mp3`,
+  audioUrl: [
+    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+  ][index % 3],
+  coverName: `${category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-worship.jpg`,
+  coverUrl: categoryMockImages[index % categoryMockImages.length],
+  uploadedBy: ["Grace Walker", "David Chen", "Miriam Johnson", "Ruth Adeyemi"][index % 4],
+  createdAt: `2024-07-${String(index + 1).padStart(2, "0")}`,
+}));
+
+const ALL_MOCK_SERIES = mergeById(mergeById(MOCK_SERIES, CATEGORY_MOCK_SERIES), USER_SERIES_MOCK);
+const ALL_MOCK_VIDEOS = mergeById(mergeById(mergeById(mergeById(MOCK_VIDEOS, CATEGORY_MOCK_VIDEOS), CATEGORY_SERIES_MOCK_VIDEOS), COMMUNITY_SHARE_MOCK_VIDEOS), USER_SERIES_MOCK_VIDEOS);
 
 const MOCK_POSTS: CommunityPost[] = [
   { id: "mock-p1", userId: "mock-user1", author: "Grace Walker", text: "God has been so faithful this week. After months of waiting, my prayers were answered in the most unexpected way. Never stop trusting Him!", scripture: "Psalm 27:14", imageName: "sunrise-testimony.jpg", imageUrl: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800&q=80", likes: ["a", "b", "c", "d"], saves: ["a"], reports: [] },
@@ -564,6 +626,7 @@ function App() {
   const [prayers, setPrayers] = useStoredState<PrayerRequest[]>("faithflix-prayers", MOCK_PRAYERS);
   const [friendRequests, setFriendRequests] = useStoredState<FriendRequest[]>("faithflix-friends", MOCK_FRIEND_REQUESTS);
   const [messages, setMessages] = useStoredState<Message[]>("faithflix-messages", MOCK_MESSAGES);
+  const [worshipSongs, setWorshipSongs] = useStoredState<WorshipSong[]>("faithflix-worship-songs", MOCK_WORSHIP_SONGS);
   const [mainSearchQuery, setMainSearchQuery] = React.useState("");
   const t = React.useCallback((key: string) => translate("en", key), []);
   const [commSearchQuery, setCommSearchQuery] = React.useState("");
@@ -575,7 +638,7 @@ function App() {
   };
 
   React.useEffect(() => {
-    const demoVersion = "faithflix-demo-content-v6";
+    const demoVersion = "faithflix-demo-content-v7";
     if (localStorage.getItem(demoVersion)) return;
     setUsers((current) => mergeById(MOCK_USERS, current));
     setVideos((current) => mergeById(ALL_MOCK_VIDEOS, current));
@@ -587,11 +650,12 @@ function App() {
     setComments((current) => mergeById(MOCK_COMMENTS, current));
     setFriendRequests((current) => mergeById(MOCK_FRIEND_REQUESTS, current));
     setMessages((current) => mergeById(MOCK_MESSAGES, current));
+    setWorshipSongs((current) => mergeById(MOCK_WORSHIP_SONGS, current));
     setSaved((current) => mergeRecordLists(MOCK_SAVED, current));
     setSavedLists((current) => ({ ...MOCK_SAVED_LISTS, ...current }));
     setLikes((current) => mergeRecordLists(MOCK_LIKES, current));
     localStorage.setItem(demoVersion, "loaded");
-  }, [setUsers, setVideos, setSeries, setCategories, setUploads, setPosts, setPrayers, setComments, setFriendRequests, setMessages, setSaved, setSavedLists, setLikes]);
+  }, [setUsers, setVideos, setSeries, setCategories, setUploads, setPosts, setPrayers, setComments, setFriendRequests, setMessages, setWorshipSongs, setSaved, setSavedLists, setLikes]);
 
   const currentUser = users.find((user) => user.id === sessionId);
   const isAdmin = currentUser?.role === "admin";
@@ -787,6 +851,8 @@ function App() {
     setFriendRequests,
     messages,
     setMessages,
+    worshipSongs,
+    setWorshipSongs,
     notify,
     signOut,
     t,
@@ -834,6 +900,7 @@ function App() {
           {visiblePage === "series" && <SeriesScreen />}
           {(visiblePage === "upload") && <CommunityScreen />}
           {visiblePage === "community" && <CommunityScreen />}
+          {visiblePage === "worship" && <WorshipScreen />}
           {visiblePage === "saved" && <SavedScreen />}
           {visiblePage === "profile" && <ProfileScreen />}
           {visiblePage === "forgot-password" && <ForgotPasswordScreen />}
@@ -843,11 +910,12 @@ function App() {
         </main>
 
         {!isAdmin && visiblePage !== "community" && visiblePage !== "upload" && !(visiblePage === "profile" && !currentUser) && !(visiblePage === "forgot-password" && !currentUser) && (
-          <nav className="bottom-nav six" aria-label="Primary navigation">
+          <nav className="bottom-nav seven" aria-label="Primary navigation">
             <NavButton label={t("nav.home")} icon={Home} active={visiblePage === "home"} onClick={() => go("home")} />
             <NavButton label={t("nav.watch")} icon={Film} active={visiblePage === "watch"} onClick={() => go("watch")} />
             <NavButton label={t("nav.series")} icon={Clapperboard} active={visiblePage === "series"} onClick={() => go("series")} />
             <NavButton label={t("nav.community")} icon={MessagesSquare} active={false} onClick={() => go("community")} />
+            <NavButton label="Worship" icon={Music2} active={visiblePage === "worship"} onClick={() => go("worship")} />
             <NavButton label={t("nav.saved")} icon={Bookmark} active={visiblePage === "saved"} onClick={() => go("saved")} />
             <NavButton label={t("nav.profile")} icon={User} active={visiblePage === "profile" || visiblePage === "admin-login" || visiblePage === "admin-studio"} onClick={() => go("profile")} />
           </nav>
@@ -914,6 +982,8 @@ function buildContextShape() {
     setFriendRequests: React.Dispatch<React.SetStateAction<FriendRequest[]>>;
     messages: Message[];
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+    worshipSongs: WorshipSong[];
+    setWorshipSongs: React.Dispatch<React.SetStateAction<WorshipSong[]>>;
     notify: (message: string) => void;
     signOut: () => void;
     t: (key: string) => string;
@@ -1521,7 +1591,7 @@ function UploadScreen() {
         setSelectedVideoId(savedVideo.id);
         progress.done("Posted");
         notify("Posted. Video may take a minute to process.");
-        setCommunityView("shares");
+        setCommunityView("feed");
         go("community");
       } catch (error) {
         const message = error instanceof Error ? error.message : "Upload failed.";
@@ -1550,7 +1620,167 @@ function UploadScreen() {
         <Check label="This submission follows the content rules." checked={form.rules} onChange={(rules) => setForm({ ...form, rules })} />
         <button className="primary-button" type="button" onClick={submit}>Post Now</button>
       </form>
+      <UserSeriesBuilder />
       <MyUploads />
+    </section>
+  );
+}
+
+function UserSeriesBuilder() {
+  const { currentUser, visibleCategories, series, setSeries, setVideos, notify, go } = useApp();
+  const [seriesForm, setSeriesForm] = React.useState({ title: "", description: "", scriptureTheme: "", category: visibleCategories[0]?.name ?? "" });
+  const [episodeForm, setEpisodeForm] = React.useState({ seriesId: "", title: "", description: "", scripture: "", episode: "1", duration: "" });
+  const [videoFile, setVideoFile] = React.useState<File | null>(null);
+  const [coverFile, setCoverFile] = React.useState<File | null>(null);
+  const userSeries = series.filter((item) => item.title.includes("Community") || item.title === seriesForm.title);
+
+  const createSeries = () => {
+    if (!currentUser) return go("profile");
+    if (!seriesForm.title.trim()) return notify("Name your series first.");
+    if (series.some((item) => item.title.toLowerCase() === seriesForm.title.trim().toLowerCase())) return notify("That series already exists.");
+    const cover = fileInfo(coverFile);
+    const nextSeries: SeriesItem = {
+      id: uid("user-series"),
+      title: seriesForm.title.trim(),
+      description: seriesForm.description,
+      posterName: cover.name,
+      posterUrl: cover.url,
+      scriptureTheme: seriesForm.scriptureTheme,
+      category: seriesForm.category,
+      status: "Published",
+      featured: false,
+    };
+    setSeries((current) => [...current, nextSeries]);
+    setEpisodeForm((current) => ({ ...current, seriesId: nextSeries.title, scripture: nextSeries.scriptureTheme }));
+    setSeriesForm({ ...seriesForm, title: "", description: "", scriptureTheme: "" });
+    setCoverFile(null);
+    notify("Series created. Add an episode next.");
+  };
+
+  const createEpisode = () => {
+    if (!currentUser) return go("profile");
+    if (!episodeForm.seriesId || !episodeForm.title.trim()) return notify("Choose a series and title your episode.");
+    if (!videoFile) return notify("Choose an episode video file.");
+    const video = fileInfo(videoFile);
+    const chosenSeries = series.find((item) => item.title === episodeForm.seriesId);
+    const nextVideo: VideoItem = {
+      id: uid("user-episode"),
+      source: "user",
+      title: episodeForm.title.trim(),
+      description: episodeForm.description,
+      scripture: episodeForm.scripture || chosenSeries?.scriptureTheme || "",
+      category: chosenSeries?.category || seriesForm.category,
+      seriesId: episodeForm.seriesId,
+      episode: episodeForm.episode,
+      duration: episodeForm.duration,
+      creator: currentUser.name,
+      tags: "user series, episode",
+      status: "Published",
+      videoName: video.name,
+      videoUrl: video.url,
+      thumbnailName: chosenSeries?.posterName || "",
+      thumbnailUrl: chosenSeries?.posterUrl || "",
+      cropDimension: "9:16",
+      cropRatio: "9 / 16",
+      createdAt: new Date().toLocaleString(),
+    };
+    setVideos((current) => [nextVideo, ...current]);
+    setEpisodeForm({ seriesId: episodeForm.seriesId, title: "", description: "", scripture: "", episode: String(Number(episodeForm.episode || "1") + 1), duration: "" });
+    setVideoFile(null);
+    notify("Episode added to your series.");
+  };
+
+  return (
+    <div className="user-series-builder">
+      <SectionHeader title="Create a series" action="User content" />
+      <div className="form-card">
+        <Field label="Series title" value={seriesForm.title} onChange={(title) => setSeriesForm({ ...seriesForm, title })} />
+        <label>Description<textarea value={seriesForm.description} onChange={(event) => setSeriesForm({ ...seriesForm, description: event.target.value })} /></label>
+        <Field label="Scripture theme" value={seriesForm.scriptureTheme} onChange={(scriptureTheme) => setSeriesForm({ ...seriesForm, scriptureTheme })} />
+        <Select label="Category" value={seriesForm.category} onChange={(category) => setSeriesForm({ ...seriesForm, category })} options={visibleCategories.map((item) => item.name)} />
+        <FileField label="Series cover" onChange={setCoverFile} />
+        <button className="primary-button" type="button" onClick={createSeries}>Create Series</button>
+      </div>
+      <div className="form-card">
+        <h2>Add episode</h2>
+        <Select label="Series" value={episodeForm.seriesId} onChange={(seriesId) => setEpisodeForm({ ...episodeForm, seriesId })} options={["", ...series.map((item) => item.title)]} />
+        <Field label="Episode title" value={episodeForm.title} onChange={(title) => setEpisodeForm({ ...episodeForm, title })} />
+        <label>Description<textarea value={episodeForm.description} onChange={(event) => setEpisodeForm({ ...episodeForm, description: event.target.value })} /></label>
+        <Field label="Scripture reference" value={episodeForm.scripture} onChange={(scripture) => setEpisodeForm({ ...episodeForm, scripture })} />
+        <Field label="Episode number" value={episodeForm.episode} onChange={(episode) => setEpisodeForm({ ...episodeForm, episode })} />
+        <Field label="Duration" value={episodeForm.duration} onChange={(duration) => setEpisodeForm({ ...episodeForm, duration })} />
+        <FileField label="Episode video" onChange={setVideoFile} />
+        <button className="primary-button" type="button" onClick={createEpisode}>Add Episode</button>
+      </div>
+      <div className="horizontal-series-row home-series-row">
+        {userSeries.slice(0, 10).map((item) => <HomeSeriesCard key={item.id} item={item} episodeCount={0} onOpen={() => notify(item.title)} />)}
+      </div>
+    </div>
+  );
+}
+
+function WorshipScreen() {
+  const { currentUser, worshipSongs, setWorshipSongs, visibleCategories, notify, go } = useApp();
+  const [selectedCategory, setSelectedCategory] = React.useState("All");
+  const [form, setForm] = React.useState({ title: "", artist: "", description: "", category: visibleCategories[0]?.name ?? "", duration: "" });
+  const [audioFile, setAudioFile] = React.useState<File | null>(null);
+  const [coverFile, setCoverFile] = React.useState<File | null>(null);
+  const categories = Array.from(new Set(worshipSongs.map((song) => song.category).filter(Boolean)));
+  const filteredSongs = selectedCategory === "All" ? worshipSongs : worshipSongs.filter((song) => song.category === selectedCategory);
+
+  const uploadSong = () => {
+    if (!currentUser) return go("profile");
+    if (!form.title.trim() || !form.artist.trim()) return notify("Add a song title and artist name.");
+    if (!audioFile) return notify("Choose an audio file first.");
+    const audio = fileInfo(audioFile);
+    const cover = fileInfo(coverFile);
+    const song: WorshipSong = {
+      id: uid("song"),
+      title: form.title.trim(),
+      artist: form.artist.trim(),
+      description: form.description,
+      category: form.category,
+      duration: form.duration,
+      audioName: audio.name,
+      audioUrl: audio.url,
+      coverName: cover.name,
+      coverUrl: cover.url,
+      uploadedBy: currentUser.name,
+      createdAt: new Date().toLocaleString(),
+    };
+    setWorshipSongs([song, ...worshipSongs]);
+    setForm({ ...form, title: "", artist: "", description: "", duration: "" });
+    setAudioFile(null);
+    setCoverFile(null);
+    notify("Worship song uploaded.");
+  };
+
+  return (
+    <section className="screen worship-screen">
+      <SectionIntro eyebrow="Worship" title="Worship music" body="Stream worship songs and let members upload original worship music for the community." />
+      <div className="worship-filter" aria-label="Filter worship songs by category">
+        <button className={selectedCategory === "All" ? "community-share-pill active" : "community-share-pill"} onClick={() => setSelectedCategory("All")}>All</button>
+        {categories.map((category) => <button key={category} className={selectedCategory === category ? "community-share-pill active" : "community-share-pill"} onClick={() => setSelectedCategory(category)}>{category}</button>)}
+      </div>
+      <div className="worship-layout">
+        <div>
+          <SectionHeader title="Now streaming" action={filteredSongs.length + " songs"} />
+          <div className="worship-song-list">
+            {filteredSongs.map((song) => <article className="content-panel worship-song-card" key={song.id}>{song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="worship-cover-empty"><Music2 size={28} /></div>}<div><p className="eyebrow">{song.category}</p><h3>{song.title}</h3><p>{song.artist} • {song.duration || "New"}</p>{song.audioUrl && <audio controls src={song.audioUrl} />}</div></article>)}
+          </div>
+        </div>
+        <div className="form-card worship-upload-card">
+          <h2>Upload worship song</h2>
+          <Field label="Song title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
+          <Field label="Artist / worship team" value={form.artist} onChange={(artist) => setForm({ ...form, artist })} />
+          <label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
+          <Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={visibleCategories.map((item) => item.name)} />
+          <Field label="Duration" value={form.duration} onChange={(duration) => setForm({ ...form, duration })} />
+          <FileField label="Audio file" onChange={setAudioFile} />
+          <FileField label="Cover image" onChange={setCoverFile} />
+          <button className="primary-button" type="button" onClick={uploadSong}>Upload Song</button>
+        </div>
+      </div>
     </section>
   );
 }
@@ -1691,7 +1921,7 @@ function playVideoFullscreen(video: VideoItem, notify: (message: string) => void
   void player.requestFullscreen?.().catch(() => undefined);
 }
 
-function CommunitySharesScreen() {
+function CommunitySharesScreen({ compact = false }: { compact?: boolean }) {
   const { publicVideos, notify, go, t } = useApp();
   const [selectedCategory, setSelectedCategory] = React.useState("All");
   const userVideos = publicVideos.filter((v) => v.source === "user");
@@ -1700,13 +1930,14 @@ function CommunitySharesScreen() {
   const openVideo = (video: VideoItem) => playVideoFullscreen(video, notify);
   return (
     <div className="community-shares-screen">
-      <div className="community-shares-intro">
+      {!compact && <div className="community-shares-intro">
         <Share2 size={28} className="community-shares-icon" />
         <div>
           <h3 className="community-shares-title">Community Shares</h3>
           <p className="community-shares-body">Testimonies and videos shared by members of the Faith Flix community. New videos can take a minute to finish processing.</p>
         </div>
-      </div>
+      </div>}
+      {compact && <SectionHeader title="Shared videos" action={userVideos.length + " live"} />}
       {userVideos.length > 0 && (
         <div className="community-share-filter" aria-label="Filter community shares by category">
           <button className={selectedCategory === "All" ? "community-share-pill active" : "community-share-pill"} onClick={() => setSelectedCategory("All")}>All</button>
@@ -1731,7 +1962,6 @@ function CommunityScreen() {
   const tabs: { id: CommunityView; label: string; icon: React.ElementType }[] = [
     { id: "feed", label: t("comm.tab.feed"), icon: MessagesSquare },
     { id: "prayer", label: t("comm.tab.prayer"), icon: HeartHandshake },
-    { id: "shares", label: "Shares", icon: Share2 },
     { id: "upload", label: t("comm.tab.upload"), icon: Upload },
     { id: "groups", label: t("comm.tab.groups"), icon: Users },
     { id: "friends", label: t("comm.tab.friends"), icon: UserPlus },
@@ -1741,7 +1971,6 @@ function CommunityScreen() {
   const screenTitles: Record<CommunityView, string> = {
     feed: t("comm.title.feed"),
     prayer: t("comm.title.prayer"),
-    shares: "Community Shares",
     upload: t("comm.title.upload"),
     groups: t("comm.title.groups"),
     friends: t("comm.title.friends"),
@@ -1762,7 +1991,6 @@ function CommunityScreen() {
         {commSearchQuery.trim() ? <CommunitySearchResults /> : <>
         {communityView === "feed" && <FaithFeed />}
         {communityView === "prayer" && <PrayerWall />}
-        {communityView === "shares" && <CommunitySharesScreen />}
         {communityView === "upload" && <UploadScreen />}
         {communityView === "groups" && (
           <div className="comm-groups-grid">
@@ -1868,6 +2096,7 @@ function FaithFeed() {
         <FileField label="Optional image" onChange={setImage} />
         <button className="primary-button" onClick={create}>Share Post</button>
       </div>
+      {!commSearchQuery && <CommunitySharesScreen compact />}
       {commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={Search} title="No posts match your search." body={`Try a different keyword.`} action="" onAction={() => {}} />}
       {filteredPosts.map((post) => <PostCard key={post.id} post={post} comments={comments.filter((item) => item.targetId === post.id)} onToggle={togglePost} />)}
       {!commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={MessagesSquare} title="No community posts yet. Be the first to share encouragement." body="Faith Feed posts will appear here." action="Write encouragement" onAction={() => notify("Use the form above to share encouragement.")} />}
