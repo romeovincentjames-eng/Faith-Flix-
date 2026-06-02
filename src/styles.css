@@ -956,14 +956,84 @@ select option {
   min-height: 0;
 }
 
-.home-series-row .series-mini {
-  background: rgba(255, 255, 255, 0.13);
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+.home-series-card {
+  display: grid;
+  gap: 12px;
+  min-height: 100%;
+  padding: 10px;
+  overflow: hidden;
+  color: #f7fbff;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 28px;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+  transition: transform 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
 }
 
-.home-series-row .series-mini:hover {
-  background: rgba(255, 255, 255, 0.17);
+.home-series-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 28px 62px rgba(0, 0, 0, 0.34), 0 0 0 1px rgba(246, 210, 123, 0.16);
+}
+
+.home-series-thumb {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 9 / 12;
+  border-radius: 24px;
+  background: rgba(2, 4, 10, 0.82);
+}
+
+.home-series-thumb img,
+.home-series-empty {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  object-fit: cover;
+  color: #f6d27b;
+  background: linear-gradient(145deg, rgba(246, 210, 123, 0.18), rgba(87, 154, 209, 0.16));
+}
+
+.home-series-overlay {
+  position: absolute;
+  inset: auto 10px 10px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  color: #10131a;
+  background: rgba(246, 210, 123, 0.94);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.home-series-info {
+  display: grid;
+  gap: 7px;
+  padding: 0 4px 4px;
+}
+
+.home-series-info h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.15;
+}
+
+.home-series-info p {
+  margin: 0;
+  color: rgba(247, 251, 255, 0.68);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .button-row {

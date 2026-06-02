@@ -923,7 +923,7 @@ function HomeScreen() {
       ) : <EmptyState icon={Film} title="No videos uploaded yet." body="Published platform videos will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
 
       <SectionHeader title={t("home.publishedSeries")} action={`${publicSeries.length} ${t("home.live")}`} />
-      {publicSeries.length ? <div className="horizontal-series-row home-series-row">{publicSeries.map((item) => <SeriesCard key={item.id} item={item} onClick={() => { setSelectedSeriesId(item.id); go("series"); }} />)}</div> : <EmptyState icon={Clapperboard} title={t("series.noSeries")} body={t("series.noSeriesBodyHome")} action={t("nav.series")} onAction={() => go("series")} />}
+      {publicSeries.length ? <div className="horizontal-series-row home-series-row">{publicSeries.map((item) => <HomeSeriesCard key={item.id} item={item} episodeCount={publicVideos.filter((video) => video.seriesId === item.title).length} onOpen={() => { setSelectedSeriesId(item.id); go("series"); }} />)}</div> : <EmptyState icon={Clapperboard} title={t("series.noSeries")} body={t("series.noSeriesBodyHome")} action={t("nav.series")} onAction={() => go("series")} />}
     </section>
   );
 }
@@ -2244,6 +2244,27 @@ function VideoCard({ video, onOpen, extra }: { video: VideoItem; onOpen: () => v
       </div>
       {extra && <div className="button-row">{extra}</div>}
     </article>
+  );
+}
+
+function HomeSeriesCard({ item, episodeCount, onOpen }: { item: SeriesItem; episodeCount: number; onOpen: () => void }) {
+  return (
+    <button className="home-series-card" onClick={onOpen} aria-label={`Open ${item.title}`}>
+      <div className="home-series-thumb">
+        {item.posterUrl
+          ? <img src={item.posterUrl} alt={item.title} />
+          : <div className="home-series-empty"><Clapperboard size={34} /></div>}
+        <div className="home-series-overlay">
+          <span className="thumb-play-btn"><Play size={18} /></span>
+          <span>{episodeCount} episode{episodeCount !== 1 ? "s" : ""}</span>
+        </div>
+      </div>
+      <div className="home-series-info">
+        <span className="thumb-cat-tag">{item.category || "Series"}</span>
+        <h3>{item.title}</h3>
+        <p>{item.description || item.scriptureTheme || "Faith Flix series"}</p>
+      </div>
+    </button>
   );
 }
 
