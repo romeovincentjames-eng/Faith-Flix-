@@ -521,6 +521,14 @@ textarea {
   padding: 0 13px;
 }
 
+input[type="date"] {
+  height: 48px;
+  min-height: 48px;
+  line-height: 48px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 textarea {
   min-height: 112px;
   padding-top: 12px;
