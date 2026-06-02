@@ -221,8 +221,6 @@ const CATEGORY_MOCK_VIDEOS: VideoItem[] = defaultCategories.map((category, index
   createdAt: `2024-03-${String(index + 1).padStart(2, "0")}`,
 }));
 
-const ALL_MOCK_VIDEOS = mergeById(MOCK_VIDEOS, CATEGORY_MOCK_VIDEOS);
-
 const MOCK_SERIES: SeriesItem[] = [
   { id: "mock-s1", title: "Faith Journey", description: "A 6-part series on the foundations of Christian faith for believers at every stage of their walk.", posterName: "faith-journey.jpg", posterUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80", scriptureTheme: "Hebrews 11:1", category: "Sermons", status: "Published", featured: true },
   { id: "mock-s2", title: "Genesis Unlocked", description: "Animated exploration of Genesis from creation to Joseph, brought to life in stunning detail.", posterName: "genesis.jpg", posterUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80", scriptureTheme: "Genesis 1:1", category: "Animated Bible Stories", status: "Published", featured: false },
@@ -232,6 +230,60 @@ const MOCK_SERIES: SeriesItem[] = [
   { id: "mock-s6", title: "Next Gen Faith", description: "Youth-focused messages, recaps, and encouragement for students following Jesus.", posterName: "next-gen.jpg", posterUrl: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&q=80", scriptureTheme: "1 Timothy 4:12", category: "Youth Faith Content", status: "Published", featured: false },
   { id: "mock-s7", title: "Parables of Jesus", description: "Cinematic shorts based on the stories Jesus told.", posterName: "parables.jpg", posterUrl: "https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=400&q=80", scriptureTheme: "Luke 15", category: "Christian Short Films", status: "Published", featured: true },
 ];
+
+const seriesMockImages = [
+  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=500&q=80",
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&q=80",
+  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500&q=80",
+  "https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=500&q=80",
+  "https://images.unsplash.com/photo-1543286386-2e659306cd6c?w=500&q=80",
+  "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=500&q=80",
+];
+
+const CATEGORY_MOCK_SERIES: SeriesItem[] = defaultCategories.flatMap((category, categoryIndex) =>
+  ["Origins", "Deep Dive", "Visual Guide"].map((label, seriesIndex) => ({
+    id: "mock-cat-series-" + categoryIndex + "-" + seriesIndex,
+    title: category.name + " " + label,
+    description: "Demo series for " + category.name + " so you can preview a full category list with multiple options.",
+    posterName: category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + seriesIndex + ".jpg",
+    posterUrl: seriesMockImages[(categoryIndex + seriesIndex) % seriesMockImages.length],
+    scriptureTheme: ["John 15:5", "Psalm 119:105", "Romans 8:28"][seriesIndex],
+    category: category.name,
+    status: "Published" as Status,
+    featured: seriesIndex === 0,
+  }))
+);
+
+const CATEGORY_SERIES_MOCK_VIDEOS: VideoItem[] = CATEGORY_MOCK_SERIES.flatMap((series, index) =>
+  [1, 2].map((episodeNumber) => ({
+    id: "mock-cat-series-video-" + index + "-" + episodeNumber,
+    source: "admin" as const,
+    title: series.title + " Ep " + episodeNumber,
+    description: "Preview episode " + episodeNumber + " for " + series.title + ".",
+    scripture: series.scriptureTheme,
+    category: series.category,
+    seriesId: series.title,
+    episode: String(episodeNumber),
+    duration: String(8 + (index % 7)) + ":" + String(episodeNumber * 11).padStart(2, "0"),
+    creator: "Faith Flix Demo",
+    tags: "demo, " + series.category.toLowerCase(),
+    status: "Published" as Status,
+    featured: false,
+    videoName: series.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + episodeNumber + ".mp4",
+    videoUrl: [
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+    ][episodeNumber - 1],
+    thumbnailName: series.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + episodeNumber + ".jpg",
+    thumbnailUrl: series.posterUrl,
+    cropDimension: "9:16",
+    cropRatio: "9 / 16",
+    createdAt: "2024-04-" + String((index % 25) + 1).padStart(2, "0"),
+  }))
+);
+
+const ALL_MOCK_SERIES = mergeById(MOCK_SERIES, CATEGORY_MOCK_SERIES);
+const ALL_MOCK_VIDEOS = mergeById(mergeById(MOCK_VIDEOS, CATEGORY_MOCK_VIDEOS), CATEGORY_SERIES_MOCK_VIDEOS);
 
 const MOCK_POSTS: CommunityPost[] = [
   { id: "mock-p1", userId: "mock-user1", author: "Grace Walker", text: "God has been so faithful this week. After months of waiting, my prayers were answered in the most unexpected way. Never stop trusting Him!", scripture: "Psalm 27:14", imageName: "sunrise-testimony.jpg", imageUrl: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800&q=80", likes: ["a", "b", "c", "d"], saves: ["a"], reports: [] },
@@ -464,7 +516,7 @@ function App() {
   const [users, setUsers] = useStoredState<Profile[]>("faithflix-users", []);
   const [sessionId, setSessionId] = useStoredState<string>("faithflix-session", "");
   const [videos, setVideos] = useStoredState<VideoItem[]>("faithflix-videos", ALL_MOCK_VIDEOS);
-  const [series, setSeries] = useStoredState<SeriesItem[]>("faithflix-series", MOCK_SERIES);
+  const [series, setSeries] = useStoredState<SeriesItem[]>("faithflix-series", ALL_MOCK_SERIES);
   const [categories, setCategories] = useStoredState<CategoryItem[]>("faithflix-categories", defaultCategories);
   const [uploads, setUploads] = useStoredState<UserUpload[]>("faithflix-user-uploads", MOCK_UPLOADS);
   const [saved, setSaved] = useStoredState<Record<string, string[]>>("faithflix-saved", MOCK_SAVED);
@@ -486,11 +538,11 @@ function App() {
   };
 
   React.useEffect(() => {
-    const demoVersion = "faithflix-demo-content-v3";
+    const demoVersion = "faithflix-demo-content-v4";
     if (localStorage.getItem(demoVersion)) return;
     setUsers((current) => mergeById(MOCK_USERS, current));
     setVideos((current) => mergeById(ALL_MOCK_VIDEOS, current));
-    setSeries((current) => mergeById(MOCK_SERIES, current));
+    setSeries((current) => mergeById(ALL_MOCK_SERIES, current));
     setCategories((current) => uniqueCategoriesByName([...defaultCategories, ...current]));
     setUploads((current) => mergeById(MOCK_UPLOADS, current));
     setPosts((current) => mergeById(MOCK_POSTS, current));
@@ -563,7 +615,7 @@ function App() {
     const loadSupabaseSeries = async () => {
       const { data, error } = await supabase.from("series").select("*").order("created_at", { ascending: true });
       if (!active || error || !data) return;
-      if (data.length > 0) setSeries(mergeById(MOCK_SERIES, (data as DbSeries[]).map(seriesFromDb)));
+      if (data.length > 0) setSeries(mergeById(ALL_MOCK_SERIES, (data as DbSeries[]).map(seriesFromDb)));
     };
 
     const loadSupabaseCategories = async () => {
@@ -588,7 +640,7 @@ function App() {
 
   React.useEffect(() => {
     setVideos((current) => (current.length === 0 || current.every((v) => v.id.startsWith("starter-"))) ? ALL_MOCK_VIDEOS : current);
-    setSeries((current) => current.length === 0 ? MOCK_SERIES : current);
+    setSeries((current) => current.length === 0 ? ALL_MOCK_SERIES : current);
     setPosts((current) => current.length === 0 ? MOCK_POSTS : current);
     setPrayers((current) => current.length === 0 ? MOCK_PRAYERS : current);
   // eslint-disable-next-line react-hooks/exhaustive-deps

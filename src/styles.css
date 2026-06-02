@@ -3592,3 +3592,30 @@ textarea:focus {
 .video-placeholder {
   border-radius: 24px;
 }
+
+.series-category-panel {
+  max-height: min(46vh, 520px);
+  overflow: hidden;
+}
+
+.category-series-grid {
+  max-height: min(32vh, 360px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-width: none;
+}
+
+.category-series-grid::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .series-category-panel {
+    max-height: 42vh;
+  }
+
+  .category-series-grid {
+    max-height: 28vh;
+  }
+}
