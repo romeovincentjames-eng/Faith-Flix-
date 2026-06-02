@@ -1557,10 +1557,52 @@ const COMMUNITY_GROUPS = [
   { name: "Missionaries", members: 7, verse: "Matthew 28:19", color: "#f472b6" },
 ];
 
+function playVideoFullscreen(video: VideoItem, notify: (message: string) => void) {
+  if (!video.videoUrl) {
+    notify("This video is still processing.");
+    return;
+  }
+
+  const player = document.createElement("video") as HTMLVideoElement & { webkitEnterFullscreen?: () => void };
+  player.src = video.videoUrl;
+  player.controls = true;
+  player.autoplay = true;
+  player.playsInline = false;
+  player.style.position = "fixed";
+  player.style.inset = "0";
+  player.style.width = "100vw";
+  player.style.height = "100vh";
+  player.style.objectFit = "contain";
+  player.style.background = "#000";
+  player.style.zIndex = "9999";
+  document.body.appendChild(player);
+
+  const removePlayer = () => {
+    player.pause();
+    player.remove();
+    document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    player.removeEventListener("webkitendfullscreen", removePlayer as EventListener);
+  };
+
+  const handleFullscreenChange = () => {
+    if (!document.fullscreenElement) removePlayer();
+  };
+
+  document.addEventListener("fullscreenchange", handleFullscreenChange);
+  player.addEventListener("webkitendfullscreen", removePlayer as EventListener);
+
+  void player.play().catch(() => undefined);
+  if (player.webkitEnterFullscreen) {
+    player.webkitEnterFullscreen();
+    return;
+  }
+  void player.requestFullscreen?.().catch(() => undefined);
+}
+
 function CommunitySharesScreen() {
-  const { publicVideos, setSelectedVideoId, go, t } = useApp();
+  const { publicVideos, notify, go, t } = useApp();
   const userVideos = publicVideos.filter((v) => v.source === "user");
-  const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
+  const openVideo = (video: VideoItem) => playVideoFullscreen(video, notify);
   return (
     <div className="community-shares-screen">
       <div className="community-shares-intro">
@@ -1572,7 +1614,7 @@ function CommunitySharesScreen() {
       </div>
       {userVideos.length ? (
         <div className="content-grid community-shares-grid">
-          {userVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video.id)} />)}
+          {userVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video)} />)}
         </div>
       ) : (
         <EmptyState icon={Share2} title="No community shares yet" body="When members submit testimonies and videos they will appear here." action={t("hero.submitTestimony")} onAction={() => go("upload")} />
