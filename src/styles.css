@@ -227,10 +227,16 @@ button {
 
 .compact-hero {
   min-height: auto;
+  align-items: start;
+  padding: 20px;
   border-radius: 22px;
   background:
     linear-gradient(180deg, rgba(5, 7, 13, 0.38), rgba(5, 7, 13, 0.88)),
     rgba(8, 10, 18, 0.64);
+}
+
+.home-title-hero {
+  margin-top: 0;
 }
 
 .home-stream-row {
@@ -3123,4 +3129,45 @@ textarea:focus {
 
 .lang-option-active .lang-name {
   color: #f6d27b;
+}
+
+
+.section-header-action {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: #10131a;
+  background: #f6d27b;
+  border: 0;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.category-grid-expanded {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(5, 8, 14, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(18px);
+}
+
+.category-grid-option {
+  min-height: 46px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: rgba(247, 251, 255, 0.82);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 850;
+  text-align: center;
+}
+
+.category-grid-option.active {
+  color: #10131a;
+  background: #f6d27b;
+  border-color: #f6d27b;
 }

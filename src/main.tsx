@@ -317,9 +317,21 @@ function useStoredState<T>(key: string, initialValue: T) {
 }
 
 function App() {
-  const [page, setPage] = React.useState<Page>("profile");
-  const [studioView, setStudioView] = React.useState<StudioView>("dashboard");
-  const [communityView, setCommunityView] = React.useState<CommunityView>("feed");
+  const [page, setPage] = React.useState<Page>(() => {
+    const savedPage = sessionStorage.getItem("faithflix-refresh-page") as Page | null;
+    sessionStorage.removeItem("faithflix-refresh-page");
+    return savedPage || "profile";
+  });
+  const [studioView, setStudioView] = React.useState<StudioView>(() => {
+    const savedStudioView = sessionStorage.getItem("faithflix-refresh-studio") as StudioView | null;
+    sessionStorage.removeItem("faithflix-refresh-studio");
+    return savedStudioView || "dashboard";
+  });
+  const [communityView, setCommunityView] = React.useState<CommunityView>(() => {
+    const savedCommunityView = sessionStorage.getItem("faithflix-refresh-community") as CommunityView | null;
+    sessionStorage.removeItem("faithflix-refresh-community");
+    return savedCommunityView || "feed";
+  });
   const [selectedVideoId, setSelectedVideoId] = React.useState("");
   const [selectedSeriesId, setSelectedSeriesId] = React.useState("");
   const [selectedMessageUser, setSelectedMessageUser] = React.useState("");
@@ -461,6 +473,9 @@ function App() {
     if (window.scrollY <= 4 && pulled > 90) {
       setIsPullRefreshing(true);
       notify(t("toast.refreshing"));
+      sessionStorage.setItem("faithflix-refresh-page", page);
+      sessionStorage.setItem("faithflix-refresh-studio", studioView);
+      sessionStorage.setItem("faithflix-refresh-community", communityView);
       window.setTimeout(() => window.location.reload(), 450);
     }
   };
@@ -1033,6 +1048,7 @@ function WatchScreen() {
 function SeriesScreen() {
   const { isAdmin, publicSeries, publicVideos, visibleCategories, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId, t } = useApp();
   const [selectedCategory, setSelectedCategory] = React.useState(visibleCategories[0]?.name ?? "");
+  const [showCategoryGrid, setShowCategoryGrid] = React.useState(false);
   const focusedSeries = selectedSeriesId ? publicSeries.find((s) => s.id === selectedSeriesId) : null;
   const focusedEpisodes = focusedSeries ? publicVideos.filter((v) => v.seriesId === focusedSeries.title) : [];
   const selectedCategoryVideos = publicVideos.filter((video) => video.source === "admin" && video.category === selectedCategory);
@@ -1040,6 +1056,14 @@ function SeriesScreen() {
   React.useEffect(() => {
     if (!selectedCategory && visibleCategories[0]) setSelectedCategory(visibleCategories[0].name);
   }, [selectedCategory, visibleCategories]);
+
+  const chooseSeriesCategory = (category: CategoryItem) => {
+    setSelectedCategory(category.name);
+    setShowCategoryGrid(false);
+    window.requestAnimationFrame(() => {
+      document.getElementById(`series-category-button-${category.id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    });
+  };
 
   if (focusedSeries) {
     return (
@@ -1080,10 +1104,17 @@ function SeriesScreen() {
     <section className="screen">
       <SectionIntro eyebrow={t("series.eyebrow")} title={t("series.title")} body={t("series.body")} />
 
-      <SectionHeader title={t("home.categories")} action={`${visibleCategories.length} ${t("home.visible")}`} />
+      <SectionHeader title={t("home.categories")} action={`${visibleCategories.length} ${t("home.visible")}`} onAction={() => setShowCategoryGrid((open) => !open)} />
+      {showCategoryGrid && (
+        <div className="category-grid-expanded">
+          {visibleCategories.map((category) => (
+            <button className={selectedCategory === category.name ? "category-grid-option active" : "category-grid-option"} key={category.id} onClick={() => chooseSeriesCategory(category)}>{category.name}</button>
+          ))}
+        </div>
+      )}
       <div className="category-grid category-top-row series-category-row">
         {visibleCategories.map((category) => (
-          <button id={`series-category-button-${category.id}`} className={selectedCategory === category.name ? "category-pill active" : "category-pill"} key={category.id} onClick={() => setSelectedCategory(category.name)}>{category.name}</button>
+          <button id={`series-category-button-${category.id}`} className={selectedCategory === category.name ? "category-pill active" : "category-pill"} key={category.id} onClick={() => chooseSeriesCategory(category)}>{category.name}</button>
         ))}
       </div>
       <div className="content-panel category-drop-panel active">
@@ -2202,8 +2233,8 @@ function SectionIntro({ eyebrow, title, body }: { eyebrow: string; title: string
   return <div className="section-intro"><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p>{body}</p></div>;
 }
 
-function SectionHeader({ title, action }: { title: string; action: string }) {
-  return <div className="section-header"><h2>{title}</h2><span>{action}</span></div>;
+function SectionHeader({ title, action, onAction }: { title: string; action: string; onAction?: () => void }) {
+  return <div className="section-header"><h2>{title}</h2>{onAction ? <button className="section-header-action" onClick={onAction}>{action}</button> : <span>{action}</span>}</div>;
 }
 
 function EmptyState({ icon: Icon, title, body, action, onAction }: { icon: React.ElementType; title: string; body: string; action: string; onAction: () => void }) {
