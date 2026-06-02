@@ -305,6 +305,17 @@ function mergeRecordLists(base: Record<string, string[]>, incoming: Record<strin
   return merged;
 }
 
+function uniqueCategoriesByName(items: CategoryItem[]) {
+  const map = new Map<string, CategoryItem>();
+  items.forEach((item) => {
+    const key = item.name.trim().toLowerCase();
+    if (!key) return;
+    const existing = map.get(key);
+    map.set(key, existing ? { ...existing, ...item, id: existing.id, name: existing.name } : item);
+  });
+  return Array.from(map.values());
+}
+
 function uid(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -472,7 +483,7 @@ function App() {
     setUsers((current) => mergeById(MOCK_USERS, current));
     setVideos((current) => mergeById(ALL_MOCK_VIDEOS, current));
     setSeries((current) => mergeById(MOCK_SERIES, current));
-    setCategories((current) => mergeById(defaultCategories, current));
+    setCategories((current) => uniqueCategoriesByName([...defaultCategories, ...current]));
     setUploads((current) => mergeById(MOCK_UPLOADS, current));
     setPosts((current) => mergeById(MOCK_POSTS, current));
     setPrayers((current) => mergeById(MOCK_PRAYERS, current));
@@ -486,7 +497,7 @@ function App() {
 
   const currentUser = users.find((user) => user.id === sessionId);
   const isAdmin = currentUser?.role === "admin";
-  const visibleCategories = categories.filter((category) => !category.hidden && !isPrayerCategoryName(category.name));
+  const visibleCategories = uniqueCategoriesByName(categories).filter((category) => !category.hidden && !isPrayerCategoryName(category.name));
   const publicVideos = videos.filter((video) => video.status === "Published" && !isPrayerVideo(video));
   const publicSeries = series.filter((item) => item.status === "Published");
 
@@ -549,7 +560,7 @@ function App() {
     const loadSupabaseCategories = async () => {
       const { data, error } = await supabase.from("categories").select("*").order("created_at", { ascending: true });
       if (!active || error || !data) return;
-      if (data.length > 0) setCategories(mergeById(defaultCategories, (data as DbCategory[]).map(categoryFromDb)));
+      if (data.length > 0) setCategories(uniqueCategoriesByName([...defaultCategories, ...(data as DbCategory[]).map(categoryFromDb)]));
     };
 
     void loadSupabaseVideos();
