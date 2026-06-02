@@ -155,8 +155,6 @@ button {
   font-weight: 800;
 }
 
-.brand-mark,
-.icon-button,
 .card-icon,
 .empty-icon {
   display: inline-grid;
@@ -166,35 +164,33 @@ button {
   border: 1px solid rgba(246, 210, 123, 0.2);
 }
 
+/* ── Shared header button style (brand bubble, search, bell) ── */
 .brand-mark,
 .icon-button {
+  display: inline-grid;
+  place-items: center;
   width: 38px;
   height: 38px;
   border-radius: 12px;
+  background: linear-gradient(145deg, #0e1220, #13182a);
+  border: 1px solid rgba(246, 210, 123, 0.4);
+  color: #f6d27b;
+  box-shadow: 0 0 8px rgba(246, 210, 123, 0.12);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
   overflow: hidden;
 }
 
-.icon-button {
-  background: linear-gradient(145deg, #0e1220, #13182a);
-  border: 1px solid rgba(246, 210, 123, 0.35);
-  color: #f6d27b;
-  box-shadow: 0 0 8px rgba(246, 210, 123, 0.1);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-}
-
+.brand-mark:hover,
 .icon-button:hover {
-  border-color: rgba(246, 210, 123, 0.65);
-  box-shadow: 0 0 14px rgba(246, 210, 123, 0.25);
+  border-color: rgba(246, 210, 123, 0.7);
+  box-shadow: 0 0 16px rgba(246, 210, 123, 0.28);
   background: linear-gradient(145deg, #131828, #1a2038);
 }
 
+/* Brand bubble: slightly bigger to hold the logo image */
 .brand-mark-img-wrap {
   width: 42px;
   height: 42px;
-  border-radius: 12px;
-  background: none;
-  border-color: rgba(246, 210, 123, 0.35);
-  overflow: hidden;
   padding: 0;
 }
 
@@ -202,17 +198,13 @@ button {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 0;
+  border-radius: 10px;
   display: block;
 }
 
 .top-actions {
   display: flex;
   gap: 9px;
-}
-
-.icon-button {
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .main-stage {
