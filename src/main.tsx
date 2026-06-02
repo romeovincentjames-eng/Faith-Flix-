@@ -1244,7 +1244,7 @@ function SeriesScreen() {
         </div>
         <h3 className="series-episodes-heading">Episodes</h3>
         {focusedEpisodes.length ? (
-          <div className="content-grid">
+          <div className="episode-row series-detail-episode-row">
             {focusedEpisodes.map((video, i) => (
               <div key={video.id} className="series-episode-item">
                 <span className="episode-num">Ep {i + 1}</span>

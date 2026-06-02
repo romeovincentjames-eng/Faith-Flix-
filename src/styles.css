@@ -1637,6 +1637,20 @@ select option {
   scroll-snap-align: start;
 }
 
+.series-detail-episode-row {
+  grid-auto-columns: minmax(220px, 260px);
+  padding: 2px 20px 26px;
+  scroll-padding-inline: 20px;
+}
+
+.series-detail-episode-row .video-card {
+  min-width: 0;
+}
+
+.series-detail-episode-row .series-episode-item {
+  scroll-snap-align: start;
+}
+
 @media (max-width: 560px) {
   .series-swipe-area {
     grid-auto-columns: minmax(280px, 90vw);
@@ -1644,6 +1658,12 @@ select option {
 
   .episode-row {
     grid-auto-columns: minmax(170px, 72vw);
+  }
+
+  .series-detail-episode-row {
+    grid-auto-columns: minmax(190px, 72vw);
+    padding-inline: 16px;
+    scroll-padding-inline: 16px;
   }
 }
 
