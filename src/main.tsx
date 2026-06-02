@@ -146,7 +146,6 @@ const defaultCategories = [
   "Sermons",
   "Worship Videos",
   "Testimonies",
-  "Prayer Videos",
   "Christian Short Films",
   "Faith Music Visuals",
   "Gospel Messages",
@@ -163,8 +162,6 @@ const defaultCategories = [
   "Bible Study Content",
   "Christian Creator Videos",
   "Church Media",
-  "Prayer Room Content",
-  "Answered Prayer Stories",
   "Faith Journey Videos",
 ].map((name, index) => ({ id: `cat-${index}`, name, hidden: false, custom: false }));
 
@@ -178,7 +175,6 @@ const MOCK_VIDEOS: VideoItem[] = [
   { id: "mock-v7", source: "admin", title: "Sermon on the Mount", description: "A visual Bible study through the Beatitudes — exploring what it means to live the Kingdom way.", scripture: "Matthew 5:3–12", category: "Bible Study Content", seriesId: "Red Letter Series", episode: "2", duration: "22:08", creator: "The Bible Project", tags: "sermon, beatitudes, jesus", status: "Published", videoName: "sermon-mount.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", thumbnailName: "bible-open.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1543286386-2e659306cd6c?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-22" },
   { id: "mock-v8", source: "admin", title: "Grace Like Rain", description: "A cinematic worship visual experience set to original music — experience God's grace poured out in stunning imagery.", scripture: "Ephesians 2:8", category: "Faith Music Visuals", seriesId: "", episode: "", duration: "5:33", creator: "Hillsong Creative", tags: "grace, music, visual", status: "Published", featured: true, videoName: "grace-like-rain.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", thumbnailName: "candles.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-24" },
   { id: "mock-v9", source: "admin", title: "The Prodigal Son", description: "A short cinematic film retelling the parable of the prodigal son in a modern-day setting. A story of redemption and love.", scripture: "Luke 15:11–32", category: "Christian Short Films", seriesId: "Parables of Jesus", episode: "1", duration: "28:14", creator: "RedemptionFilms", tags: "prodigal, film, parable", status: "Published", videoName: "prodigal-son.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", thumbnailName: "church-interior.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-26" },
-  { id: "mock-v10", source: "admin", title: "Praying for Your Nation", description: "Join thousands of believers in a prayer movement for national revival — intercede with scripture, worship, and bold faith.", scripture: "2 Chronicles 7:14", category: "Prayer Videos", seriesId: "Faith Journey", episode: "4", duration: "11:47", creator: "Awakening Prayer Network", tags: "prayer, nation, revival", status: "Published", videoName: "national-prayer.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4", thumbnailName: "prayer-nature.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1499810631641-541e76d678a2?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-28" },
 ];
 
 const MOCK_SERIES: SeriesItem[] = [
@@ -365,8 +361,8 @@ function App() {
 
   const currentUser = users.find((user) => user.id === sessionId);
   const isAdmin = currentUser?.role === "admin";
-  const visibleCategories = categories.filter((category) => !category.hidden);
-  const publicVideos = videos.filter((video) => video.status === "Published");
+  const visibleCategories = categories.filter((category) => !category.hidden && !isPrayerCategoryName(category.name));
+  const publicVideos = videos.filter((video) => video.status === "Published" && !isPrayerVideo(video));
   const publicSeries = series.filter((item) => item.status === "Published");
 
   React.useEffect(() => {
@@ -763,6 +759,14 @@ function statusToDb(status: Status) {
   return status.toLowerCase() as "draft" | "published" | "hidden";
 }
 
+function isPrayerCategoryName(name: string) {
+  return name.toLowerCase().includes("prayer");
+}
+
+function isPrayerVideo(video: VideoItem) {
+  return [video.category, video.title, video.tags].some((value) => value.toLowerCase().includes("prayer"));
+}
+
 function videoFromDb(video: DbVideo): VideoItem {
   return {
     id: video.id,
@@ -905,17 +909,15 @@ function HomeScreen() {
 
   return (
     <section className="screen">
-      <div className="home-logo-strip" aria-label="Faith Flix">
-        <span className="home-logo-mark"><Sparkles size={18} /></span>
-        <span>Faith Flix</span>
-      </div>
-
       <SectionHeader title={t("home.publishedVideos")} action={`${adminVideos.length} ${t("home.live")}`} />
       {latest.length ? (
         <div className="horizontal-video-row published-row home-stream-row">
           {latest.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} />)}
         </div>
       ) : <EmptyState icon={Film} title="No videos uploaded yet." body="Published platform videos will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
+
+      <SectionHeader title={t("home.publishedSeries")} action={`${publicSeries.length} ${t("home.live")}`} />
+      {publicSeries.length ? <div className="horizontal-series-row">{publicSeries.map((item) => <SeriesCard key={item.id} item={item} onClick={() => { setSelectedSeriesId(item.id); go("series"); }} />)}</div> : <EmptyState icon={Clapperboard} title={t("series.noSeries")} body={t("series.noSeriesBodyHome")} action={t("nav.series")} onAction={() => go("series")} />}
     </section>
   );
 }
@@ -1836,7 +1838,7 @@ function AdminVideos() {
                 <Field label="Creator / Ministry" value={video.creator} onChange={(creator) => update(video.id, { creator })} />
                 <label>Description<textarea value={video.description} onChange={(e) => update(video.id, { description: e.target.value })} /></label>
                 <Field label="Scripture reference" value={video.scripture} onChange={(scripture) => update(video.id, { scripture })} />
-                <Select label="Category" value={video.category} onChange={(category) => update(video.id, { category })} options={["Sermons","Worship Videos","Testimonies","Bible Study Content","Devotional Clips","Animated Bible Stories","Gospel Messages","Faith Music Visuals","Christian Short Films","Prayer Videos","Scripture Reflections","Church Media"]} />
+                <Select label="Category" value={video.category} onChange={(category) => update(video.id, { category })} options={["Sermons","Worship Videos","Testimonies","Bible Study Content","Devotional Clips","Animated Bible Stories","Gospel Messages","Faith Music Visuals","Christian Short Films","Scripture Reflections","Church Media"]} />
                 <Field label="Series title (blank = standalone)" value={video.seriesId} onChange={(seriesId) => update(video.id, { seriesId })} />
                 <Field label="Episode number" value={video.episode} onChange={(episode) => update(video.id, { episode })} />
                 <Field label="Duration (e.g. 12:34)" value={video.duration} onChange={(duration) => update(video.id, { duration })} />

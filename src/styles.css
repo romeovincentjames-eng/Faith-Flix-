@@ -3172,30 +3172,38 @@ textarea:focus {
 
 .category-grid-expanded {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 10px;
-  padding: 12px;
-  border-radius: 16px;
+  padding: 10px;
+  overflow: visible;
+  scrollbar-width: none;
+  border-radius: 26px;
   background: rgba(5, 8, 14, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(18px);
 }
 
+.category-grid-expanded::-webkit-scrollbar {
+  display: none;
+}
+
 .category-grid-option {
-  min-height: 46px;
-  padding: 0 12px;
-  border-radius: 12px;
-  color: rgba(247, 251, 255, 0.82);
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: #f7fbff;
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.11);
   font-weight: 850;
   text-align: center;
+  white-space: nowrap;
 }
 
 .category-grid-option.active {
   color: #10131a;
-  background: #f6d27b;
-  border-color: #f6d27b;
+  background: linear-gradient(135deg, #ffe29a, #d2a94f);
+  border-color: transparent;
+  box-shadow: 0 4px 20px rgba(210, 169, 79, 0.42);
 }
 
 

@@ -16,7 +16,6 @@ values
   ('Sermons', false, false),
   ('Worship Videos', false, false),
   ('Testimonies', false, false),
-  ('Prayer Videos', false, false),
   ('Christian Short Films', false, false),
   ('Faith Music Visuals', false, false),
   ('Gospel Messages', false, false),
@@ -33,8 +32,6 @@ values
   ('Bible Study Content', false, false),
   ('Christian Creator Videos', false, false),
   ('Church Media', false, false),
-  ('Prayer Room Content', false, false),
-  ('Answered Prayer Stories', false, false),
   ('Faith Journey Videos', false, false)
 on conflict (name) do nothing;
 
