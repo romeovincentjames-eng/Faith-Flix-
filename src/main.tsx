@@ -517,6 +517,7 @@ function App() {
   const [selectedVideoId, setSelectedVideoId] = React.useState("");
   const [selectedSeriesId, setSelectedSeriesId] = React.useState("");
   const [selectedMessageUser, setSelectedMessageUser] = React.useState("");
+  const [selectedCommunityUser, setSelectedCommunityUser] = React.useState("");
   const [toast, setToast] = React.useState("");
   const [uploadProgress, setUploadProgress] = React.useState<UploadProgress>({ active: false, value: 0, label: "" });
   const [pullStartY, setPullStartY] = React.useState<number | null>(null);
@@ -722,6 +723,8 @@ function App() {
     setCommSearchQuery,
     selectedMessageUser,
     setSelectedMessageUser,
+    selectedCommunityUser,
+    setSelectedCommunityUser,
     uploadProgress,
     setUploadProgress,
     users,
@@ -847,6 +850,8 @@ function buildContextShape() {
     setCommSearchQuery: React.Dispatch<React.SetStateAction<string>>;
     selectedMessageUser: string;
     setSelectedMessageUser: React.Dispatch<React.SetStateAction<string>>;
+    selectedCommunityUser: string;
+    setSelectedCommunityUser: React.Dispatch<React.SetStateAction<string>>;
     uploadProgress: UploadProgress;
     setUploadProgress: React.Dispatch<React.SetStateAction<UploadProgress>>;
     users: Profile[];
@@ -1773,7 +1778,7 @@ function CommunityScreen() {
 
 
 function CommunitySearchResults() {
-  const { commSearchQuery, posts, prayers, publicVideos, users, messages, currentUser, setSelectedVideoId, setCommunityView, setSelectedMessageUser, go, notify } = useApp();
+  const { commSearchQuery, setCommSearchQuery, posts, prayers, publicVideos, users, messages, currentUser, setSelectedVideoId, setCommunityView, setSelectedCommunityUser, setSelectedMessageUser, go, notify } = useApp();
   const q = commSearchQuery.trim().toLowerCase();
   const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
   const postMatches = posts.filter((post) => [post.author, post.text, post.scripture].join(" ").toLowerCase().includes(q));
@@ -1795,7 +1800,7 @@ function CommunitySearchResults() {
       {prayerMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Prayer Wall" action={prayerMatches.length + " prayers"} />{prayerMatches.map((prayer) => <article className="content-panel prayer-card" key={prayer.id}><p className="eyebrow">{prayer.visibility}</p><h3>{prayer.title}</h3><p>{prayer.text}</p></article>)}</section>}
       {shareMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Community Shares" action={shareMatches.length + " videos"} /><div className="content-grid">{shareMatches.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video.id)} />)}</div></section>}
       {groupMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Groups" action={groupMatches.length + " groups"} /><div className="comm-groups-grid">{groupMatches.map((group) => <button key={group.name} className="comm-group-card" onClick={() => notify(group.name + " — joining coming soon!")}><div className="comm-group-icon" style={{ background: group.color + "22", borderColor: group.color + "44" }}><Users size={22} style={{ color: group.color }} /></div><p className="comm-group-name">{group.name}</p><p className="comm-group-meta">{group.members} members</p><p className="comm-group-verse">{group.verse}</p></button>)}</div></section>}
-      {memberMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Members" action={memberMatches.length + " people"} />{memberMatches.map((member) => <button className="content-panel community-member-result" key={member.id} onClick={() => { setCommunityView("friends"); notify("Open Friends to connect with " + member.name + "."); }}><p className="eyebrow">@{member.username || "faithmember"}</p><h3>{member.name}</h3>{member.bio && <p>{member.bio}</p>}</button>)}</section>}
+      {memberMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Members" action={memberMatches.length + " people"} />{memberMatches.map((member) => <button className="content-panel community-member-result" key={member.id} onClick={() => { setSelectedCommunityUser(member.id); setCommSearchQuery(""); setCommunityView("friends"); }}><p className="eyebrow">@{member.username || "faithmember"}</p><h3>{member.name}</h3>{member.bio && <p>{member.bio}</p>}</button>)}</section>}
       {messageMatches.length > 0 && <section className="community-search-section"><SectionHeader title="DMs" action={messageMatches.length + " messages"} />{messageMatches.map((message) => { const otherId = message.fromId === currentUser?.id ? message.toId : message.fromId; const other = users.find((user) => user.id === otherId); return <button className="content-panel community-member-result" key={message.id} onClick={() => { setSelectedMessageUser(otherId); setCommunityView("messages"); }}><p className="eyebrow">{other?.name || "Message"}</p><h3>{message.text}</h3><p>{message.createdAt}</p></button>; })}</section>}
     </div>
   );
@@ -1880,7 +1885,7 @@ function DiscussionRooms() {
 }
 
 function FriendsPanel() {
-  const { currentUser, users, friendRequests, setFriendRequests, notify, t } = useApp();
+  const { currentUser, users, friendRequests, setFriendRequests, selectedCommunityUser, setSelectedCommunityUser, setSelectedMessageUser, setCommunityView, notify, t } = useApp();
   if (!currentUser) return <EmptyState icon={UserPlus} title={t("comm.noFriends")} body={t("comm.noFriendsBody")} action={t("profile.eyebrow")} onAction={() => notify(t("profile.eyebrow"))} />;
   const others = users.filter((user) => user.id !== currentUser.id && user.role !== "admin");
   const incoming = friendRequests.filter((request) => request.toId === currentUser.id && request.status === "pending");
@@ -1890,11 +1895,39 @@ function FriendsPanel() {
     setFriendRequests([...friendRequests, { id: uid("friend"), fromId: currentUser.id, toId, status: "pending" }]);
     notify(t("comm.friendRequestSent"));
   };
+  const selectedMember = users.find((user) => user.id === selectedCommunityUser && user.role !== "admin");
+  if (selectedMember) {
+    const friendship = friendRequests.find((request) => [request.fromId, request.toId].includes(currentUser.id) && [request.fromId, request.toId].includes(selectedMember.id));
+    const canMessage = friendship?.status === "accepted";
+    const actionLabel = friendship?.status === "accepted" ? "Friends" : friendship?.status === "pending" ? "Request Sent" : "Add Friend";
+    return (
+      <div className="content-panel community-profile-card">
+        <button className="text-button inline-text-button" onClick={() => setSelectedCommunityUser("")}>← Back to members</button>
+        <div className="community-profile-head">
+          <div className="community-profile-avatar">{selectedMember.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</div>
+          <div>
+            <p className="eyebrow">@{selectedMember.username || "faithmember"}</p>
+            <h2>{selectedMember.name}</h2>
+            {selectedMember.location && <p>{selectedMember.location}</p>}
+          </div>
+        </div>
+        {selectedMember.bio && <p>{selectedMember.bio}</p>}
+        <div className="profile-info-grid">
+          {selectedMember.favoriteScripture && <InfoLine label="Favorite scripture" value={selectedMember.favoriteScripture} />}
+          {selectedMember.ministry && <InfoLine label="Ministry" value={selectedMember.ministry} />}
+        </div>
+        <div className="button-row">
+          <button className={friendship ? "secondary-button" : "primary-button"} disabled={Boolean(friendship)} onClick={() => requestFriend(selectedMember.id)}><UserPlus size={17} /> {actionLabel}</button>
+          {canMessage && <button className="secondary-button" onClick={() => { setSelectedMessageUser(selectedMember.id); setCommunityView("messages"); }}><Inbox size={17} /> Message</button>}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="panel-grid">
       <div className="content-panel"><h2>{t("comm.friends")}</h2>{accepted.length ? accepted.map((request) => <FriendRow key={request.id} request={request} />) : <p>{t("comm.noFriendsYet")}</p>}</div>
       <div className="content-panel"><h2>{t("comm.requests")}</h2>{incoming.length ? incoming.map((request) => <button className="secondary-button" key={request.id} onClick={() => { setFriendRequests(friendRequests.map((item) => item.id === request.id ? { ...item, status: "accepted" } : item)); notify("Friend request accepted."); }}>Accept {users.find((user) => user.id === request.fromId)?.name}</button>) : <p>{t("comm.noRequestsYet")}</p>}</div>
-      <div className="content-panel"><h2>{t("comm.otherMembers")}</h2>{others.length ? others.map((user) => <button className="secondary-button" key={user.id} onClick={() => requestFriend(user.id)}>Add {user.name}</button>) : <p>{t("comm.noOtherUsers")}</p>}</div>
+      <div className="content-panel"><h2>{t("comm.otherMembers")}</h2>{others.length ? others.map((user) => <button className="secondary-button" key={user.id} onClick={() => setSelectedCommunityUser(user.id)}>Open {user.name}</button>) : <p>{t("comm.noOtherUsers")}</p>}</div>
     </div>
   );
 }

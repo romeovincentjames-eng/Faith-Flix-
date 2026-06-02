@@ -3757,3 +3757,39 @@ textarea:focus {
 .community-app .comm-group-icon {
   border-radius: 999px;
 }
+
+.community-profile-card {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.community-profile-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 10px 0 18px;
+}
+
+.community-profile-avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #f6d27b;
+  background: linear-gradient(145deg, rgba(246, 210, 123, 0.18), rgba(255, 255, 255, 0.06));
+  border: 1px solid rgba(246, 210, 123, 0.35);
+  font-weight: 900;
+  font-size: 1.1rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.community-profile-head h2 {
+  margin: 0;
+}
+
+.profile-info-grid {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+}
