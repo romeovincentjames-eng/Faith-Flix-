@@ -701,6 +701,10 @@ function App() {
   }, [isAdmin, page]);
 
   const visiblePage = isAdmin ? "admin-studio" : page;
+  const isCommunityShell = visiblePage === "community" || visiblePage === "upload";
+  const topSearchValue = isCommunityShell ? commSearchQuery : mainSearchQuery;
+  const setTopSearchValue = isCommunityShell ? setCommSearchQuery : setMainSearchQuery;
+  const topSearchPlaceholder = isCommunityShell ? "Search community..." : t("search.placeholder");
 
   const app = {
     page,
@@ -772,12 +776,12 @@ function App() {
               <Search size={17} className="topbar-search-icon" />
               <input
                 className="topbar-search-input"
-                placeholder={t("search.placeholder")}
+                placeholder={topSearchPlaceholder}
                 autoFocus
-                value={mainSearchQuery}
-                onChange={(e) => setMainSearchQuery(e.target.value)}
+                value={topSearchValue}
+                onChange={(e) => setTopSearchValue(e.target.value)}
               />
-              <button className="icon-button" aria-label="Close search" onClick={() => { setShowMainSearch(false); setMainSearchQuery(""); }}>
+              <button className="icon-button" aria-label="Close search" onClick={() => { setShowMainSearch(false); setTopSearchValue(""); }}>
                 <X size={19} />
               </button>
             </div>
@@ -1544,6 +1548,15 @@ const COMM_STORIES = [
   { name: "Thomas R.", initials: "TR", color: "#c4b5fd" },
 ];
 
+const COMMUNITY_GROUPS = [
+  { name: "Morning Devotions", members: 24, verse: "Psalm 143:8", color: "#f6d27b" },
+  { name: "Romans Study", members: 18, verse: "Romans 8:28", color: "#60a5fa" },
+  { name: "Youth Ministry", members: 31, verse: "Proverbs 22:6", color: "#34d399" },
+  { name: "Worship & Prayer", members: 42, verse: "Psalm 100:1", color: "#fb923c" },
+  { name: "Apologetics", members: 11, verse: "1 Peter 3:15", color: "#c4b5fd" },
+  { name: "Missionaries", members: 7, verse: "Matthew 28:19", color: "#f472b6" },
+];
+
 function CommunitySharesScreen() {
   const { publicVideos, setSelectedVideoId, go, t } = useApp();
   const userVideos = publicVideos.filter((v) => v.source === "user");
@@ -1569,8 +1582,7 @@ function CommunitySharesScreen() {
 }
 
 function CommunityScreen() {
-  const { communityView, setCommunityView, notify, go, commSearchQuery, setCommSearchQuery, t } = useApp();
-  const [showCommSearch, setShowCommSearch] = React.useState(false);
+  const { communityView, setCommunityView, notify, go, commSearchQuery, t } = useApp();
   const tabs: { id: CommunityView; label: string; icon: React.ElementType }[] = [
     { id: "feed", label: t("comm.tab.feed"), icon: MessagesSquare },
     { id: "prayer", label: t("comm.tab.prayer"), icon: HeartHandshake },
@@ -1598,26 +1610,9 @@ function CommunityScreen() {
           <span className="community-brand-icon"><Cross size={15} /></span>
           <span className="community-brand-name">{screenTitles[communityView]}</span>
         </div>
-        <div className="community-topbar-actions">
-          <button className="community-icon-btn" aria-label={showCommSearch ? "Close search" : "Search"} onClick={() => { setShowCommSearch((v) => !v); if (showCommSearch) setCommSearchQuery(""); }}>{showCommSearch ? <X size={20} /> : <Search size={20} />}</button>
-          <button className="community-icon-btn" aria-label="Write post" onClick={() => setCommunityView("feed")}><Edit3 size={20} /></button>
-        </div>
       </div>
-      {showCommSearch && (
-        <div className="comm-search-row">
-          <Search size={15} className="comm-search-icon" />
-          <input
-            className="comm-search-input"
-            placeholder={communityView === "prayer" ? "Search prayers…" : communityView === "groups" ? "Search groups…" : "Search posts…"}
-            autoFocus
-            value={commSearchQuery}
-            onChange={(e) => setCommSearchQuery(e.target.value)}
-          />
-          {commSearchQuery && <button className="community-icon-btn" onClick={() => setCommSearchQuery("")}><X size={15} /></button>}
-        </div>
-      )}
 
-      {communityView === "feed" && (
+      {communityView === "feed" && !commSearchQuery.trim() && (
         <div className="comm-story-row">
           <button className="comm-story-item" onClick={() => notify("Add your story — coming soon!")}>
             <div className="comm-story-avatar comm-story-add"><Plus size={22} /></div>
@@ -1635,20 +1630,14 @@ function CommunityScreen() {
       )}
 
       <div className="community-body">
+        {commSearchQuery.trim() ? <CommunitySearchResults /> : <>
         {communityView === "feed" && <FaithFeed />}
         {communityView === "prayer" && <PrayerWall />}
         {communityView === "shares" && <CommunitySharesScreen />}
         {communityView === "upload" && <UploadScreen />}
         {communityView === "groups" && (
           <div className="comm-groups-grid">
-            {[
-              { name: "Morning Devotions", members: 24, verse: "Psalm 143:8", color: "#f6d27b" },
-              { name: "Romans Study", members: 18, verse: "Romans 8:28", color: "#60a5fa" },
-              { name: "Youth Ministry", members: 31, verse: "Proverbs 22:6", color: "#34d399" },
-              { name: "Worship & Prayer", members: 42, verse: "Psalm 100:1", color: "#fb923c" },
-              { name: "Apologetics", members: 11, verse: "1 Peter 3:15", color: "#c4b5fd" },
-              { name: "Missionaries", members: 7, verse: "Matthew 28:19", color: "#f472b6" },
-            ].map((group) => (
+            {COMMUNITY_GROUPS.map((group) => (
               <button key={group.name} className="comm-group-card" onClick={() => notify(`${group.name} — joining coming soon!`)}>
                 <div className="comm-group-icon" style={{ background: group.color + "22", borderColor: group.color + "44" }}>
                   <Users size={22} style={{ color: group.color }} />
@@ -1662,6 +1651,7 @@ function CommunityScreen() {
         )}
         {communityView === "friends" && <FriendsPanel />}
         {communityView === "messages" && <MessagesPanel />}
+        </>}
       </div>
 
       <nav className="community-inner-nav">
@@ -1680,6 +1670,36 @@ function CommunityScreen() {
       <button className="comm-back-bar" onClick={() => go("home")} aria-label={t("comm.backToApp")}>
         Main Menu
       </button>
+    </div>
+  );
+}
+
+
+function CommunitySearchResults() {
+  const { commSearchQuery, posts, prayers, publicVideos, users, messages, currentUser, setSelectedVideoId, setCommunityView, setSelectedMessageUser, go, notify } = useApp();
+  const q = commSearchQuery.trim().toLowerCase();
+  const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
+  const postMatches = posts.filter((post) => [post.author, post.text, post.scripture].join(" ").toLowerCase().includes(q));
+  const prayerMatches = prayers.filter((prayer) => [prayer.title, prayer.text, prayer.visibility].join(" ").toLowerCase().includes(q));
+  const shareMatches = publicVideos.filter((video) => video.source === "user" && [video.title, video.description, video.category, video.creator, video.scripture, video.tags].join(" ").toLowerCase().includes(q));
+  const groupMatches = COMMUNITY_GROUPS.filter((group) => [group.name, group.verse, String(group.members)].join(" ").toLowerCase().includes(q));
+  const memberMatches = users.filter((user) => user.role !== "admin" && [user.name, user.username, user.bio, user.favoriteScripture, user.ministry, user.location].join(" ").toLowerCase().includes(q));
+  const messageMatches = currentUser
+    ? messages.filter((message) => [message.text, users.find((user) => user.id === (message.fromId === currentUser.id ? message.toId : message.fromId))?.name].join(" ").toLowerCase().includes(q) && [message.fromId, message.toId].includes(currentUser.id))
+    : [];
+  const total = postMatches.length + prayerMatches.length + shareMatches.length + groupMatches.length + memberMatches.length + messageMatches.length;
+
+  if (!total) return <EmptyState icon={Search} title="No community results found." body="Try searching posts, prayers, groups, members, shared videos, or messages." action="" onAction={() => {}} />;
+
+  return (
+    <div className="community-search-results">
+      <SectionHeader title="Community results" action={total + " found"} />
+      {postMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Faith Feed" action={postMatches.length + " posts"} />{postMatches.map((post) => <article className="content-panel" key={post.id}><p className="eyebrow">{post.author}</p><h3>{post.scripture || "Community post"}</h3><p>{post.text}</p></article>)}</section>}
+      {prayerMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Prayer Wall" action={prayerMatches.length + " prayers"} />{prayerMatches.map((prayer) => <article className="content-panel prayer-card" key={prayer.id}><p className="eyebrow">{prayer.visibility}</p><h3>{prayer.title}</h3><p>{prayer.text}</p></article>)}</section>}
+      {shareMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Community Shares" action={shareMatches.length + " videos"} /><div className="content-grid">{shareMatches.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video.id)} />)}</div></section>}
+      {groupMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Groups" action={groupMatches.length + " groups"} /><div className="comm-groups-grid">{groupMatches.map((group) => <button key={group.name} className="comm-group-card" onClick={() => notify(group.name + " — joining coming soon!")}><div className="comm-group-icon" style={{ background: group.color + "22", borderColor: group.color + "44" }}><Users size={22} style={{ color: group.color }} /></div><p className="comm-group-name">{group.name}</p><p className="comm-group-meta">{group.members} members</p><p className="comm-group-verse">{group.verse}</p></button>)}</div></section>}
+      {memberMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Members" action={memberMatches.length + " people"} />{memberMatches.map((member) => <button className="content-panel community-member-result" key={member.id} onClick={() => { setCommunityView("friends"); notify("Open Friends to connect with " + member.name + "."); }}><p className="eyebrow">@{member.username || "faithmember"}</p><h3>{member.name}</h3>{member.bio && <p>{member.bio}</p>}</button>)}</section>}
+      {messageMatches.length > 0 && <section className="community-search-section"><SectionHeader title="DMs" action={messageMatches.length + " messages"} />{messageMatches.map((message) => { const otherId = message.fromId === currentUser?.id ? message.toId : message.fromId; const other = users.find((user) => user.id === otherId); return <button className="content-panel community-member-result" key={message.id} onClick={() => { setSelectedMessageUser(otherId); setCommunityView("messages"); }}><p className="eyebrow">{other?.name || "Message"}</p><h3>{message.text}</h3><p>{message.createdAt}</p></button>; })}</section>}
     </div>
   );
 }

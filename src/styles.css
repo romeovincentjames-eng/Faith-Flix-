@@ -3628,3 +3628,20 @@ textarea:focus {
 .video-title-button:hover {
   color: #f6d27b;
 }
+
+.community-search-results,
+.community-search-section {
+  display: grid;
+  gap: 14px;
+}
+
+.community-member-result {
+  width: 100%;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.community-member-result:hover {
+  border-color: rgba(246, 210, 123, 0.28);
+}
