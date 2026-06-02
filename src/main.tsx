@@ -1718,22 +1718,6 @@ function CommunityScreen() {
         </div>
       </div>
 
-      {communityView === "feed" && !commSearchQuery.trim() && (
-        <div className="comm-story-row">
-          <button className="comm-story-item" onClick={() => notify("Add your story — coming soon!")}>
-            <div className="comm-story-avatar comm-story-add"><Plus size={22} /></div>
-            <span className="comm-story-name">Your Story</span>
-          </button>
-          {COMM_STORIES.map((member) => (
-            <button className="comm-story-item" key={member.name} onClick={() => notify(`${member.name}'s story — coming soon!`)}>
-              <div className="comm-story-avatar comm-story-ring" style={{ "--story-color": member.color } as React.CSSProperties}>
-                <span>{member.initials}</span>
-              </div>
-              <span className="comm-story-name">{member.name.split(" ")[0]}</span>
-            </button>
-          ))}
-        </div>
-      )}
 
       <div className="community-body">
         {commSearchQuery.trim() ? <CommunitySearchResults /> : <>
