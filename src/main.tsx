@@ -1088,7 +1088,8 @@ function NavButton({ label, icon: Icon, active, onClick }: { label: string; icon
 function HomeScreen() {
   const { isAdmin, publicVideos, publicSeries, go, setSelectedVideoId, setSelectedSeriesId, mainSearchQuery, t } = useApp();
   const adminVideos = publicVideos.filter((v) => v.source === "admin");
-  const latest = adminVideos.slice(-10).reverse();
+  const featuredVideos = adminVideos.filter((video) => video.featured).slice(-10).reverse();
+  const featuredSeries = publicSeries.filter((item) => item.featured);
 
 
   const openHomeVideoNormal = (video: VideoItem) => {
@@ -1141,15 +1142,15 @@ function HomeScreen() {
 
   return (
     <section className="screen">
-      <SectionHeader title={t("home.publishedVideos")} action={`${adminVideos.length} ${t("home.live")}`} />
-      {latest.length ? (
+      <SectionHeader title="Featured videos" action={`${featuredVideos.length} featured`} />
+      {featuredVideos.length ? (
         <div className="horizontal-video-row published-row home-stream-row">
-          {latest.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} onTitleOpen={() => openHomeVideoNormal(video)} />)}
+          {featuredVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} onTitleOpen={() => openHomeVideoNormal(video)} />)}
         </div>
-      ) : <EmptyState icon={Film} title="No videos uploaded yet." body="Published platform videos will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
+      ) : <EmptyState icon={Film} title="No featured videos yet." body="Mark platform videos as Featured in Admin Studio and they will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
 
-      <SectionHeader title={t("home.publishedSeries")} action={`${publicSeries.length} ${t("home.live")}`} />
-      {publicSeries.length ? <div className="horizontal-series-row home-series-row">{publicSeries.map((item) => <HomeSeriesCard key={item.id} item={item} episodeCount={publicVideos.filter((video) => video.seriesId === item.title).length} onOpen={() => { setSelectedSeriesId(item.id); go("series"); }} />)}</div> : <EmptyState icon={Clapperboard} title={t("series.noSeries")} body={t("series.noSeriesBodyHome")} action={t("nav.series")} onAction={() => go("series")} />}
+      <SectionHeader title="Featured series" action={`${featuredSeries.length} featured`} />
+      {featuredSeries.length ? <div className="horizontal-series-row home-series-row">{featuredSeries.map((item) => <HomeSeriesCard key={item.id} item={item} episodeCount={publicVideos.filter((video) => video.seriesId === item.title).length} onOpen={() => { setSelectedSeriesId(item.id); go("series"); }} />)}</div> : <EmptyState icon={Clapperboard} title="No featured series yet." body="Mark series as Featured in Admin Studio and they will appear here." action={t("nav.series")} onAction={() => go("series")} />}
     </section>
   );
 }
