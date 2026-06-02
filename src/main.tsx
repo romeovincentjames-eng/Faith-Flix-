@@ -170,6 +170,14 @@ const defaultCategories = [
   "Faith Journey Videos",
 ].map((name, index) => ({ id: `cat-${index}`, name, hidden: false, custom: false }));
 
+const COMMUNITY_VIDEO_CATEGORIES = [
+  "Testimonies",
+  "Devotional Clips",
+  "Church Clips",
+  "Worship Videos",
+  "Bible Stories",
+];
+
 const MOCK_VIDEOS: VideoItem[] = [
   { id: "mock-v1", source: "admin", title: "Walking by Faith", description: "A powerful message on what it truly means to trust God in every season of life, even when you cannot see the path ahead.", scripture: "2 Corinthians 5:7", category: "Sermons", seriesId: "Faith Journey", episode: "1", duration: "12:34", creator: "Pastor James Rivers", tags: "faith, trust, walk", status: "Published", featured: false, videoName: "walking-by-faith.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", thumbnailName: "sunrise.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-10" },
   { id: "mock-v2", source: "admin", title: "The Power of the Cross", description: "Discover the transforming power of the cross and what Jesus's sacrifice means for our lives today.", scripture: "1 Corinthians 1:18", category: "Gospel Messages", seriesId: "Gospel Messages Origins", episode: "1", duration: "8:45", creator: "Faith Flix", tags: "cross, gospel, salvation", status: "Published", featured: true, videoName: "power-of-cross.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", thumbnailName: "cross-sunset.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-12" },
@@ -225,7 +233,9 @@ const CATEGORY_MOCK_VIDEOS: VideoItem[] = defaultCategories.map((category, index
   createdAt: `2024-03-${String(index + 1).padStart(2, "0")}`,
 }));
 
-const COMMUNITY_SHARE_MOCK_VIDEOS: VideoItem[] = defaultCategories.map((category, index) => ({
+const COMMUNITY_SHARE_MOCK_VIDEOS: VideoItem[] = COMMUNITY_VIDEO_CATEGORIES.map((categoryName, index) => {
+  const category = { name: categoryName };
+  return ({
   id: `mock-share-video-${index}`,
   source: "user",
   title: `${category.name} Community Share`,
@@ -250,7 +260,8 @@ const COMMUNITY_SHARE_MOCK_VIDEOS: VideoItem[] = defaultCategories.map((category
   cropDimension: ["9:16", "4:5", "1:1"][index % 3],
   cropRatio: ["9 / 16", "4 / 5", "1 / 1"][index % 3],
   createdAt: `2024-05-${String((index % 25) + 1).padStart(2, "0")}`,
-}));
+});
+});
 
 const MOCK_SERIES: SeriesItem[] = [
   { id: "mock-s1", title: "Faith Journey", description: "A 6-part series on the foundations of Christian faith for believers at every stage of their walk.", posterName: "faith-journey.jpg", posterUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80", scriptureTheme: "Hebrews 11:1", category: "Sermons", status: "Published", featured: true },
@@ -651,10 +662,10 @@ function App() {
   };
 
   React.useEffect(() => {
-    const demoVersion = "faithflix-demo-content-v8";
+    const demoVersion = "faithflix-demo-content-v9";
     if (localStorage.getItem(demoVersion)) return;
     setUsers((current) => mergeById(MOCK_USERS, current));
-    setVideos((current) => mergeById(ALL_MOCK_VIDEOS, current));
+    setVideos((current) => mergeById(ALL_MOCK_VIDEOS, current.filter((video) => !video.id.startsWith("mock-share-video-") || COMMUNITY_VIDEO_CATEGORIES.includes(video.category))));
     setSeries((current) => mergeById(ALL_MOCK_SERIES, current));
     setCategories((current) => uniqueCategoriesByName([...defaultCategories, ...current]));
     setUploads((current) => mergeById(MOCK_UPLOADS, current));
@@ -1545,8 +1556,8 @@ function SeriesScreen() {
 }
 
 function UploadScreen() {
-  const { currentUser, isAdmin, visibleCategories, setUploads, setVideos, setSelectedVideoId, setCommunityView, setUploadProgress, notify, go, t } = useApp();
-  const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: visibleCategories[0]?.name ?? "", testimonyType: "Testimony", visibility: "Public", tags: "", consent: false, rules: false, cropDimension: "9:16", cropRatio: "9 / 16" });
+  const { currentUser, isAdmin, setUploads, setVideos, setSelectedVideoId, setCommunityView, setUploadProgress, notify, go, t } = useApp();
+  const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], testimonyType: "Testimony", visibility: "Public", tags: "", consent: false, rules: false, cropDimension: "9:16", cropRatio: "9 / 16" });
   const [videoFile, setVideoFile] = React.useState<File | null>(null);
   const [thumbFile, setThumbFile] = React.useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = React.useState("");
@@ -1614,7 +1625,7 @@ function UploadScreen() {
         <Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
         <label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
         <Field label="Scripture reference" value={form.scripture} onChange={(scripture) => setForm({ ...form, scripture })} />
-        <Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={visibleCategories.map((item) => item.name)} />
+        <Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={COMMUNITY_VIDEO_CATEGORIES} />
         <Select label="Testimony type" value={form.testimonyType} onChange={(testimonyType) => setForm({ ...form, testimonyType })} options={["Testimony", "Answered prayer", "Devotional", "Church clip", "Worship"]} />
         <Select label="Visibility" value={form.visibility} onChange={(visibility) => setForm({ ...form, visibility })} options={["Public", "Friends", "Private"]} />
         <Field label="Tags" value={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
@@ -1926,8 +1937,7 @@ function playVideoFullscreen(video: VideoItem, notify: (message: string) => void
 function CommunitySharesScreen({ compact = false }: { compact?: boolean }) {
   const { publicVideos, notify, go, t } = useApp();
   const [selectedCategory, setSelectedCategory] = React.useState("All");
-  const userVideos = publicVideos.filter((v) => v.source === "user");
-  const shareCategories = Array.from(new Set(userVideos.map((video) => video.category).filter(Boolean)));
+  const userVideos = publicVideos.filter((v) => v.source === "user" && !v.seriesId);
   const filteredVideos = selectedCategory === "All" ? userVideos : userVideos.filter((video) => video.category === selectedCategory);
   const openVideo = (video: VideoItem) => playVideoFullscreen(video, notify);
   return (
@@ -1943,7 +1953,7 @@ function CommunitySharesScreen({ compact = false }: { compact?: boolean }) {
       {userVideos.length > 0 && (
         <div className="community-share-filter" aria-label="Filter community shares by category">
           <button className={selectedCategory === "All" ? "community-share-pill active" : "community-share-pill"} onClick={() => setSelectedCategory("All")}>All</button>
-          {shareCategories.map((category) => (
+          {COMMUNITY_VIDEO_CATEGORIES.map((category) => (
             <button className={selectedCategory === category ? "community-share-pill active" : "community-share-pill"} key={category} onClick={() => setSelectedCategory(category)}>{category}</button>
           ))}
         </div>
@@ -2064,7 +2074,8 @@ function CommunitySearchResults() {
 }
 
 function FaithFeed() {
-  const { currentUser, posts, setPosts, notify, comments, commSearchQuery, t } = useApp();
+  const { currentUser, posts, setPosts, notify, comments, commSearchQuery } = useApp();
+  const [feedMode, setFeedMode] = React.useState<"posts" | "videos">("posts");
   const [text, setText] = React.useState("");
   const [scripture, setScripture] = React.useState("");
   const [image, setImage] = React.useState<File | null>(null);
@@ -2092,17 +2103,109 @@ function FaithFeed() {
 
   return (
     <>
-      <div className="form-card">
-        <label>Encouragement<textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Share faith-based encouragement" /></label>
-        <Field label="Scripture reference" value={scripture} onChange={setScripture} />
-        <FileField label="Optional image" onChange={setImage} />
-        <button className="primary-button" onClick={create}>Share Post</button>
+      <div className="feed-mode-switch" role="tablist" aria-label="Feed content type">
+        <button className={feedMode === "posts" ? "feed-mode-pill active" : "feed-mode-pill"} onClick={() => setFeedMode("posts")} type="button">Posts</button>
+        <button className={feedMode === "videos" ? "feed-mode-pill active" : "feed-mode-pill"} onClick={() => setFeedMode("videos")} type="button">Videos</button>
       </div>
-      {!commSearchQuery && <CommunitySharesScreen compact />}
-      {commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={Search} title="No posts match your search." body={`Try a different keyword.`} action="" onAction={() => {}} />}
-      {filteredPosts.map((post) => <PostCard key={post.id} post={post} comments={comments.filter((item) => item.targetId === post.id)} onToggle={togglePost} />)}
-      {!commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={MessagesSquare} title="No community posts yet. Be the first to share encouragement." body="Faith Feed posts will appear here." action="Write encouragement" onAction={() => notify("Use the form above to share encouragement.")} />}
+
+      {feedMode === "posts" ? (
+        <>
+          <div className="form-card">
+            <label>Encouragement<textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Share faith-based encouragement" /></label>
+            <Field label="Scripture reference" value={scripture} onChange={setScripture} />
+            <FileField label="Optional image" onChange={setImage} />
+            <button className="primary-button" onClick={create}>Share Post</button>
+          </div>
+          {commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={Search} title="No posts match your search." body="Try a different keyword." action="" onAction={() => {}} />}
+          {filteredPosts.map((post) => <PostCard key={post.id} post={post} comments={comments.filter((item) => item.targetId === post.id)} onToggle={togglePost} />)}
+          {!commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={MessagesSquare} title="No community posts yet. Be the first to share encouragement." body="Faith Feed posts will appear here." action="Write encouragement" onAction={() => notify("Use the form above to share encouragement.")} />}
+        </>
+      ) : (
+        <>
+          <CommunityVideoComposer />
+          <CommunitySharesScreen compact />
+          <CommunitySeriesShelf />
+        </>
+      )}
     </>
+  );
+}
+
+function CommunityVideoComposer() {
+  const { currentUser, setVideos, setSelectedVideoId, notify } = useApp();
+  const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], tags: "" });
+  const [videoFile, setVideoFile] = React.useState<File | null>(null);
+  const [thumbFile, setThumbFile] = React.useState<File | null>(null);
+
+  const postVideo = () => {
+    if (!currentUser) return notify("Create an account before posting a video.");
+    if (!form.title.trim()) return notify("Add a video title.");
+    if (!videoFile) return notify("Choose a video file first.");
+    const videoInfo = fileInfo(videoFile);
+    const thumbInfo = fileInfo(thumbFile);
+    const nextVideo: VideoItem = {
+      id: uid("feed-video"),
+      source: "user",
+      title: form.title.trim(),
+      description: form.description,
+      scripture: form.scripture,
+      category: form.category,
+      seriesId: "",
+      episode: "",
+      duration: "",
+      creator: currentUser.name,
+      tags: form.tags,
+      status: "Published",
+      featured: false,
+      videoName: videoInfo.name,
+      videoUrl: videoInfo.url,
+      thumbnailName: thumbInfo.name,
+      thumbnailUrl: thumbInfo.url,
+      cropDimension: "9:16",
+      cropRatio: "9 / 16",
+      createdAt: new Date().toLocaleString(),
+    };
+    setVideos((current) => [nextVideo, ...current]);
+    setSelectedVideoId(nextVideo.id);
+    setForm({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], tags: "" });
+    setVideoFile(null);
+    setThumbFile(null);
+    notify("Video posted to the feed.");
+  };
+
+  return (
+    <div className="form-card community-video-composer">
+      <SectionHeader title="Post a video" action="Community" />
+      <Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
+      <label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
+      <Field label="Scripture reference" value={form.scripture} onChange={(scripture) => setForm({ ...form, scripture })} />
+      <Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={COMMUNITY_VIDEO_CATEGORIES} />
+      <Field label="Tags" value={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
+      <FileField label="Video file" onChange={setVideoFile} />
+      <FileField label="Thumbnail image" onChange={setThumbFile} />
+      <button className="primary-button" type="button" onClick={postVideo}>Post Video</button>
+    </div>
+  );
+}
+
+function CommunitySeriesShelf() {
+  const { publicSeries, publicVideos, setSelectedSeriesId, go } = useApp();
+  const communitySeries = publicSeries.filter((item) => item.id.startsWith("user-series") || item.id.startsWith("mock-user-series") || item.title.toLowerCase().includes("community series"));
+
+  if (!communitySeries.length) {
+    return <EmptyState icon={Clapperboard} title="No community series yet" body="Series uploaded from the Upload section will appear here." action="Create Series" onAction={() => go("upload")} />;
+  }
+
+  return (
+    <section className="community-series-section">
+      <SectionHeader title="Community series" action={`${communitySeries.length} series`} />
+      <div className="horizontal-series-row home-series-row community-series-row">
+        {communitySeries.map((item) => {
+          const count = publicVideos.filter((video) => video.seriesId === item.title).length;
+          return <HomeSeriesCard key={item.id} item={item} episodeCount={count} onOpen={() => { setSelectedSeriesId(item.id); go("series"); }} />;
+        })}
+      </div>
+    </section>
   );
 }
 
