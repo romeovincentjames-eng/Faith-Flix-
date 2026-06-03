@@ -948,7 +948,7 @@ function App() {
           {visiblePage === "series" && <SeriesScreen />}
           {(visiblePage === "upload") && <CommunityScreen />}
           {visiblePage === "community" && <CommunityScreen />}
-          {visiblePage === "worship" && <WorshipScreen />}
+          <div style={{ display: visiblePage === "worship" ? "contents" : "none" }}><WorshipScreen /></div>
           {visiblePage === "saved" && <SavedScreen />}
           {visiblePage === "profile" && <ProfileScreen />}
           {visiblePage === "forgot-password" && <ForgotPasswordScreen />}
@@ -1318,6 +1318,7 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
         if (entry.isIntersecting) {
           videoRef.current?.play().catch(() => {});
           setPaused(false);
+          window.dispatchEvent(new CustomEvent("pauseWorshipAudio"));
         } else {
           videoRef.current?.pause();
         }
@@ -1974,6 +1975,12 @@ function WorshipScreen() {
   const [showUploadSheet, setShowUploadSheet] = React.useState(false);
   const audioRef = React.useRef<HTMLAudioElement>(null);
 
+  React.useEffect(() => {
+    const handler = () => { audioRef.current?.pause(); setIsPlaying(false); };
+    window.addEventListener("pauseWorshipAudio", handler);
+    return () => window.removeEventListener("pauseWorshipAudio", handler);
+  }, []);
+
   const songQuery = worshipSearchQuery.trim().toLowerCase();
   const filteredSongs = (songQuery
     ? worshipSongs.filter((s) => [s.title, s.artist, s.description, s.uploadedBy].join(" ").toLowerCase().includes(songQuery))
@@ -2075,10 +2082,12 @@ function WorshipScreen() {
         ))}
       </div>
 
-      {/* Upload FAB */}
-      <button className="comm-fab" aria-label="Upload worship song" onClick={() => setShowUploadSheet(true)}>
-        <Plus size={24} />
-      </button>
+      {/* Upload FAB — hidden while a song is playing */}
+      {!isPlaying && (
+        <button className="comm-fab" aria-label="Upload worship song" onClick={() => setShowUploadSheet(true)}>
+          <Plus size={24} />
+        </button>
+      )}
 
       {showUploadSheet && <WorshipUploadSheet onClose={() => setShowUploadSheet(false)} />}
 
