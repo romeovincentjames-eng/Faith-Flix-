@@ -2554,9 +2554,12 @@ function CommunityUpload({ onDone }: { onDone?: () => void } = {}) {
         <Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={COMMUNITY_VIDEO_CATEGORIES} />
         <Select label="Type" value={form.testimonyType} onChange={(testimonyType) => setForm({ ...form, testimonyType })} options={["Testimony", "Answered prayer", "Devotional", "Church clip", "Worship"]} />
         <Field label="Tags (optional)" value={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
-        <CropDimensionPicker value={form.cropDimension} onChange={(option) => setForm({ ...form, cropDimension: option.label, cropRatio: option.ratio })} />
+        <div className="comm-format-notice">
+          <span className="comm-format-badge">9:16 Vertical</span>
+          <span className="comm-format-text">Videos must be vertical to appear in the Watch feed.</span>
+        </div>
         <FileField label="Video file" onChange={setVideoFile} />
-        <PhotoCropChooser label="Thumbnail (optional)" value={thumbPreview} cropLabel={form.cropDimension} cropRatio={form.cropRatio} onChange={(file, previewUrl) => { setThumbFile(file); setThumbPreview(previewUrl); }} />
+        <PhotoCropChooser label="Thumbnail (optional)" value={thumbPreview} cropLabel="9:16" cropRatio="9 / 16" onChange={(file, previewUrl) => { setThumbFile(file); setThumbPreview(previewUrl); }} />
         <Check label="I have permission to share this content." checked={form.consent} onChange={(consent) => setForm({ ...form, consent })} />
         <Check label="This submission follows the Faith Flix content rules." checked={form.rules} onChange={(rules) => setForm({ ...form, rules })} />
         <button className="primary-button" type="button" onClick={submit}>Post Now</button>
