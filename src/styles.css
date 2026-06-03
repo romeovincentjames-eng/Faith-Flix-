@@ -1071,9 +1071,9 @@ select option {
 
 .home-series-card {
   display: grid;
-  grid-template-columns: 116px minmax(0, 1fr);
-  gap: 13px;
-  min-height: 180px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  min-height: 130px;
   padding: 12px;
   overflow: hidden;
   color: #f7fbff;
@@ -1096,9 +1096,9 @@ select option {
   position: relative;
   overflow: hidden;
   align-self: stretch;
-  min-height: 156px;
+  min-height: 108px;
   aspect-ratio: 3 / 4;
-  border-radius: 19px;
+  border-radius: 14px;
   background: #02040a;
 }
 
@@ -1201,16 +1201,16 @@ select option {
 
 @media (max-width: 560px) {
   .home-series-card {
-    grid-template-columns: 106px minmax(0, 1fr);
-    min-height: 164px;
+    grid-template-columns: 88px minmax(0, 1fr);
+    min-height: 118px;
     gap: 10px;
     padding: 10px;
-    border-radius: 22px;
+    border-radius: 18px;
   }
 
   .home-series-thumb {
-    min-height: 140px;
-    border-radius: 17px;
+    min-height: 98px;
+    border-radius: 12px;
   }
 
   .home-series-info h3 {
@@ -6012,15 +6012,15 @@ textarea:focus {
 .home-series-shelf {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 268px;
+  grid-auto-columns: 238px;
   gap: 10px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
   scroll-padding-inline-start: 50%;
-  scroll-padding-inline-end: calc(50% - 134px);
+  scroll-padding-inline-end: calc(50% - 119px);
   padding-inline-start: 16px;
-  padding-inline-end: calc(50% - 134px);
+  padding-inline-end: calc(50% - 119px);
   padding-block: 4px 18px;
   scrollbar-width: none;
 }
@@ -6035,9 +6035,9 @@ textarea:focus {
 
 @media (max-width: 390px) {
   .home-series-shelf {
-    grid-auto-columns: 245px;
-    scroll-padding-inline-end: calc(50% - 122px);
-    padding-inline-end: calc(50% - 122px);
+    grid-auto-columns: 218px;
+    scroll-padding-inline-end: calc(50% - 109px);
+    padding-inline-end: calc(50% - 109px);
   }
 }
 
