@@ -2893,8 +2893,7 @@ textarea:focus {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(0,0,0,0.65);
-  backdrop-filter: blur(5px);
+  background: rgba(0,0,0,0.55);
   animation: fade-in 0.22s ease;
 }
 

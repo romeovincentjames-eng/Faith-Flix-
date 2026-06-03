@@ -2450,24 +2450,24 @@ function WorshipScreen() {
               <h2 className="ws-featured-title">{featuredEp.title}</h2>
               <p className="ws-featured-artist">{featuredEp.artist}</p>
               {featuredEp.description && <p className="ws-featured-desc">{featuredEp.description}</p>}
-              <div className="ws-featured-tracklist">
-                {featuredEpSongs.map((s, i) => (
-                  <div key={s.id} className={`ws-feat-track${currentSongId === s.id ? " active" : ""}`} onClick={() => playSong(s)} role="button" tabIndex={0}>
-                    <span className="ws-feat-track-num">{currentSongId === s.id && isPlaying ? <span className="sp-eq"><span/><span/><span/></span> : i + 1}</span>
-                    <span className="ws-feat-track-name">{s.title}</span>
-                    <button className="ws-heart-btn" aria-label={savedWorshipSongIds.includes(s.id) ? "Unsave" : "Save"} onClick={e => { e.stopPropagation(); toggleSave(s.id); }}>
-                      <Heart size={13} fill={savedWorshipSongIds.includes(s.id) ? "currentColor" : "none"} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="ws-featured-actions">
-                <button className="sp-play-btn" onClick={() => featuredEpSongs[0] && playSong(featuredEpSongs[0])}>
-                  <Play size={15} /> Play EP
-                </button>
-                <button className="sp-shuffle-btn" onClick={() => { const r = featuredEpSongs[Math.floor(Math.random() * featuredEpSongs.length)]; if (r) { setShuffle(true); playSong(r); } }}>Shuffle</button>
-              </div>
             </div>
+          </div>
+          <div className="ws-featured-tracklist">
+            {featuredEpSongs.map((s, i) => (
+              <div key={s.id} className={`ws-feat-track${currentSongId === s.id ? " active" : ""}`} onClick={() => playSong(s)} role="button" tabIndex={0}>
+                <span className="ws-feat-track-num">{currentSongId === s.id && isPlaying ? <span className="sp-eq"><span/><span/><span/></span> : i + 1}</span>
+                <span className="ws-feat-track-name">{s.title}</span>
+                <button className="ws-heart-btn" aria-label={savedWorshipSongIds.includes(s.id) ? "Unsave" : "Save"} onClick={e => { e.stopPropagation(); toggleSave(s.id); }}>
+                  <Heart size={13} fill={savedWorshipSongIds.includes(s.id) ? "currentColor" : "none"} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="ws-featured-actions">
+            <button className="sp-play-btn" onClick={() => featuredEpSongs[0] && playSong(featuredEpSongs[0])}>
+              <Play size={15} /> Play EP
+            </button>
+            <button className="sp-shuffle-btn" onClick={() => { const r = featuredEpSongs[Math.floor(Math.random() * featuredEpSongs.length)]; if (r) { setShuffle(true); playSong(r); } }}>Shuffle</button>
           </div>
         </div>
       )}
