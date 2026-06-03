@@ -151,6 +151,8 @@ type SavedList = { id: string; name: string; videoIds: string[] };
 type UploadProgress = { active: boolean; value: number; label: string };
 type WorshipAlbum = { id: string; title: string; artist: string; coverUrl?: string; type: "Single" | "EP" | "Album"; year: string; trackIds: string[]; description?: string };
 type WorshipSong = { id: string; title: string; artist: string; description: string; category: string; duration: string; audioName: string; audioUrl?: string; coverName: string; coverUrl?: string; uploadedBy: string; createdAt: string; albumId?: string; albumType?: "Single" | "EP" | "Album" };
+type AppNotifType = "friend_request" | "friend_accepted" | "dm" | "like" | "comment" | "friend_post" | "prayer_prayed";
+type AppNotif = { id: string; type: AppNotifType; title: string; body: string; preview?: string; fromUserId?: string; createdAt?: string; action: string; actionView?: string };
 
 const adminEmail = "romeovgalasso@gmail.com";
 const adminPassword = "Rvjg123100";
@@ -612,6 +614,188 @@ function alignProfessionalVideoWithSeries<T extends Pick<VideoItem, "source" | "
   return video.source === "admin" ? { ...video, seriesId: professionalSeriesTitle(video) } : video;
 }
 
+function deriveNotifications(args: {
+  currentUser: Profile | undefined;
+  users: Profile[];
+  friendRequests: FriendRequest[];
+  messages: Message[];
+  posts: CommunityPost[];
+  comments: CommentItem[];
+  prayers: PrayerRequest[];
+}): AppNotif[] {
+  const { currentUser, users, friendRequests, messages, posts, comments, prayers } = args;
+  if (!currentUser) return [];
+  const notifs: AppNotif[] = [];
+
+  const myFriendIds = friendRequests
+    .filter((fr) => (fr.fromId === currentUser.id || fr.toId === currentUser.id) && fr.status === "accepted")
+    .map((fr) => (fr.fromId === currentUser.id ? fr.toId : fr.fromId));
+
+  friendRequests
+    .filter((fr) => fr.toId === currentUser.id && fr.status === "pending")
+    .forEach((fr) => {
+      const from = users.find((u) => u.id === fr.fromId);
+      notifs.push({ id: `fr-${fr.id}`, type: "friend_request", title: "Friend Request", body: `${from?.name ?? "Someone"} sent you a friend request`, fromUserId: fr.fromId, action: "community", actionView: "friends" });
+    });
+
+  friendRequests
+    .filter((fr) => fr.fromId === currentUser.id && fr.status === "accepted")
+    .forEach((fr) => {
+      const to = users.find((u) => u.id === fr.toId);
+      notifs.push({ id: `fa-${fr.id}`, type: "friend_accepted", title: "Now Friends!", body: `${to?.name ?? "Someone"} accepted your friend request`, fromUserId: fr.toId, action: "community", actionView: "friends" });
+    });
+
+  const dmBySender: Record<string, Message> = {};
+  messages.filter((m) => m.toId === currentUser.id).forEach((m) => {
+    if (!dmBySender[m.fromId] || m.createdAt > dmBySender[m.fromId].createdAt) dmBySender[m.fromId] = m;
+  });
+  Object.entries(dmBySender).forEach(([fromId, msg]) => {
+    const from = users.find((u) => u.id === fromId);
+    notifs.push({ id: `dm-${fromId}`, type: "dm", title: "New Message", body: `${from?.name ?? "Someone"} sent you a message`, preview: msg.text.length > 80 ? msg.text.slice(0, 80) + "…" : msg.text, fromUserId: fromId, createdAt: msg.createdAt, action: "community", actionView: "messages" });
+  });
+
+  const myPosts = posts.filter((p) => p.userId === currentUser.id);
+  myPosts.forEach((post) => {
+    if (post.likes.length > 0) {
+      notifs.push({ id: `like-${post.id}`, type: "like", title: "Post Liked", body: `${post.likes.length} ${post.likes.length === 1 ? "person" : "people"} liked your post`, preview: post.text.length > 60 ? post.text.slice(0, 60) + "…" : post.text, action: "community", actionView: "posts" });
+    }
+  });
+
+  const myPostIds = new Set(myPosts.map((p) => p.id));
+  const grouped: Record<string, CommentItem[]> = {};
+  comments.filter((c) => myPostIds.has(c.targetId)).forEach((c) => { (grouped[c.targetId] ??= []).push(c); });
+  Object.entries(grouped).forEach(([postId, comms]) => {
+    const post = myPosts.find((p) => p.id === postId);
+    notifs.push({ id: `comment-${postId}`, type: "comment", title: "New Comment", body: `${comms.length} ${comms.length === 1 ? "comment" : "comments"} on your post`, preview: post?.text.slice(0, 60) + (post && post.text.length > 60 ? "…" : ""), action: "community", actionView: "posts" });
+  });
+
+  myFriendIds.forEach((friendId) => {
+    const friendPosts = posts.filter((p) => p.userId === friendId);
+    if (friendPosts.length > 0) {
+      const friend = users.find((u) => u.id === friendId);
+      notifs.push({ id: `fp-${friendId}`, type: "friend_post", title: "Friend Posted", body: `${friend?.name ?? "A friend"} shared something new`, preview: friendPosts[0].text.length > 60 ? friendPosts[0].text.slice(0, 60) + "…" : friendPosts[0].text, fromUserId: friendId, action: "community", actionView: "posts" });
+    }
+  });
+
+  prayers.filter((p) => p.userId === currentUser.id).forEach((prayer) => {
+    const count = (prayer.actions.prayed ?? []).length;
+    if (count > 0) {
+      notifs.push({ id: `prayed-${prayer.id}`, type: "prayer_prayed", title: "Prayer Support", body: `${count} ${count === 1 ? "person is" : "people are"} praying for "${prayer.title}"`, action: "community", actionView: "prayer" });
+    }
+  });
+
+  return notifs;
+}
+
+function NotifBadge({ readNotifIds, currentUser, users, friendRequests, messages, posts, comments, prayers }: {
+  readNotifIds: string[]; currentUser: Profile | undefined; users: Profile[];
+  friendRequests: FriendRequest[]; messages: Message[]; posts: CommunityPost[];
+  comments: CommentItem[]; prayers: PrayerRequest[];
+}) {
+  const notifs = deriveNotifications({ currentUser, users, friendRequests, messages, posts, comments, prayers });
+  const unread = notifs.filter((n) => !readNotifIds.includes(n.id)).length;
+  if (unread === 0) return null;
+  return <span className="notif-count-badge" aria-label={`${unread} unread`}>{unread > 9 ? "9+" : unread}</span>;
+}
+
+function NotificationPanel({ onClose }: { onClose: () => void }) {
+  const { currentUser, users, friendRequests, messages, posts, comments, prayers, readNotifIds, setReadNotifIds, go } = useApp();
+
+  const notifs = React.useMemo(() =>
+    deriveNotifications({ currentUser, users, friendRequests, messages, posts, comments, prayers }),
+    [currentUser, users, friendRequests, messages, posts, comments, prayers]
+  );
+
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  const markAllRead = () => setReadNotifIds(notifs.map((n) => n.id));
+
+  const handleNotif = (n: AppNotif) => {
+    setReadNotifIds((prev) => prev.includes(n.id) ? prev : [...prev, n.id]);
+    go(n.action as Parameters<typeof go>[0]);
+    onClose();
+  };
+
+  const unreadCount = notifs.filter((n) => !readNotifIds.includes(n.id)).length;
+
+  const notifIcon = (type: AppNotifType) => {
+    const base = "nc-icon-wrap";
+    switch (type) {
+      case "friend_request": return <span className={`${base} nc-icon-gold`}><UserPlus size={16} /></span>;
+      case "friend_accepted": return <span className={`${base} nc-icon-blue`}><Users size={16} /></span>;
+      case "dm": return <span className={`${base} nc-icon-blue`}><MessageCircle size={16} /></span>;
+      case "like": return <span className={`${base} nc-icon-red`}><Heart size={16} /></span>;
+      case "comment": return <span className={`${base} nc-icon-gold`}><MessageCircle size={16} /></span>;
+      case "friend_post": return <span className={`${base} nc-icon-gold`}><MessagesSquare size={16} /></span>;
+      case "prayer_prayed": return <span className={`${base} nc-icon-gold`}><HeartHandshake size={16} /></span>;
+    }
+  };
+
+  const initials = (userId?: string) => {
+    const u = users.find((u) => u.id === userId);
+    return u ? u.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() : "?";
+  };
+
+  return (
+    <>
+      <div className="nc-overlay" onClick={onClose} />
+      <div className="nc-panel" role="dialog" aria-label="Notifications">
+        <div className="nc-header">
+          <h2 className="nc-title">Notifications</h2>
+          {unreadCount > 0 && (
+            <button className="nc-mark-read" onClick={markAllRead}>Mark all read</button>
+          )}
+          <button className="icon-button" onClick={onClose} aria-label="Close"><X size={18} /></button>
+        </div>
+
+        {notifs.length === 0 ? (
+          <div className="nc-empty">
+            <Bell size={36} style={{ color: "var(--gold)", marginBottom: 12, opacity: 0.5 }} />
+            <p>No notifications yet.</p>
+            <span>When friends post, message you, or interact with your content you'll see it here.</span>
+          </div>
+        ) : (
+          <div className="nc-list">
+            {notifs.map((n) => {
+              const isRead = readNotifIds.includes(n.id);
+              return (
+                <button key={n.id} className={`nc-item${isRead ? "" : " nc-item-unread"}`} onClick={() => handleNotif(n)}>
+                  <div className="nc-item-left">
+                    {n.fromUserId ? (
+                      <div className="nc-avatar">
+                        {initials(n.fromUserId)}
+                        <div className="nc-avatar-icon">{notifIcon(n.type)}</div>
+                      </div>
+                    ) : (
+                      <div className="nc-icon-only">{notifIcon(n.type)}</div>
+                    )}
+                  </div>
+                  <div className="nc-item-body">
+                    <div className="nc-item-header-row">
+                      <span className="nc-item-title">{n.title}</span>
+                      {n.createdAt && <span className="nc-item-time">{n.createdAt}</span>}
+                      {!isRead && <span className="nc-unread-dot" />}
+                    </div>
+                    <p className="nc-item-body-text">{n.body}</p>
+                    {n.preview && <p className="nc-item-preview">"{n.preview}"</p>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {notifs.length > 0 && unreadCount === 0 && (
+          <p className="nc-all-read">You're all caught up ✓</p>
+        )}
+      </div>
+    </>
+  );
+}
+
 function App() {
   const [page, setPage] = React.useState<Page>(() => {
     const savedPage = sessionStorage.getItem("faithflix-refresh-page") as Page | null;
@@ -653,11 +837,13 @@ function App() {
   const [messages, setMessages] = useStoredState<Message[]>("faithflix-messages", MOCK_MESSAGES);
   const [worshipSongs, setWorshipSongs] = useStoredState<WorshipSong[]>("faithflix-worship-songs", MOCK_WORSHIP_SONGS);
   const [worshipAlbums, setWorshipAlbums] = useStoredState<WorshipAlbum[]>("faithflix-worship-albums", MOCK_WORSHIP_ALBUMS);
+  const [readNotifIds, setReadNotifIds] = useStoredState<string[]>("faithflix-read-notifs", []);
   const [mainSearchQuery, setMainSearchQuery] = React.useState("");
   const t = React.useCallback((key: string) => translate("en", key), []);
   const [commSearchQuery, setCommSearchQuery] = React.useState("");
   const [worshipSearchQuery, setWorshipSearchQuery] = React.useState("");
   const [showMainSearch, setShowMainSearch] = React.useState(false);
+  const [notifPanelOpen, setNotifPanelOpen] = React.useState(false);
 
   const notify = (message: string) => {
     setToast(message);
@@ -891,6 +1077,8 @@ function App() {
     setWorshipSongs,
     worshipAlbums,
     setWorshipAlbums,
+    readNotifIds,
+    setReadNotifIds,
     notify,
     signOut,
     triggerSplash,
@@ -929,9 +1117,9 @@ function App() {
                 </button>
                 <div className="top-actions">
                   <button className="icon-button topbar-search-btn" aria-label="Search" onClick={() => setShowMainSearch(true)}><Search size={19} /></button>
-                  <button className="icon-button topbar-notif-btn" aria-label="Notifications" onClick={() => notify(t("toast.noNotifications"))}>
+                  <button className="icon-button topbar-notif-btn" aria-label="Notifications" onClick={() => setNotifPanelOpen(true)}>
                     <Bell size={19} />
-                    <span className="notif-dot" aria-hidden="true" />
+                    <NotifBadge readNotifIds={readNotifIds} currentUser={currentUser} users={users} friendRequests={friendRequests} messages={messages} posts={posts} comments={comments} prayers={prayers} />
                   </button>
                 </div>
               </>
@@ -972,6 +1160,9 @@ function App() {
           </div>
         )}
         {toast && <div className="toast">{toast}</div>}
+        {notifPanelOpen && (
+          <NotificationPanel onClose={() => setNotifPanelOpen(false)} />
+        )}
       </div>
     </AppContext.Provider>
   );
@@ -1039,6 +1230,8 @@ function buildContextShape() {
     setWorshipSongs: React.Dispatch<React.SetStateAction<WorshipSong[]>>;
     worshipAlbums: WorshipAlbum[];
     setWorshipAlbums: React.Dispatch<React.SetStateAction<WorshipAlbum[]>>;
+    readNotifIds: string[];
+    setReadNotifIds: React.Dispatch<React.SetStateAction<string[]>>;
     notify: (message: string) => void;
     signOut: () => void;
     triggerSplash: () => void;
