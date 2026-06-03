@@ -895,6 +895,40 @@ function App() {
         <div className="ambient ambient-one" />
         <div className="ambient ambient-two" />
 
+        {!isSignInPage && (
+          <header className={`topbar${showMainSearch ? " topbar-search-open" : ""}`}>
+            {showMainSearch ? (
+              <div className="topbar-search-row">
+                <Search size={17} className="topbar-search-icon" />
+                <input
+                  className="topbar-search-input"
+                  placeholder={topSearchPlaceholder}
+                  autoFocus
+                  value={topSearchValue}
+                  onChange={(e) => setTopSearchValue(e.target.value)}
+                />
+                <button className="icon-button" aria-label="Close search" onClick={() => { setShowMainSearch(false); setTopSearchValue(""); }}>
+                  <X size={19} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <button className="brand" onClick={() => go(isAdmin ? "admin-studio" : "home")} aria-label="Faith Flix home">
+                  <span className="brand-mark brand-mark-img-wrap"><img src="/brand-icon.png" alt="Faith Flix" className="brand-mark-img" /></span>
+                  <span>Faith Flix</span>
+                </button>
+                <div className="top-actions">
+                  <button className="icon-button topbar-search-btn" aria-label="Search" onClick={() => setShowMainSearch(true)}><Search size={19} /></button>
+                  <button className="icon-button topbar-notif-btn" aria-label="Notifications" onClick={() => notify(t("toast.noNotifications"))}>
+                    <Bell size={19} />
+                    <span className="notif-dot" aria-hidden="true" />
+                  </button>
+                </div>
+              </>
+            )}
+          </header>
+        )}
+
         <main className={`main-stage${visiblePage === "home" ? " home-page" : ""}${visiblePage === "watch" ? " watch-page" : ""}`}>
           {visiblePage === "home" && <HomeScreen />}
           {visiblePage === "watch" && <WatchScreen />}
