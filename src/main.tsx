@@ -2319,14 +2319,12 @@ function WorshipScreen() {
   }, []);
 
   React.useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
     const onScroll = () => {
-      document.body.classList.toggle("worship-scrolled", el.scrollTop > 60);
+      document.body.classList.toggle("worship-scrolled", window.scrollY > 60);
     };
-    el.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
       document.body.classList.remove("worship-scrolled");
     };
   }, [browseType]);
