@@ -2875,6 +2875,337 @@ textarea:focus {
   box-shadow: 0 10px 28px rgba(210, 169, 79, 0.28);
 }
 
+/* ── Community FAB ──────────────────────────────────── */
+.comm-fab {
+  position: fixed;
+  bottom: calc(var(--nav-h) + 18px);
+  right: 22px;
+  z-index: 50;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffe29a, #d4a017);
+  color: #10131a;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 24px rgba(212,160,23,0.5), 0 2px 10px rgba(0,0,0,0.45);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.comm-fab:hover { transform: scale(1.08); box-shadow: 0 6px 32px rgba(212,160,23,0.65), 0 2px 14px rgba(0,0,0,0.5); }
+.comm-fab:active { transform: scale(0.95); }
+
+/* ── Post Composer Sheet ────────────────────────────── */
+.post-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(5px);
+  animation: fade-in 0.22s ease;
+}
+
+.post-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 61;
+  background: #0e1422;
+  border-radius: 22px 22px 0 0;
+  border-top: 1px solid rgba(212,160,23,0.22);
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.65);
+  max-height: 90svh;
+  display: flex;
+  flex-direction: column;
+  animation: sheet-up 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.post-sheet-drag-bar {
+  width: 38px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.2);
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+
+.post-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+
+.post-sheet-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 99px;
+  padding: 3px;
+}
+
+.post-sheet-tab {
+  padding: 7px 22px;
+  border-radius: 99px;
+  border: none;
+  background: transparent;
+  color: rgba(247,251,255,0.55);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.post-sheet-tab.active {
+  background: linear-gradient(135deg, #ffe29a, #d4a017);
+  color: #10131a;
+}
+
+.post-sheet-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 16px 16px 24px;
+}
+
+.post-sheet-video-body {
+  padding: 8px 16px 24px;
+}
+
+.post-sheet-signin {
+  text-align: center;
+  padding: 36px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: rgba(247,251,255,0.7);
+}
+
+.post-sheet-composer {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.post-avatar-lg {
+  width: 44px !important;
+  height: 44px !important;
+  font-size: 1rem !important;
+  flex-shrink: 0;
+}
+
+.post-sheet-textarea {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: #f7fbff;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: none;
+  line-height: 1.58;
+  min-height: 96px;
+  padding: 4px 0;
+}
+
+.post-sheet-textarea::placeholder {
+  color: rgba(247,251,255,0.3);
+}
+
+.post-sheet-preview {
+  width: 100%;
+  border-radius: 14px;
+  max-height: 260px;
+  object-fit: cover;
+  margin-bottom: 14px;
+}
+
+.post-sheet-meta-row {
+  margin-bottom: 14px;
+}
+
+.post-sheet-scripture-input {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #f7fbff;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.18s;
+}
+
+.post-sheet-scripture-input:focus {
+  border-color: rgba(212,160,23,0.5);
+}
+
+.post-sheet-scripture-input::placeholder {
+  color: rgba(247,251,255,0.3);
+}
+
+.post-sheet-bottom-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding-top: 12px;
+}
+
+.post-sheet-photo-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  background: rgba(212,160,23,0.1);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.18s;
+}
+
+.post-sheet-photo-btn:hover { background: rgba(212,160,23,0.2); }
+
+.post-sheet-char {
+  flex: 1;
+  font-size: 0.78rem;
+  color: rgba(247,251,255,0.3);
+}
+
+.comm-post-btn {
+  padding: 10px 26px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #ffe29a, #d4a017);
+  color: #10131a;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.18s, transform 0.12s;
+}
+
+.comm-post-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.comm-post-btn:not(:disabled):hover { opacity: 0.88; transform: scale(1.04); }
+
+/* ── Instagram-style post card ──────────────────────── */
+.ig-post {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ig-post-header {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 14px;
+}
+
+.ig-avatar-ring {
+  flex-shrink: 0;
+  padding: 2.5px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffe29a 0%, #d4a017 50%, #4A90D9 100%);
+}
+
+.ig-post-user {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ig-post-name {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #f7fbff;
+}
+
+.ig-post-location {
+  font-size: 0.72rem;
+  color: rgba(247,251,255,0.48);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ig-post-image {
+  width: 100%;
+  display: block;
+  max-height: 500px;
+  object-fit: cover;
+}
+
+.ig-post-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px 2px;
+}
+
+.ig-post-actions-left {
+  display: flex;
+  gap: 0;
+}
+
+.ig-action-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: rgba(247,251,255,0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s, color 0.15s;
+}
+
+.ig-action-btn:hover { transform: scale(1.14); }
+.ig-action-btn.liked { color: #E84545; }
+.ig-action-btn.saved { color: var(--gold); }
+
+.ig-post-likes {
+  padding: 0 14px 4px;
+  margin: 0;
+  font-size: 0.87rem;
+  font-weight: 800;
+  color: #f7fbff;
+}
+
+.ig-post-caption {
+  padding: 0 14px 12px;
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: rgba(247,251,255,0.88);
+}
+
+.ig-post-caption strong {
+  color: #f7fbff;
+  margin-right: 4px;
+}
+
 .community-video-composer {
   margin-bottom: 18px;
 }

@@ -6,6 +6,7 @@ import {
   Bell,
   BookOpen,
   Bookmark,
+  Camera,
   CheckCircle2,
   ChevronRight,
   Clapperboard,
@@ -23,6 +24,7 @@ import {
   Lock,
   MessageCircle,
   MessagesSquare,
+  MoreHorizontal,
   Music2,
   Play,
   Plus,
@@ -2186,10 +2188,20 @@ function CommunitySharesScreen({ compact = false }: { compact?: boolean }) {
 
 function CommunityScreen() {
   const { communityView, setCommunityView, notify, commSearchQuery, t } = useApp();
+  const [showPostSheet, setShowPostSheet] = React.useState(communityView === "upload");
+  const [sheetTab, setSheetTab] = React.useState<"post" | "video">(communityView === "upload" ? "video" : "post");
+
+  React.useEffect(() => {
+    if (communityView === "upload") {
+      setSheetTab("video");
+      setShowPostSheet(true);
+      setCommunityView("feed");
+    }
+  }, [communityView]);
+
   const tabs: { id: CommunityView; label: string; icon: React.ElementType }[] = [
     { id: "feed", label: t("comm.tab.feed"), icon: MessagesSquare },
     { id: "prayer", label: t("comm.tab.prayer"), icon: HeartHandshake },
-    { id: "upload", label: "Share", icon: Upload },
     { id: "groups", label: t("comm.tab.groups"), icon: Users },
     { id: "friends", label: t("comm.tab.friends"), icon: UserPlus },
     { id: "messages", label: t("comm.tab.messages"), icon: Inbox },
@@ -2206,9 +2218,8 @@ function CommunityScreen() {
         ))}
       </div>
       {commSearchQuery.trim() ? <CommunitySearchResults /> : <>
-        {communityView === "feed" && <FaithFeed />}
+        {(communityView === "feed" || communityView === "upload") && <FaithFeed />}
         {communityView === "prayer" && <PrayerWall />}
-        {communityView === "upload" && <CommunityUpload />}
         {communityView === "groups" && (
           <div className="comm-groups-grid">
             {COMMUNITY_GROUPS.map((group) => (
@@ -2226,12 +2237,23 @@ function CommunityScreen() {
         {communityView === "friends" && <FriendsPanel />}
         {communityView === "messages" && <MessagesPanel />}
       </>}
+
+      <button className="comm-fab" aria-label="Create post" onClick={() => { setSheetTab("post"); setShowPostSheet(true); }}>
+        <Plus size={24} />
+      </button>
+
+      {showPostSheet && (
+        <PostComposerSheet
+          defaultTab={sheetTab}
+          onClose={() => setShowPostSheet(false)}
+        />
+      )}
     </section>
   );
 }
 
 
-function CommunityUpload() {
+function CommunityUpload({ onDone }: { onDone?: () => void } = {}) {
   const { currentUser, setUploads, setVideos, setSelectedVideoId, setCommunityView, setUploadProgress, notify, go } = useApp();
   const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], testimonyType: "Testimony", tags: "", consent: false, rules: false, cropDimension: "9:16", cropRatio: "9 / 16" });
   const [videoFile, setVideoFile] = React.useState<File | null>(null);
@@ -2277,7 +2299,7 @@ function CommunityUpload() {
         setSelectedVideoId(savedVideo.id);
         progress.done("Posted");
         notify("Posted! Video may take a minute to process.");
-        setCommunityView("feed");
+        if (onDone) onDone(); else setCommunityView("feed");
       } catch (error) {
         const message = error instanceof Error ? error.message : "Upload failed.";
         progress.fail("Upload failed");
@@ -2305,6 +2327,88 @@ function CommunityUpload() {
         <button className="primary-button" type="button" onClick={submit}>Post Now</button>
       </div>
       <MyUploads />
+    </>
+  );
+}
+
+function PostComposerSheet({ defaultTab, onClose }: { defaultTab: "post" | "video"; onClose: () => void }) {
+  const { currentUser, posts, setPosts, notify, go } = useApp();
+  const [tab, setTab] = React.useState<"post" | "video">(defaultTab);
+  const [text, setText] = React.useState("");
+  const [scripture, setScripture] = React.useState("");
+  const [image, setImage] = React.useState<File | null>(null);
+  const [imagePreview, setImagePreview] = React.useState("");
+
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  const sharePost = () => {
+    if (!currentUser) return notify("Sign in to post.");
+    if (!text.trim()) return notify("Write something first.");
+    const info = fileInfo(image);
+    setPosts((current) => [{ id: uid("post"), userId: currentUser.id, author: currentUser.name, text, scripture, imageName: info.name, imageUrl: info.url, likes: [], saves: [], reports: [] }, ...current]);
+    setText(""); setScripture(""); setImage(null); setImagePreview("");
+    notify("Post shared!");
+    onClose();
+  };
+
+  return (
+    <>
+      <div className="post-sheet-overlay" onClick={onClose} />
+      <div className="post-sheet">
+        <div className="post-sheet-drag-bar" />
+        <div className="post-sheet-header">
+          <div className="post-sheet-tabs">
+            <button className={`post-sheet-tab${tab === "post" ? " active" : ""}`} onClick={() => setTab("post")}>Post</button>
+            <button className={`post-sheet-tab${tab === "video" ? " active" : ""}`} onClick={() => setTab("video")}>Video</button>
+          </div>
+          <button className="icon-button post-sheet-close" aria-label="Close" onClick={onClose}><X size={20} /></button>
+        </div>
+
+        {tab === "post" ? (
+          <div className="post-sheet-body">
+            {!currentUser ? (
+              <div className="post-sheet-signin">
+                <Lock size={34} style={{ color: "var(--gold)", marginBottom: 8 }} />
+                <p>Sign in to post in the community</p>
+                <button className="primary-button" onClick={() => { go("profile"); onClose(); }}>Sign In</button>
+              </div>
+            ) : (
+              <>
+                <div className="post-sheet-composer">
+                  <div className="post-avatar post-avatar-lg">{currentUser.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}</div>
+                  <textarea
+                    className="post-sheet-textarea"
+                    placeholder="Share encouragement, a testimony, or what God put on your heart…"
+                    value={text}
+                    autoFocus
+                    onChange={(e) => setText(e.target.value)}
+                    rows={4}
+                  />
+                </div>
+                {imagePreview && <img className="post-sheet-preview" src={imagePreview} alt="Preview" />}
+                <div className="post-sheet-meta-row">
+                  <input className="post-sheet-scripture-input" placeholder="Scripture reference (optional)" value={scripture} onChange={(e) => setScripture(e.target.value)} />
+                </div>
+                <div className="post-sheet-bottom-bar">
+                  <label className="post-sheet-photo-btn" aria-label="Add photo">
+                    <Camera size={20} />
+                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0] ?? null; setImage(f); setImagePreview(f ? URL.createObjectURL(f) : ""); }} />
+                  </label>
+                  <span className="post-sheet-char">{text.length > 0 ? `${text.length} chars` : ""}</span>
+                  <button className="comm-post-btn" onClick={sharePost} disabled={!text.trim()}>Share</button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="post-sheet-body post-sheet-video-body">
+            <CommunityUpload onDone={onClose} />
+          </div>
+        )}
+      </div>
     </>
   );
 }
@@ -2341,21 +2445,7 @@ function CommunitySearchResults() {
 function FaithFeed() {
   const { currentUser, posts, setPosts, notify, comments, commSearchQuery } = useApp();
   const [feedMode, setFeedMode] = React.useState<"posts" | "videos">("posts");
-  const [text, setText] = React.useState("");
-  const [scripture, setScripture] = React.useState("");
-  const [image, setImage] = React.useState<File | null>(null);
   const actor = currentUser?.id ?? "guest";
-
-  const create = () => {
-    if (!currentUser) return notify("Create an account before posting.");
-    if (!text.trim()) return notify("Write an encouragement first.");
-    const info = fileInfo(image);
-    setPosts([{ id: uid("post"), userId: currentUser.id, author: currentUser.name, text, scripture, imageName: info.name, imageUrl: info.url, likes: [], saves: [], reports: [] }, ...posts]);
-    setText("");
-    setScripture("");
-    setImage(null);
-    notify("Post shared.");
-  };
 
   const togglePost = (id: string, field: "likes" | "saves" | "reports", message: string) => {
     setPosts(posts.map((post) => post.id === id ? { ...post, [field]: post[field].includes(actor) ? post[field].filter((item) => item !== actor) : [...post[field], actor] } : post));
@@ -2375,15 +2465,9 @@ function FaithFeed() {
 
       {feedMode === "posts" ? (
         <>
-          <div className="form-card">
-            <label>Encouragement<textarea value={text} onChange={(event) => setText(event.target.value)} placeholder="Share faith-based encouragement" /></label>
-            <Field label="Scripture reference" value={scripture} onChange={setScripture} />
-            <FileField label="Optional image" onChange={setImage} />
-            <button className="primary-button" onClick={create}>Share Post</button>
-          </div>
           {commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={Search} title="No posts match your search." body="Try a different keyword." action="" onAction={() => {}} />}
           {filteredPosts.map((post) => <PostCard key={post.id} post={post} comments={comments.filter((item) => item.targetId === post.id)} onToggle={togglePost} />)}
-          {!commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={MessagesSquare} title="No community posts yet. Be the first to share encouragement." body="Faith Feed posts will appear here." action="Write encouragement" onAction={() => notify("Use the form above to share encouragement.")} />}
+          {!commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={MessagesSquare} title="No posts yet — be first!" body="Tap the gold + button below to share encouragement, a testimony, or what God put on your heart." action="" onAction={() => {}} />}
         </>
       ) : (
         <>
@@ -3282,23 +3366,42 @@ function CommentBox({ targetId, comments, value, setValue }: { targetId: string;
 
 function PostCard({ post, comments, onToggle }: { post: CommunityPost; comments: CommentItem[]; onToggle: (id: string, field: "likes" | "saves" | "reports", message: string) => void }) {
   const [comment, setComment] = React.useState("");
+  const { currentUser, notify } = useApp();
+  const actor = currentUser?.id ?? "guest";
   const initials = post.author.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  const isLiked = post.likes.includes(actor);
+  const isSaved = post.saves.includes(actor);
+
   return (
-    <article className="content-panel post-card">
-      <div className="post-header">
-        <div className="post-avatar">{initials}</div>
-        <div className="post-author-info">
-          <p className="post-author-name">{post.author}</p>
-          {post.scripture && <p className="post-meta">{post.scripture}</p>}
+    <article className="ig-post">
+      <div className="ig-post-header">
+        <div className="ig-avatar-ring">
+          <div className="post-avatar">{initials}</div>
         </div>
+        <div className="ig-post-user">
+          <span className="ig-post-name">{post.author}</span>
+          {post.scripture && <span className="ig-post-location">{post.scripture}</span>}
+        </div>
+        <button className="icon-button" aria-label="Post options" onClick={() => onToggle(post.id, "reports", "Post reported to admins.")}><MoreHorizontal size={20} /></button>
       </div>
-      <p className="post-text">{post.text}</p>
-      {post.imageUrl && <img className="poster" src={post.imageUrl} alt="" />}
-      <div className="button-row">
-        <button className="secondary-button" onClick={() => onToggle(post.id, "likes", "Post liked.")}><Heart size={15} /> {post.likes.length}</button>
-        <button className="secondary-button" onClick={() => onToggle(post.id, "saves", "Post saved.")}><Bookmark size={15} /> {post.saves.length}</button>
-        <button className="secondary-button" onClick={() => onToggle(post.id, "reports", "Post reported to admins.")}>Report</button>
+
+      {post.imageUrl && <img className="ig-post-image" src={post.imageUrl} alt="" />}
+
+      <div className="ig-post-actions">
+        <div className="ig-post-actions-left">
+          <button className={`ig-action-btn${isLiked ? " liked" : ""}`} aria-label="Like" onClick={() => onToggle(post.id, "likes", isLiked ? "Like removed." : "Post liked.")}>
+            <Heart size={24} fill={isLiked ? "currentColor" : "none"} strokeWidth={isLiked ? 0 : 2} />
+          </button>
+          <button className="ig-action-btn" aria-label="Comment"><MessageCircle size={24} /></button>
+          <button className="ig-action-btn" aria-label="Share" onClick={() => notify("Share coming soon.")}><Send size={22} /></button>
+        </div>
+        <button className={`ig-action-btn${isSaved ? " saved" : ""}`} aria-label="Save" onClick={() => onToggle(post.id, "saves", isSaved ? "Removed from saved." : "Post saved.")}>
+          <Bookmark size={24} fill={isSaved ? "currentColor" : "none"} strokeWidth={isSaved ? 0 : 2} />
+        </button>
       </div>
+
+      {post.likes.length > 0 && <p className="ig-post-likes">{post.likes.length} like{post.likes.length !== 1 ? "s" : ""}</p>}
+      <p className="ig-post-caption"><strong>{post.author}</strong> {post.text}</p>
       <CommentBox targetId={post.id} comments={comments} value={comment} setValue={setComment} />
     </article>
   );
