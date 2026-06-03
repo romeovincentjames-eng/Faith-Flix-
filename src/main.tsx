@@ -2295,7 +2295,7 @@ function UserSeriesBuilder() {
 }
 
 function WorshipScreen() {
-  const { worshipSongs, worshipAlbums, savedWorshipSongIds, setSavedWorshipSongIds, worshipPlaylists, setWorshipPlaylists, currentUser, notify, go } = useApp();
+  const { worshipSongs, worshipAlbums, savedWorshipSongIds, setSavedWorshipSongIds, worshipPlaylists, setWorshipPlaylists, currentUser, isAdmin, notify, go } = useApp();
   const [currentSongId, setCurrentSongId] = React.useState<string | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
@@ -2583,7 +2583,7 @@ function WorshipScreen() {
 
       <div style={{ height: 24 }} />
 
-      {!isPlaying && <button className="comm-fab" aria-label="Upload worship song" onClick={() => setShowUploadSheet(true)}><Plus size={24} /></button>}
+      {isAdmin && <button className="comm-fab" aria-label="Upload worship song" onClick={() => setShowUploadSheet(true)}><Plus size={24} /></button>}
       {showUploadSheet && <WorshipUploadSheet onClose={() => setShowUploadSheet(false)} />}
       {albumSheet}
       {nowPlayingBar}
@@ -2699,7 +2699,7 @@ function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, save
   const first = songs[0];
   return (
     <>
-      <div className="post-sheet-overlay" onClick={onClose} />
+      <div className="post-sheet-overlay" style={{ background: "rgba(0,0,0,0.15)", backdropFilter: "none" }} onClick={onClose} />
       <div className="album-sheet">
         <div className="post-sheet-drag-bar" />
         <div className="album-sheet-header">

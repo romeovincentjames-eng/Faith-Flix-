@@ -5840,14 +5840,14 @@ textarea:focus {
 /* ── Now Playing Bar (redesigned) ── */
 .now-playing-bar {
   position: fixed;
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  top: calc(var(--topbar-h) + env(safe-area-inset-top, 0px));
   left: 0;
   right: 0;
   z-index: 35;
   background: rgba(8,12,24,0.97);
   backdrop-filter: blur(28px) saturate(1.6);
-  border-top: 1px solid rgba(212,160,23,0.22);
-  box-shadow: 0 -6px 32px rgba(0,0,0,0.6);
+  border-bottom: 1px solid rgba(212,160,23,0.22);
+  box-shadow: 0 6px 32px rgba(0,0,0,0.6);
   overflow: hidden;
 }
 
@@ -6030,7 +6030,7 @@ textarea:focus {
 .ep-overlay {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 500;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -8346,7 +8346,7 @@ select {
 
 /* ── Worship Screen Redesign ── */
 .ws-screen { padding-bottom: 0; }
-.ws-screen.has-now-playing { padding-bottom: 80px; }
+.ws-screen.has-now-playing { padding-top: 80px; }
 
 /* Featured EP */
 /* Featured EP banner — polished card */
