@@ -1071,10 +1071,10 @@ select option {
 
 .home-series-card {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 12px;
-  min-height: 130px;
-  padding: 12px;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 10px;
+  min-height: 80px;
+  padding: 8px;
   overflow: hidden;
   color: #f7fbff;
   text-align: left;
@@ -1096,9 +1096,9 @@ select option {
   position: relative;
   overflow: hidden;
   align-self: stretch;
-  min-height: 108px;
+  min-height: 70px;
   aspect-ratio: 3 / 4;
-  border-radius: 14px;
+  border-radius: 10px;
   background: #02040a;
 }
 
@@ -1201,16 +1201,16 @@ select option {
 
 @media (max-width: 560px) {
   .home-series-card {
-    grid-template-columns: 88px minmax(0, 1fr);
-    min-height: 118px;
-    gap: 10px;
-    padding: 10px;
-    border-radius: 18px;
+    grid-template-columns: 56px minmax(0, 1fr);
+    min-height: 72px;
+    gap: 8px;
+    padding: 7px;
+    border-radius: 10px;
   }
 
   .home-series-thumb {
-    min-height: 98px;
-    border-radius: 12px;
+    min-height: 62px;
+    border-radius: 8px;
   }
 
   .home-series-info h3 {
@@ -6012,16 +6012,16 @@ textarea:focus {
 .home-series-shelf {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 238px;
-  gap: 10px;
+  grid-auto-columns: 200px;
+  gap: 8px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
   scroll-padding-inline-start: 50%;
-  scroll-padding-inline-end: calc(50% - 119px);
+  scroll-padding-inline-end: calc(50% - 100px);
   padding-inline-start: 16px;
-  padding-inline-end: calc(50% - 119px);
-  padding-block: 4px 18px;
+  padding-inline-end: calc(50% - 100px);
+  padding-block: 4px 14px;
   scrollbar-width: none;
 }
 
@@ -6035,20 +6035,20 @@ textarea:focus {
 
 @media (max-width: 390px) {
   .home-series-shelf {
-    grid-auto-columns: 218px;
-    scroll-padding-inline-end: calc(50% - 109px);
-    padding-inline-end: calc(50% - 109px);
+    grid-auto-columns: 182px;
+    scroll-padding-inline-end: calc(50% - 91px);
+    padding-inline-end: calc(50% - 91px);
   }
 }
 
 .home-series-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: 8px;
+  padding: 8px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 14px;
+  border-radius: 10px;
   cursor: pointer;
   text-align: left;
   transition: background 0.18s ease, transform 0.18s ease;
@@ -6061,9 +6061,9 @@ textarea:focus {
 }
 
 .home-series-poster {
-  width: 54px;
-  height: 54px;
-  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
   object-fit: cover;
   flex-shrink: 0;
   background: #0d1228;
