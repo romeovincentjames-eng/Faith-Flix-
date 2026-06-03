@@ -1531,6 +1531,15 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
   const [muted, setMuted] = React.useState(true);
   const [paused, setPaused] = React.useState(false);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
+  const [isExiting, setIsExiting] = React.useState(false);
+
+  const closeFullscreen = React.useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      setIsFullscreen(false);
+      setIsExiting(false);
+    }, 240);
+  }, []);
 
   React.useEffect(() => {
     const el = cardRef.current;
@@ -1588,11 +1597,11 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
     return () => document.body.classList.remove("video-fullscreen");
   }, [isFullscreen]);
 
-  const handleOuterTap = () => setIsFullscreen(f => !f);
+  const handleOuterTap = () => { if (isFullscreen) { closeFullscreen(); } else { setIsFullscreen(true); } };
   const handleCenterTap = (e: React.MouseEvent) => { e.stopPropagation(); tapVideo(); };
 
   return (
-    <div ref={cardRef} className={`watch-feed-card${isFullscreen ? " wfc-fullscreen" : ""}`}>
+    <div ref={cardRef} className={`watch-feed-card${isFullscreen ? " wfc-fullscreen" : ""}${isFullscreen && isExiting ? " wfc-exiting" : ""}`}>
       {video.videoUrl ? (
         isCloudflare ? (
           <iframe
@@ -1635,7 +1644,7 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
 
       {/* Exit fullscreen button */}
       {isFullscreen && (
-        <button className="wfc-exit-btn" onClick={() => setIsFullscreen(false)} aria-label="Exit fullscreen">
+        <button className="wfc-exit-btn" onClick={closeFullscreen} aria-label="Exit fullscreen">
           <X size={20} />
         </button>
       )}

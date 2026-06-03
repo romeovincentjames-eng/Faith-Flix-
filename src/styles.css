@@ -8607,6 +8607,32 @@ select {
 .ep-ctrl-side.ep-ctrl-active { color: var(--gold); }
 
 /* ── WatchFeedCard fullscreen + tap zones ── */
+@keyframes wfc-expand {
+  from {
+    transform: scale(0.86);
+    opacity: 0.55;
+    border-radius: 20px;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+    border-radius: 0;
+  }
+}
+
+@keyframes wfc-collapse {
+  from {
+    transform: scale(1);
+    opacity: 1;
+    border-radius: 0;
+  }
+  to {
+    transform: scale(0.86);
+    opacity: 0;
+    border-radius: 20px;
+  }
+}
+
 .watch-feed-card.wfc-fullscreen {
   position: fixed !important;
   inset: 0 !important;
@@ -8615,6 +8641,11 @@ select {
   z-index: 9000 !important;
   scroll-snap-align: none;
   border-radius: 0;
+  animation: wfc-expand 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.watch-feed-card.wfc-fullscreen.wfc-exiting {
+  animation: wfc-collapse 0.24s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 /* Hide topbar + bottom nav when a video is fullscreen */
