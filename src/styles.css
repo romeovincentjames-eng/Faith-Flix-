@@ -5301,12 +5301,34 @@ textarea:focus {
 /* Responsive hero */
 @media (max-width: 600px) {
   .sp-hero {
-    grid-template-columns: 130px 1fr;
-    gap: 16px;
-    padding: 18px;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 16px;
+    text-align: center;
   }
-  .sp-hero-art { width: 130px; height: 130px; }
-  .sp-hero-title { font-size: 1.4rem; }
+  .sp-hero-art {
+    width: 110px;
+    height: 110px;
+    margin: 0 auto;
+  }
+  .sp-hero-info {
+    gap: 4px;
+  }
+  .sp-hero-title { font-size: 1.3rem; }
+  .sp-hero-desc { display: none; }
+  .sp-hero-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .sp-play-btn {
+    padding: 10px 22px;
+    font-size: 0.86rem;
+  }
+  .sp-shuffle-btn {
+    padding: 9px 18px;
+    font-size: 0.86rem;
+  }
   .now-playing-bar { grid-template-columns: 1fr auto; }
   .np-right { display: none; }
 }
