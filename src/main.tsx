@@ -962,7 +962,7 @@ function App() {
             <NavButton label={t("nav.home")} icon={Home} active={visiblePage === "home"} onClick={() => go("home")} />
             <NavButton label={t("nav.watch")} icon={Film} active={visiblePage === "watch"} onClick={() => go("watch")} />
             <NavButton label={t("nav.series")} icon={Clapperboard} active={visiblePage === "series"} onClick={() => go("series")} />
-            <NavButton label={t("nav.community")} icon={MessagesSquare} active={false} onClick={() => go("community")} />
+            <NavButton label={t("nav.community")} icon={MessagesSquare} active={visiblePage === "community" || visiblePage === "upload"} onClick={() => go("community")} />
             <NavButton label="Worship" icon={Music2} active={visiblePage === "worship"} onClick={() => go("worship")} />
             <NavButton label={t("nav.saved")} icon={Bookmark} active={visiblePage === "saved"} onClick={() => go("saved")} />
             <NavButton label={t("nav.profile")} icon={User} active={visiblePage === "profile" || visiblePage === "admin-login" || visiblePage === "admin-studio"} onClick={() => go("profile")} />
