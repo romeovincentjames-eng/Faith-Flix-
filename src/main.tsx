@@ -29,11 +29,15 @@ import {
   MessageCircle,
   MessagesSquare,
   MoreHorizontal,
+  ChevronLeft,
   Disc3,
+  ListMusic,
   Music2,
   Pause,
   Play,
   Plus,
+  Repeat,
+  Shuffle,
   SkipBack,
   SkipForward,
   Search,
@@ -150,6 +154,7 @@ type Message = { id: string; fromId: string; toId: string; text: string; created
 type SavedList = { id: string; name: string; videoIds: string[] };
 type UploadProgress = { active: boolean; value: number; label: string };
 type WorshipAlbum = { id: string; title: string; artist: string; coverUrl?: string; type: "Single" | "EP" | "Album"; year: string; trackIds: string[]; description?: string };
+type WorshipPlaylist = { id: string; name: string; songIds: string[]; createdAt: string };
 type WorshipSong = { id: string; title: string; artist: string; description: string; category: string; duration: string; audioName: string; audioUrl?: string; coverName: string; coverUrl?: string; uploadedBy: string; createdAt: string; albumId?: string; albumType?: "Single" | "EP" | "Album" };
 type AppNotifType = "friend_request" | "friend_accepted" | "dm" | "like" | "comment" | "friend_post" | "prayer_prayed";
 type AppNotif = { id: string; type: AppNotifType; title: string; body: string; preview?: string; fromUserId?: string; createdAt?: string; action: string; actionView?: string };
@@ -837,6 +842,8 @@ function App() {
   const [messages, setMessages] = useStoredState<Message[]>("faithflix-messages", MOCK_MESSAGES);
   const [worshipSongs, setWorshipSongs] = useStoredState<WorshipSong[]>("faithflix-worship-songs", MOCK_WORSHIP_SONGS);
   const [worshipAlbums, setWorshipAlbums] = useStoredState<WorshipAlbum[]>("faithflix-worship-albums", MOCK_WORSHIP_ALBUMS);
+  const [savedWorshipSongIds, setSavedWorshipSongIds] = useStoredState<string[]>("faithflix-saved-worship-songs", []);
+  const [worshipPlaylists, setWorshipPlaylists] = useStoredState<WorshipPlaylist[]>("faithflix-worship-playlists", []);
   const [readNotifIds, setReadNotifIds] = useStoredState<string[]>("faithflix-read-notifs", []);
   const [mainSearchQuery, setMainSearchQuery] = React.useState("");
   const t = React.useCallback((key: string) => translate("en", key), []);
@@ -1081,6 +1088,10 @@ function App() {
     setWorshipSongs,
     worshipAlbums,
     setWorshipAlbums,
+    savedWorshipSongIds,
+    setSavedWorshipSongIds,
+    worshipPlaylists,
+    setWorshipPlaylists,
     readNotifIds,
     setReadNotifIds,
     notify,
@@ -1234,6 +1245,10 @@ function buildContextShape() {
     setWorshipSongs: React.Dispatch<React.SetStateAction<WorshipSong[]>>;
     worshipAlbums: WorshipAlbum[];
     setWorshipAlbums: React.Dispatch<React.SetStateAction<WorshipAlbum[]>>;
+    savedWorshipSongIds: string[];
+    setSavedWorshipSongIds: React.Dispatch<React.SetStateAction<string[]>>;
+    worshipPlaylists: WorshipPlaylist[];
+    setWorshipPlaylists: React.Dispatch<React.SetStateAction<WorshipPlaylist[]>>;
     readNotifIds: string[];
     setReadNotifIds: React.Dispatch<React.SetStateAction<string[]>>;
     notify: (message: string) => void;
@@ -2203,15 +2218,20 @@ function UserSeriesBuilder() {
 }
 
 function WorshipScreen() {
-  const { worshipSongs, worshipAlbums, worshipSearchQuery } = useApp();
+  const { worshipSongs, worshipAlbums, savedWorshipSongIds, setSavedWorshipSongIds, worshipPlaylists, setWorshipPlaylists, currentUser, notify, go } = useApp();
   const [currentSongId, setCurrentSongId] = React.useState<string | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
   const [audioDuration, setAudioDuration] = React.useState(0);
-  const [activeCategory, setActiveCategory] = React.useState("All");
-  const [showUploadSheet, setShowUploadSheet] = React.useState(false);
+  const [shuffle, setShuffle] = React.useState(false);
+  const [repeat, setRepeat] = React.useState(false);
+  const [browseType, setBrowseType] = React.useState<"Single" | "EP" | "Album" | null>(null);
+  const [libraryTab, setLibraryTab] = React.useState<"saved" | "playlists">("saved");
   const [showExpandedPlayer, setShowExpandedPlayer] = React.useState(false);
   const [selectedAlbumId, setSelectedAlbumId] = React.useState<string | null>(null);
+  const [showUploadSheet, setShowUploadSheet] = React.useState(false);
+  const [showCreatePlaylist, setShowCreatePlaylist] = React.useState(false);
+  const [newPlaylistName, setNewPlaylistName] = React.useState("");
   const audioRef = React.useRef<HTMLAudioElement>(null);
 
   React.useEffect(() => {
@@ -2220,20 +2240,22 @@ function WorshipScreen() {
     return () => window.removeEventListener("pauseWorshipAudio", handler);
   }, []);
 
-  const songQuery = worshipSearchQuery.trim().toLowerCase();
-  const filteredSongs = (songQuery
-    ? worshipSongs.filter((s) => [s.title, s.artist, s.description, s.uploadedBy].join(" ").toLowerCase().includes(songQuery))
-    : worshipSongs
-  ).filter((s) => activeCategory === "All" || s.category === activeCategory);
+  const queueSongs = React.useMemo(() => {
+    if (browseType) {
+      const ids = new Set(worshipAlbums.filter(a => a.type === browseType).flatMap(a => a.trackIds));
+      return worshipSongs.filter(s => ids.has(s.id));
+    }
+    return worshipSongs;
+  }, [worshipSongs, worshipAlbums, browseType]);
 
-  const currentSong = worshipSongs.find((s) => s.id === currentSongId) ?? null;
-  const currentIndex = filteredSongs.findIndex((s) => s.id === currentSongId);
-  const categories = ["All", ...Array.from(new Set(worshipSongs.map((s) => s.category).filter(Boolean)))];
-  const featuredSong = currentSong ?? filteredSongs[0] ?? null;
-
-  const singles = worshipAlbums.filter((a) => a.type === "Single");
-  const eps = worshipAlbums.filter((a) => a.type === "EP");
-  const albums = worshipAlbums.filter((a) => a.type === "Album");
+  const currentSong = worshipSongs.find(s => s.id === currentSongId) ?? null;
+  const currentIndex = queueSongs.findIndex(s => s.id === currentSongId);
+  const singles = worshipAlbums.filter(a => a.type === "Single");
+  const eps = worshipAlbums.filter(a => a.type === "EP");
+  const albums = worshipAlbums.filter(a => a.type === "Album");
+  const featuredEp = worshipAlbums.find(a => a.id === "album-faith-rising");
+  const featuredEpSongs = featuredEp ? worshipSongs.filter(s => featuredEp.trackIds.includes(s.id)) : [];
+  const savedSongs = worshipSongs.filter(s => savedWorshipSongIds.includes(s.id));
 
   const playSong = React.useCallback((song: WorshipSong) => {
     if (currentSongId === song.id) {
@@ -2243,26 +2265,31 @@ function WorshipScreen() {
     }
     setCurrentSongId(song.id);
     setIsPlaying(true);
-    if (audioRef.current) {
-      audioRef.current.src = song.audioUrl ?? "";
+    if (audioRef.current && song.audioUrl) {
+      audioRef.current.src = song.audioUrl;
       void audioRef.current.play().catch(() => setIsPlaying(false));
     }
   }, [currentSongId, isPlaying]);
 
-  const prevSong = () => { if (currentIndex > 0) playSong(filteredSongs[currentIndex - 1]); };
-  const nextSong = React.useCallback(() => { if (currentIndex < filteredSongs.length - 1) playSong(filteredSongs[currentIndex + 1]); }, [currentIndex, filteredSongs, playSong]);
+  const nextSong = React.useCallback(() => {
+    if (shuffle) { playSong(queueSongs[Math.floor(Math.random() * queueSongs.length)]); return; }
+    if (currentIndex < queueSongs.length - 1) playSong(queueSongs[currentIndex + 1]);
+    else if (repeat && queueSongs.length) playSong(queueSongs[0]);
+  }, [shuffle, repeat, currentIndex, queueSongs, playSong]);
+
+  const prevSong = () => {
+    if (shuffle) { playSong(queueSongs[Math.floor(Math.random() * queueSongs.length)]); return; }
+    if (currentIndex > 0) playSong(queueSongs[currentIndex - 1]);
+  };
 
   const togglePlay = () => {
-    if (!currentSong && filteredSongs.length) { playSong(filteredSongs[0]); return; }
+    if (!currentSong && queueSongs.length) { playSong(queueSongs[0]); return; }
     if (isPlaying) { audioRef.current?.pause(); setIsPlaying(false); }
     else { void audioRef.current?.play(); setIsPlaying(true); }
   };
 
   const seek = (pct: number) => {
-    if (audioRef.current && audioDuration) {
-      audioRef.current.currentTime = (pct / 100) * audioDuration;
-      setProgress(pct);
-    }
+    if (audioRef.current && audioDuration) { audioRef.current.currentTime = (pct / 100) * audioDuration; setProgress(pct); }
   };
 
   const fmtTime = (pct: number) => {
@@ -2271,192 +2298,248 @@ function WorshipScreen() {
     return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`;
   };
 
-  return (
-    <section className={`screen worship-screen sp-screen${currentSong ? " has-now-playing" : ""}`}>
-      <audio
-        ref={audioRef}
-        onTimeUpdate={() => { const a = audioRef.current; if (a?.duration) setProgress((a.currentTime / a.duration) * 100); }}
-        onDurationChange={() => setAudioDuration(audioRef.current?.duration ?? 0)}
-        onEnded={nextSong}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-      />
+  const toggleSave = (songId: string) => {
+    if (!currentUser) { notify("Sign in to save songs."); return; }
+    setSavedWorshipSongIds(prev => prev.includes(songId) ? prev.filter(id => id !== songId) : [...prev, songId]);
+  };
 
-      {/* Hero banner */}
-      <div className="sp-hero">
-        <div className="sp-hero-art">
-          {featuredSong?.coverUrl
-            ? <img src={featuredSong.coverUrl} alt={featuredSong.title} />
-            : <div className="sp-hero-art-empty"><Music2 size={52} /></div>}
+  const createPlaylist = () => {
+    if (!newPlaylistName.trim()) return;
+    const pl: WorshipPlaylist = { id: uid("pl"), name: newPlaylistName.trim(), songIds: [], createdAt: new Date().toLocaleString() };
+    setWorshipPlaylists(prev => [pl, ...prev]);
+    setNewPlaylistName("");
+    setShowCreatePlaylist(false);
+    notify(`Playlist "${pl.name}" created.`);
+  };
+
+  const playerProps = currentSong ? {
+    song: currentSong, isPlaying, progress,
+    hasPrev: shuffle || currentIndex > 0,
+    hasNext: shuffle || currentIndex < queueSongs.length - 1 || repeat,
+    onPrev: prevSong, onNext: nextSong, onTogglePlay: togglePlay, onSeek: seek,
+    isSaved: savedWorshipSongIds.includes(currentSong.id),
+    onToggleSave: () => toggleSave(currentSong.id),
+    shuffle, onToggleShuffle: () => setShuffle(s => !s),
+    repeat, onToggleRepeat: () => setRepeat(r => !r),
+  } : null;
+
+  const audioEl = (
+    <audio ref={audioRef}
+      onTimeUpdate={() => { const a = audioRef.current; if (a?.duration) setProgress((a.currentTime / a.duration) * 100); }}
+      onDurationChange={() => setAudioDuration(audioRef.current?.duration ?? 0)}
+      onEnded={nextSong} onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)}
+    />
+  );
+
+  const albumSheet = selectedAlbumId && (() => {
+    const album = worshipAlbums.find(a => a.id === selectedAlbumId);
+    const albumSongs = album ? worshipSongs.filter(s => album.trackIds.includes(s.id)) : [];
+    return album ? <AlbumDetailSheet album={album} songs={albumSongs} currentSongId={currentSongId} isPlaying={isPlaying} onPlay={s => { playSong(s); }} savedSongIds={savedWorshipSongIds} onToggleSave={toggleSave} onClose={() => setSelectedAlbumId(null)} /> : null;
+  })();
+
+  const nowPlayingBar = playerProps && <NowPlayingBar {...playerProps} onExpand={() => setShowExpandedPlayer(true)} />;
+
+  const expandedPlayer = showExpandedPlayer && playerProps && (
+    <ExpandedPlayerOverlay {...playerProps}
+      album={worshipAlbums.find(a => a.id === currentSong!.albumId)}
+      currentTime={fmtTime(progress)} totalTime={currentSong!.duration || fmtTime(100)}
+      onClose={() => setShowExpandedPlayer(false)}
+      onOpenAlbum={id => { setSelectedAlbumId(id); setShowExpandedPlayer(false); }}
+    />
+  );
+
+  /* ── Browse view ── */
+  if (browseType) {
+    const albumsOfType = worshipAlbums.filter(a => a.type === browseType);
+    const label = browseType === "Single" ? "Singles" : browseType === "EP" ? "EPs" : "Albums";
+    return (
+      <section className={`screen ws-screen${currentSong ? " has-now-playing" : ""}`}>
+        {audioEl}
+        <div className="ws-browse-header">
+          <button className="ws-back-btn" onClick={() => setBrowseType(null)}><ChevronLeft size={20} /> Music</button>
+          <h1 className="ws-browse-title">{label}</h1>
+          <div style={{ width: 60 }} />
         </div>
-        <div className="sp-hero-info">
-          <p className="eyebrow" style={{ marginBottom: 6 }}>Worship Center</p>
-          <h1 className="sp-hero-title">{featuredSong?.title ?? "Worship Music"}</h1>
-          <p className="sp-hero-artist">{featuredSong ? `${featuredSong.artist} • ${featuredSong.category}` : "Faith Flix"}</p>
-          <p className="sp-hero-desc">{featuredSong?.description || "Stream original worship songs and praise music curated for your faith journey."}</p>
-          <div className="sp-hero-actions">
-            <button className="sp-play-btn" onClick={() => featuredSong && playSong(featuredSong)}>
-              {isPlaying && currentSongId === featuredSong?.id ? <Pause size={18} /> : <Play size={18} />}
-              {isPlaying && currentSongId === featuredSong?.id ? "Pause" : "Play"}
-            </button>
-            <button className="sp-shuffle-btn" onClick={() => { const r = filteredSongs[Math.floor(Math.random() * filteredSongs.length)]; if (r) playSong(r); }}>Shuffle</button>
+        {albumsOfType.length === 0
+          ? <EmptyState icon={Music2} title={`No ${label} Yet`} body="Check back soon for new releases." action="" onAction={() => {}} />
+          : <div className="ws-browse-grid">
+              {albumsOfType.map(album => {
+                const first = worshipSongs.find(s => album.trackIds.includes(s.id));
+                return (
+                  <div key={album.id} className="ws-browse-card" onClick={() => setSelectedAlbumId(album.id)} role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && setSelectedAlbumId(album.id)}>
+                    <div className="ws-browse-card-art">
+                      {album.coverUrl ? <img src={album.coverUrl} alt={album.title} /> : <div className="ws-browse-card-art-empty"><Music2 size={32} /></div>}
+                      {first && <button className="ws-browse-card-play" onClick={e => { e.stopPropagation(); playSong(first); }} aria-label="Play"><Play size={18} /></button>}
+                    </div>
+                    <p className="ws-browse-card-title">{album.title}</p>
+                    <p className="ws-browse-card-artist">{album.artist}</p>
+                    <p className="ws-browse-card-meta">{album.year} · {album.trackIds.length} {album.trackIds.length === 1 ? "track" : "tracks"}</p>
+                  </div>
+                );
+              })}
+            </div>
+        }
+        {albumSheet}
+        {nowPlayingBar}
+        {expandedPlayer}
+      </section>
+    );
+  }
+
+  /* ── Home view ── */
+  return (
+    <section className={`screen ws-screen${currentSong ? " has-now-playing" : ""}`}>
+      {audioEl}
+
+      {/* Featured EP */}
+      {featuredEp && (
+        <div className="ws-featured">
+          <div className="ws-featured-bg" style={featuredEp.coverUrl ? { backgroundImage: `url(${featuredEp.coverUrl})` } : undefined} />
+          <div className="ws-featured-bg-dim" />
+          <div className="ws-featured-body">
+            <div className="ws-featured-art">
+              {featuredEp.coverUrl ? <img src={featuredEp.coverUrl} alt={featuredEp.title} /> : <div className="ws-featured-art-empty"><Music2 size={44} /></div>}
+            </div>
+            <div className="ws-featured-info">
+              <span className="ws-featured-eyebrow">{featuredEp.type} · {featuredEp.year}</span>
+              <h2 className="ws-featured-title">{featuredEp.title}</h2>
+              <p className="ws-featured-artist">{featuredEp.artist}</p>
+              {featuredEp.description && <p className="ws-featured-desc">{featuredEp.description}</p>}
+              <div className="ws-featured-tracklist">
+                {featuredEpSongs.map((s, i) => (
+                  <div key={s.id} className={`ws-feat-track${currentSongId === s.id ? " active" : ""}`} onClick={() => playSong(s)} role="button" tabIndex={0}>
+                    <span className="ws-feat-track-num">{currentSongId === s.id && isPlaying ? <span className="sp-eq"><span/><span/><span/></span> : i + 1}</span>
+                    <span className="ws-feat-track-name">{s.title}</span>
+                    <button className="ws-heart-btn" aria-label={savedWorshipSongIds.includes(s.id) ? "Unsave" : "Save"} onClick={e => { e.stopPropagation(); toggleSave(s.id); }}>
+                      <Heart size={13} fill={savedWorshipSongIds.includes(s.id) ? "currentColor" : "none"} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="ws-featured-actions">
+                <button className="sp-play-btn" onClick={() => featuredEpSongs[0] && playSong(featuredEpSongs[0])}>
+                  <Play size={15} /> Play EP
+                </button>
+                <button className="sp-shuffle-btn" onClick={() => { const r = featuredEpSongs[Math.floor(Math.random() * featuredEpSongs.length)]; if (r) { setShuffle(true); playSong(r); } }}>Shuffle</button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Category pills */}
-      <div className="sp-pills">
-        {categories.map((cat) => (
-          <button key={cat} className={`sp-pill${activeCategory === cat ? " active" : ""}`} onClick={() => setActiveCategory(cat)}>{cat}</button>
-        ))}
-      </div>
-
-      {/* Track list */}
-      <div className="sp-list-header">
-        <span className="sp-col-num">#</span>
-        <span className="sp-col-title">Title</span>
-        <span className="sp-col-dur">Time</span>
-      </div>
-      <div className="sp-tracklist">
-        {filteredSongs.length === 0 && <EmptyState icon={Music2} title="No songs found" body="Try a different search or category." action="" onAction={() => {}} />}
-        {filteredSongs.map((song, idx) => (
-          <WorshipTrackRow
-            key={song.id}
-            song={song}
-            index={idx}
-            isActive={currentSongId === song.id}
-            isPlaying={isPlaying && currentSongId === song.id}
-            onPlay={() => playSong(song)}
-            onOpenAlbum={song.albumId ? () => setSelectedAlbumId(song.albumId!) : undefined}
-          />
-        ))}
-      </div>
-
-      {/* Album shelves */}
-      {singles.length > 0 && <WorshipAlbumRow title="Singles" albums={singles} songs={worshipSongs} onPlayAll={playSong} onOpenAlbum={setSelectedAlbumId} />}
-      {eps.length > 0 && <WorshipAlbumRow title="EPs" albums={eps} songs={worshipSongs} onPlayAll={playSong} onOpenAlbum={setSelectedAlbumId} />}
-      {albums.length > 0 && <WorshipAlbumRow title="Albums" albums={albums} songs={worshipSongs} onPlayAll={playSong} onOpenAlbum={setSelectedAlbumId} />}
-
-      {/* Upload FAB */}
-      {!isPlaying && (
-        <button className="comm-fab" aria-label="Upload worship song" onClick={() => setShowUploadSheet(true)}>
-          <Plus size={24} />
-        </button>
       )}
 
+      {/* Browse */}
+      <div className="ws-section">
+        <h2 className="ws-section-title">Browse</h2>
+        <div className="ws-cat-tiles">
+          <button className="ws-cat-tile" onClick={() => setBrowseType("Single")}>
+            <div className="ws-cat-icon" style={{ background: "rgba(74,144,217,0.15)", color: "var(--blue)" }}><Music2 size={22} /></div>
+            <span className="ws-cat-label">Singles</span>
+            <span className="ws-cat-count">{singles.length}</span>
+          </button>
+          <button className="ws-cat-tile" onClick={() => setBrowseType("EP")}>
+            <div className="ws-cat-icon" style={{ background: "rgba(212,160,23,0.15)", color: "var(--gold)" }}><Disc3 size={22} /></div>
+            <span className="ws-cat-label">EPs</span>
+            <span className="ws-cat-count">{eps.length}</span>
+          </button>
+          <button className="ws-cat-tile" onClick={() => setBrowseType("Album")}>
+            <div className="ws-cat-icon" style={{ background: "rgba(120,80,200,0.18)", color: "#a78bfa" }}><ListMusic size={22} /></div>
+            <span className="ws-cat-label">Albums</span>
+            <span className="ws-cat-count">{albums.length}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* My Library */}
+      <div className="ws-section">
+        <h2 className="ws-section-title">My Library</h2>
+        <div className="ws-lib-tabs">
+          <button className={`ws-lib-tab${libraryTab === "saved" ? " active" : ""}`} onClick={() => setLibraryTab("saved")}><Heart size={13} /> Saved Songs</button>
+          <button className={`ws-lib-tab${libraryTab === "playlists" ? " active" : ""}`} onClick={() => setLibraryTab("playlists")}><ListMusic size={13} /> Playlists</button>
+        </div>
+
+        {libraryTab === "saved" && (
+          savedSongs.length === 0
+            ? <div className="ws-empty-lib"><Heart size={28} style={{ color: "var(--gold)", opacity: 0.4 }} /><p>No saved songs yet</p><span>Tap ♥ on any song to save it here.</span></div>
+            : <div className="ws-song-list">
+                {savedSongs.map((song, idx) => (
+                  <div key={song.id} className={`ws-song-row${currentSongId === song.id ? " active" : ""}`} onClick={() => playSong(song)} role="button" tabIndex={0}>
+                    <span className="ws-song-num">{currentSongId === song.id && isPlaying ? <span className="sp-eq"><span/><span/><span/></span> : idx + 1}</span>
+                    <div className="ws-song-art">{song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="ws-song-art-empty"><Music2 size={14} /></div>}</div>
+                    <div className="ws-song-info"><span className="ws-song-title">{song.title}</span><span className="ws-song-artist">{song.artist}</span></div>
+                    <button className="ws-heart-btn ws-heart-active" onClick={e => { e.stopPropagation(); toggleSave(song.id); }} aria-label="Remove"><Heart size={15} fill="currentColor" /></button>
+                  </div>
+                ))}
+              </div>
+        )}
+
+        {libraryTab === "playlists" && (
+          <div className="ws-playlist-section">
+            <button className="ws-new-pl-btn" onClick={() => { if (!currentUser) { notify("Sign in to create playlists."); go("profile"); return; } setShowCreatePlaylist(v => !v); }}>
+              <Plus size={15} /> New Playlist
+            </button>
+            {showCreatePlaylist && (
+              <div className="ws-create-pl">
+                <input className="ws-pl-input" placeholder="Playlist name…" value={newPlaylistName} onChange={e => setNewPlaylistName(e.target.value)} onKeyDown={e => e.key === "Enter" && createPlaylist()} autoFocus />
+                <div className="ws-create-pl-row">
+                  <button className="primary-button" style={{ flex: 1, padding: "9px 0", fontSize: "0.85rem" }} onClick={createPlaylist}>Create</button>
+                  <button className="secondary-button" style={{ flex: 1, padding: "9px 0", fontSize: "0.85rem" }} onClick={() => { setShowCreatePlaylist(false); setNewPlaylistName(""); }}>Cancel</button>
+                </div>
+              </div>
+            )}
+            {worshipPlaylists.length === 0 && !showCreatePlaylist && (
+              <div className="ws-empty-lib"><ListMusic size={28} style={{ color: "var(--gold)", opacity: 0.4 }} /><p>No playlists yet</p><span>Create one to organize your worship music.</span></div>
+            )}
+            {worshipPlaylists.map(pl => {
+              const plSongs = worshipSongs.filter(s => pl.songIds.includes(s.id));
+              const first = plSongs[0];
+              return (
+                <div key={pl.id} className="ws-pl-row" onClick={() => first && playSong(first)} role="button" tabIndex={0}>
+                  <div className="ws-pl-art">{first?.coverUrl ? <img src={first.coverUrl} alt="" /> : <div className="ws-pl-art-empty"><ListMusic size={16} /></div>}</div>
+                  <div className="ws-pl-info"><span className="ws-pl-name">{pl.name}</span><span className="ws-pl-count">{pl.songIds.length} {pl.songIds.length === 1 ? "song" : "songs"}</span></div>
+                  <button className="np-ctrl" style={{ color: first ? "var(--gold)" : "rgba(247,251,255,0.2)" }} disabled={!first} aria-label="Play"><Play size={16} /></button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div style={{ height: 24 }} />
+
+      {!isPlaying && <button className="comm-fab" aria-label="Upload worship song" onClick={() => setShowUploadSheet(true)}><Plus size={24} /></button>}
       {showUploadSheet && <WorshipUploadSheet onClose={() => setShowUploadSheet(false)} />}
-
-      {/* Album detail sheet */}
-      {selectedAlbumId && (() => {
-        const album = worshipAlbums.find((a) => a.id === selectedAlbumId);
-        const albumSongs = album ? worshipSongs.filter((s) => album.trackIds.includes(s.id)) : [];
-        return album ? (
-          <AlbumDetailSheet
-            album={album}
-            songs={albumSongs}
-            currentSongId={currentSongId}
-            isPlaying={isPlaying}
-            onPlay={playSong}
-            onClose={() => setSelectedAlbumId(null)}
-          />
-        ) : null;
-      })()}
-
-      {/* Now Playing Bar */}
-      {currentSong && (
-        <NowPlayingBar
-          song={currentSong}
-          isPlaying={isPlaying}
-          progress={progress}
-          hasPrev={currentIndex > 0}
-          hasNext={currentIndex < filteredSongs.length - 1}
-          onPrev={prevSong}
-          onNext={nextSong}
-          onTogglePlay={togglePlay}
-          onSeek={seek}
-          onExpand={() => setShowExpandedPlayer(true)}
-        />
-      )}
-
-      {/* Expanded full-screen player */}
-      {showExpandedPlayer && currentSong && (
-        <ExpandedPlayerOverlay
-          song={currentSong}
-          album={worshipAlbums.find((a) => a.id === currentSong.albumId)}
-          isPlaying={isPlaying}
-          progress={progress}
-          currentTime={fmtTime(progress)}
-          totalTime={fmtTime(100)}
-          hasPrev={currentIndex > 0}
-          hasNext={currentIndex < filteredSongs.length - 1}
-          onPrev={prevSong}
-          onNext={nextSong}
-          onTogglePlay={togglePlay}
-          onSeek={seek}
-          onClose={() => setShowExpandedPlayer(false)}
-          onOpenAlbum={(id) => { setSelectedAlbumId(id); setShowExpandedPlayer(false); }}
-        />
-      )}
+      {albumSheet}
+      {nowPlayingBar}
+      {expandedPlayer}
     </section>
   );
 }
 
-function WorshipTrackRow({ song, index, isActive, isPlaying, onPlay, onOpenAlbum }: { song: WorshipSong; index: number; isActive: boolean; isPlaying: boolean; onPlay: () => void; onOpenAlbum?: () => void }) {
-  return (
-    <div className={`sp-track-row${isActive ? " active" : ""}`} onClick={onPlay} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onPlay()}>
-      <div className="sp-col-num">
-        {isPlaying
-          ? <span className="sp-eq" aria-label="Now playing"><span /><span /><span /></span>
-          : isActive
-            ? <Play size={13} style={{ color: "var(--gold)" }} />
-            : <span className="sp-track-num">{index + 1}</span>}
-      </div>
-      <div className="sp-track-art">
-        {song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="sp-track-art-empty"><Music2 size={15} /></div>}
-      </div>
-      <div className="sp-track-info">
-        <span className="sp-track-title">{song.title}</span>
-        <span className="sp-track-artist">{song.artist}</span>
-        {song.albumId && onOpenAlbum && (
-          <button className="sp-track-album-tag" onClick={(e) => { e.stopPropagation(); onOpenAlbum(); }}>
-            <Disc3 size={10} />{song.albumType}
-          </button>
-        )}
-      </div>
-      <div className="sp-col-dur">{song.duration || "—"}</div>
-    </div>
-  );
-}
-
-function NowPlayingBar({ song, isPlaying, progress, hasPrev, hasNext, onPrev, onNext, onTogglePlay, onSeek, onExpand }: {
-  song: WorshipSong; isPlaying: boolean; progress: number;
-  hasPrev: boolean; hasNext: boolean;
-  onPrev: () => void; onNext: () => void; onTogglePlay: () => void; onSeek: (pct: number) => void; onExpand: () => void;
+function NowPlayingBar({ song, isPlaying, progress, hasPrev, hasNext, isSaved, shuffle, repeat,
+  onPrev, onNext, onTogglePlay, onSeek, onExpand, onToggleSave, onToggleShuffle, onToggleRepeat }: {
+  song: WorshipSong; isPlaying: boolean; progress: number; hasPrev: boolean; hasNext: boolean;
+  isSaved: boolean; shuffle: boolean; repeat: boolean;
+  onPrev: () => void; onNext: () => void; onTogglePlay: () => void; onSeek: (pct: number) => void;
+  onExpand: () => void; onToggleSave: () => void; onToggleShuffle: () => void; onToggleRepeat: () => void;
 }) {
   return (
     <div className="now-playing-bar">
       <div className="np-progress-stripe">
         <div className="np-progress-fill" style={{ width: `${progress}%` }} />
-        <input className="np-progress-input" type="range" min={0} max={100} value={Math.round(progress)} onChange={(e) => onSeek(Number(e.target.value))} aria-label="Seek" />
+        <input className="np-progress-input" type="range" min={0} max={100} value={Math.round(progress)} onChange={e => onSeek(Number(e.target.value))} aria-label="Seek" />
       </div>
       <div className="np-body">
         <button className="np-left" onClick={onExpand} aria-label="Open full player">
-          <div className="np-art">
-            {song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="np-art-empty"><Music2 size={16} /></div>}
-          </div>
-          <div className="np-info">
-            <span className="np-title">{song.title}</span>
-            <span className="np-artist">{song.artist}</span>
-          </div>
+          <div className="np-art">{song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="np-art-empty"><Music2 size={16} /></div>}</div>
+          <div className="np-info"><span className="np-title">{song.title}</span><span className="np-artist">{song.artist}</span></div>
         </button>
         <div className="np-center">
           <button className="np-ctrl" onClick={onPrev} disabled={!hasPrev} aria-label="Previous"><SkipBack size={17} /></button>
-          <button className="np-play" onClick={onTogglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
-            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-          </button>
+          <button className="np-play" onClick={onTogglePlay} aria-label={isPlaying ? "Pause" : "Play"}>{isPlaying ? <Pause size={20} /> : <Play size={20} />}</button>
           <button className="np-ctrl" onClick={onNext} disabled={!hasNext} aria-label="Next"><SkipForward size={17} /></button>
         </div>
         <div className="np-right">
+          <button className="np-ctrl" onClick={onToggleSave} aria-label="Save" style={{ color: isSaved ? "#E84545" : undefined }}><Heart size={15} fill={isSaved ? "currentColor" : "none"} /></button>
           <button className="np-expand-btn" onClick={onExpand} aria-label="Expand"><ChevronUp size={20} /></button>
         </div>
       </div>
@@ -2464,11 +2547,13 @@ function NowPlayingBar({ song, isPlaying, progress, hasPrev, hasNext, onPrev, on
   );
 }
 
-function ExpandedPlayerOverlay({ song, album, isPlaying, progress, currentTime, totalTime, hasPrev, hasNext, onPrev, onNext, onTogglePlay, onSeek, onClose, onOpenAlbum }: {
+function ExpandedPlayerOverlay({ song, album, isPlaying, progress, currentTime, totalTime,
+  hasPrev, hasNext, isSaved, shuffle, repeat,
+  onPrev, onNext, onTogglePlay, onSeek, onClose, onOpenAlbum, onToggleSave, onToggleShuffle, onToggleRepeat }: {
   song: WorshipSong; album?: WorshipAlbum; isPlaying: boolean; progress: number; currentTime: string; totalTime: string;
-  hasPrev: boolean; hasNext: boolean;
+  hasPrev: boolean; hasNext: boolean; isSaved: boolean; shuffle: boolean; repeat: boolean;
   onPrev: () => void; onNext: () => void; onTogglePlay: () => void; onSeek: (pct: number) => void;
-  onClose: () => void; onOpenAlbum: (id: string) => void;
+  onClose: () => void; onOpenAlbum: (id: string) => void; onToggleSave: () => void; onToggleShuffle: () => void; onToggleRepeat: () => void;
 }) {
   return (
     <div className="ep-overlay">
@@ -2492,73 +2577,49 @@ function ExpandedPlayerOverlay({ song, album, isPlaying, progress, currentTime, 
             <h2 className="ep-song-title">{song.title}</h2>
             <p className="ep-song-artist">{song.artist}</p>
           </div>
-          {album && (
-            <button className="ep-album-badge" onClick={() => onOpenAlbum(album.id)}>
-              <Disc3 size={13} />
-              <span>{album.type} · {album.title}</span>
-              <ChevronRight size={13} />
-            </button>
-          )}
+          <button className="ep-heart-btn" onClick={onToggleSave} aria-label={isSaved ? "Unsave" : "Save"} style={{ color: isSaved ? "#E84545" : "rgba(247,251,255,0.5)" }}>
+            <Heart size={22} fill={isSaved ? "currentColor" : "none"} />
+          </button>
         </div>
+
+        {album && (
+          <button className="ep-album-badge" onClick={() => onOpenAlbum(album.id)}>
+            <Disc3 size={13} /><span>{album.type} · {album.title}</span><ChevronRight size={13} />
+          </button>
+        )}
 
         <div className="ep-progress-section">
           <div className="ep-progress-track">
             <div className="ep-progress-fill" style={{ width: `${progress}%` }} />
-            <input className="ep-progress-input" type="range" min={0} max={100} value={Math.round(progress)} onChange={(e) => onSeek(Number(e.target.value))} aria-label="Seek" />
+            <input className="ep-progress-input" type="range" min={0} max={100} value={Math.round(progress)} onChange={e => onSeek(Number(e.target.value))} aria-label="Seek" />
           </div>
-          <div className="ep-time-row">
-            <span>{currentTime}</span>
-            <span>{song.duration || totalTime}</span>
-          </div>
+          <div className="ep-time-row"><span>{currentTime}</span><span>{song.duration || totalTime}</span></div>
         </div>
 
         <div className="ep-controls">
+          <button className={`ep-ctrl-side${shuffle ? " ep-ctrl-active" : ""}`} onClick={onToggleShuffle} aria-label="Shuffle"><Shuffle size={20} /></button>
           <button className="ep-ctrl-btn" onClick={onPrev} disabled={!hasPrev} aria-label="Previous"><SkipBack size={26} /></button>
           <button className="ep-play-btn" onClick={onTogglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
             {isPlaying ? <Pause size={28} /> : <Play size={28} />}
           </button>
           <button className="ep-ctrl-btn" onClick={onNext} disabled={!hasNext} aria-label="Next"><SkipForward size={26} /></button>
+          <button className={`ep-ctrl-side${repeat ? " ep-ctrl-active" : ""}`} onClick={onToggleRepeat} aria-label="Repeat"><Repeat size={20} /></button>
         </div>
       </div>
     </div>
   );
 }
 
-function WorshipAlbumRow({ title, albums, songs, onPlayAll, onOpenAlbum }: { title: string; albums: WorshipAlbum[]; songs: WorshipSong[]; onPlayAll: (s: WorshipSong) => void; onOpenAlbum: (id: string) => void }) {
-  if (albums.length === 0) return null;
-  return (
-    <div className="wa-shelf">
-      <h3 className="wa-shelf-title">{title}</h3>
-      <div className="wa-shelf-row">
-        {albums.map((album) => {
-          const first = songs.find((s) => album.trackIds.includes(s.id));
-          return (
-            <div key={album.id} className="wa-card" onClick={() => onOpenAlbum(album.id)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onOpenAlbum(album.id)}>
-              <div className="wa-card-art">
-                {album.coverUrl ? <img src={album.coverUrl} alt={album.title} /> : <div className="wa-card-art-empty"><Music2 size={28} /></div>}
-                <button className="wa-card-play" onClick={(e) => { e.stopPropagation(); if (first) onPlayAll(first); }} aria-label="Play">
-                  <Play size={16} />
-                </button>
-              </div>
-              <p className="wa-card-title">{album.title}</p>
-              <p className="wa-card-artist">{album.artist}</p>
-              <p className="wa-card-meta">{album.year} · {album.trackIds.length} {album.trackIds.length === 1 ? "track" : "tracks"}</p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, onClose }: { album: WorshipAlbum; songs: WorshipSong[]; currentSongId: string | null; isPlaying: boolean; onPlay: (s: WorshipSong) => void; onClose: () => void }) {
+function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, savedSongIds, onToggleSave, onClose }: {
+  album: WorshipAlbum; songs: WorshipSong[]; currentSongId: string | null; isPlaying: boolean;
+  onPlay: (s: WorshipSong) => void; savedSongIds: string[]; onToggleSave: (id: string) => void; onClose: () => void;
+}) {
   React.useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
 
   const first = songs[0];
-
   return (
     <>
       <div className="post-sheet-overlay" onClick={onClose} />
@@ -2573,11 +2634,7 @@ function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, onCl
             <h2 className="album-sheet-title">{album.title}</h2>
             <p className="album-sheet-artist">{album.artist} · {album.year}</p>
             {album.description && <p className="album-sheet-desc">{album.description}</p>}
-            {first && (
-              <button className="sp-play-btn" style={{ marginTop: 10 }} onClick={() => { onPlay(first); onClose(); }}>
-                <Play size={15} /> Play All
-              </button>
-            )}
+            {first && <button className="sp-play-btn" style={{ marginTop: 10 }} onClick={() => { onPlay(first); onClose(); }}><Play size={15} /> Play All</button>}
           </div>
           <button className="icon-button" style={{ alignSelf: "flex-start", marginLeft: "auto" }} onClick={onClose} aria-label="Close"><X size={20} /></button>
         </div>
@@ -2586,14 +2643,11 @@ function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, onCl
           {songs.map((song, idx) => {
             const active = currentSongId === song.id;
             const playing = active && isPlaying;
+            const saved = savedSongIds.includes(song.id);
             return (
               <button key={song.id} className={`album-sheet-track${active ? " active" : ""}`} onClick={() => { onPlay(song); onClose(); }}>
                 <div className="album-sheet-track-num">
-                  {playing
-                    ? <span className="sp-eq"><span /><span /><span /></span>
-                    : active
-                      ? <Play size={12} style={{ color: "var(--gold)" }} />
-                      : <span>{idx + 1}</span>}
+                  {playing ? <span className="sp-eq"><span /><span /><span /></span> : active ? <Play size={12} style={{ color: "var(--gold)" }} /> : <span>{idx + 1}</span>}
                 </div>
                 <div className="album-sheet-track-art">
                   {song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="album-sheet-track-art-empty"><Music2 size={13} /></div>}
@@ -2602,6 +2656,9 @@ function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, onCl
                   <span className={`album-sheet-track-title${active ? " active" : ""}`}>{song.title}</span>
                   <span className="album-sheet-track-artist">{song.artist}</span>
                 </div>
+                <button className="ws-heart-btn" style={{ color: saved ? "#E84545" : undefined, marginRight: 4 }} onClick={e => { e.stopPropagation(); onToggleSave(song.id); }} aria-label={saved ? "Unsave" : "Save"}>
+                  <Heart size={14} fill={saved ? "currentColor" : "none"} />
+                </button>
                 <span className="album-sheet-track-dur">{song.duration || "—"}</span>
               </button>
             );
