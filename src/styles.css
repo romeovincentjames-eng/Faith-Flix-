@@ -5850,8 +5850,11 @@ textarea:focus {
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
-  scroll-padding-inline: calc(50% - 74px);
-  padding: 4px max(18px, calc(50% - 84px)) 18px;
+  scroll-padding-inline-start: 50%;
+  scroll-padding-inline-end: calc(50% - 74px);
+  padding-inline-start: 16px;
+  padding-inline-end: calc(50% - 74px);
+  padding-block: 4px 18px;
   scrollbar-width: none;
 }
 
@@ -5866,8 +5869,8 @@ textarea:focus {
 @media (max-width: 390px) {
   .home-poster-row {
     grid-auto-columns: 136px;
-    scroll-padding-inline: calc(50% - 68px);
-    padding: 4px calc(50% - 78px) 18px;
+    scroll-padding-inline-end: calc(50% - 68px);
+    padding-inline-end: calc(50% - 68px);
   }
 }
 
@@ -5956,8 +5959,11 @@ textarea:focus {
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
-  scroll-padding-inline: calc(50% - 115px);
-  padding: 4px max(18px, calc(50% - 125px)) 18px;
+  scroll-padding-inline-start: 50%;
+  scroll-padding-inline-end: calc(50% - 115px);
+  padding-inline-start: 16px;
+  padding-inline-end: calc(50% - 115px);
+  padding-block: 4px 18px;
   scrollbar-width: none;
 }
 
@@ -5972,7 +5978,8 @@ textarea:focus {
 @media (max-width: 390px) {
   .home-series-shelf {
     grid-auto-columns: 210px;
-    padding: 4px 14px 18px;
+    scroll-padding-inline-end: calc(50% - 105px);
+    padding-inline-end: calc(50% - 105px);
   }
 }
 
