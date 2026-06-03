@@ -2507,13 +2507,16 @@ function CommunityUpload({ onDone }: { onDone?: () => void } = {}) {
   );
 }
 
-function PostComposerSheet({ defaultTab, onClose }: { defaultTab: "post" | "video"; onClose: () => void }) {
-  const { currentUser, posts, setPosts, notify, go } = useApp();
-  const [tab, setTab] = React.useState<"post" | "video">(defaultTab);
+function PostComposerSheet({ defaultTab, onClose }: { defaultTab: "post" | "video" | "prayer"; onClose: () => void }) {
+  const { currentUser, posts, setPosts, prayers, setPrayers, notify, go } = useApp();
+  const [tab, setTab] = React.useState<"post" | "video" | "prayer">(defaultTab);
   const [text, setText] = React.useState("");
   const [scripture, setScripture] = React.useState("");
   const [image, setImage] = React.useState<File | null>(null);
   const [imagePreview, setImagePreview] = React.useState("");
+  const [prayerTitle, setPrayerTitle] = React.useState("");
+  const [prayerText, setPrayerText] = React.useState("");
+  const [prayerVisibility, setPrayerVisibility] = React.useState<"Public" | "Private">("Public");
 
   React.useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -2530,6 +2533,16 @@ function PostComposerSheet({ defaultTab, onClose }: { defaultTab: "post" | "vide
     onClose();
   };
 
+  const sharePrayer = () => {
+    if (!currentUser) return notify("Sign in to post a prayer request.");
+    if (!prayerTitle.trim()) return notify("Add a prayer title.");
+    if (!prayerText.trim()) return notify("Write your prayer request.");
+    setPrayers((current) => [{ id: uid("prayer"), userId: currentUser.id, title: prayerTitle.trim(), text: prayerText.trim(), visibility: prayerVisibility, actions: {} }, ...current]);
+    setPrayerTitle(""); setPrayerText(""); setPrayerVisibility("Public");
+    notify("Prayer request posted 🙏");
+    onClose();
+  };
+
   return (
     <>
       <div className="post-sheet-overlay" onClick={onClose} />
@@ -2538,12 +2551,13 @@ function PostComposerSheet({ defaultTab, onClose }: { defaultTab: "post" | "vide
         <div className="post-sheet-header">
           <div className="post-sheet-tabs">
             <button className={`post-sheet-tab${tab === "post" ? " active" : ""}`} onClick={() => setTab("post")}>Post</button>
+            <button className={`post-sheet-tab${tab === "prayer" ? " active" : ""}`} onClick={() => setTab("prayer")}>🙏 Prayer</button>
             <button className={`post-sheet-tab${tab === "video" ? " active" : ""}`} onClick={() => setTab("video")}>Video</button>
           </div>
           <button className="icon-button post-sheet-close" aria-label="Close" onClick={onClose}><X size={20} /></button>
         </div>
 
-        {tab === "post" ? (
+        {tab === "post" && (
           <div className="post-sheet-body">
             {!currentUser ? (
               <div className="post-sheet-signin">
@@ -2579,7 +2593,55 @@ function PostComposerSheet({ defaultTab, onClose }: { defaultTab: "post" | "vide
               </>
             )}
           </div>
-        ) : (
+        )}
+
+        {tab === "prayer" && (
+          <div className="post-sheet-body">
+            {!currentUser ? (
+              <div className="post-sheet-signin">
+                <HeartHandshake size={34} style={{ color: "var(--gold)", marginBottom: 8 }} />
+                <p>Sign in to post a prayer request</p>
+                <button className="primary-button" onClick={() => { go("profile"); onClose(); }}>Sign In</button>
+              </div>
+            ) : (
+              <>
+                <div className="prayer-sheet-intro">
+                  <HeartHandshake size={22} style={{ color: "var(--gold)", flexShrink: 0 }} />
+                  <p>Share a prayer request with the Faith Flix community.</p>
+                </div>
+                <div className="prayer-sheet-form">
+                  <input
+                    className="post-sheet-scripture-input prayer-title-input"
+                    placeholder="Prayer title (e.g. Healing for my family)"
+                    value={prayerTitle}
+                    autoFocus
+                    onChange={(e) => setPrayerTitle(e.target.value)}
+                  />
+                  <textarea
+                    className="post-sheet-textarea"
+                    placeholder="Share your prayer request… Be as specific or general as you'd like."
+                    value={prayerText}
+                    onChange={(e) => setPrayerText(e.target.value)}
+                    rows={5}
+                  />
+                  <div className="prayer-visibility-row">
+                    <span className="prayer-visibility-label">Visibility</span>
+                    <div className="prayer-visibility-toggle">
+                      <button className={`prayer-vis-btn${prayerVisibility === "Public" ? " active" : ""}`} onClick={() => setPrayerVisibility("Public")}>🌐 Public</button>
+                      <button className={`prayer-vis-btn${prayerVisibility === "Private" ? " active" : ""}`} onClick={() => setPrayerVisibility("Private")}>🔒 Private</button>
+                    </div>
+                  </div>
+                </div>
+                <div className="post-sheet-bottom-bar">
+                  <span className="post-sheet-char">{prayerText.length > 0 ? `${prayerText.length} chars` : ""}</span>
+                  <button className="comm-post-btn prayer-post-btn" onClick={sharePrayer} disabled={!prayerTitle.trim() || !prayerText.trim()}>Post Prayer</button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {tab === "video" && (
           <div className="post-sheet-body post-sheet-video-body">
             <CommunityUpload onDone={onClose} />
           </div>
