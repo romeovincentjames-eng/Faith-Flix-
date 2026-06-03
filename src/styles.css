@@ -3314,6 +3314,259 @@ textarea:focus {
   max-width: 120px;
 }
 
+.tweet-name-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #f7fbff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+.tweet-name-btn:hover { color: var(--gold); text-decoration: underline; }
+
+.tweet-avatar-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.tweet-avatar-btn:hover { opacity: 0.8; }
+
+/* ═══════════════════════════════════════════════════
+   FRIENDS PANEL
+═══════════════════════════════════════════════════ */
+.friends-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-bottom: 16px;
+}
+
+.friend-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 16px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+}
+
+.friend-search-icon { color: rgba(247,251,255,0.35); flex-shrink: 0; }
+
+.friend-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: #f7fbff;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+.friend-search-input::placeholder { color: rgba(247,251,255,0.3); }
+
+.friends-section {
+  padding: 12px 16px 4px;
+}
+
+.friends-section-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(247,251,255,0.45);
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.friends-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold);
+  color: #10131a;
+  font-size: 0.68rem;
+  font-weight: 900;
+  border-radius: 999px;
+  padding: 1px 7px;
+  min-width: 18px;
+}
+
+.friend-member-card,
+.friend-request-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.friend-member-avatar-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(212,160,23,0.35), rgba(74,144,217,0.35));
+  border: 1.5px solid rgba(212,160,23,0.4);
+  color: #f7fbff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.friend-member-avatar-btn:hover { opacity: 0.8; }
+
+.friend-member-info-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.friend-member-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #f7fbff;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friend-member-handle {
+  font-size: 0.78rem;
+  color: rgba(247,251,255,0.42);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friend-member-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.friend-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #ffe29a, #d4a017);
+  color: #10131a;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.friend-add-btn:hover { opacity: 0.85; }
+
+.friend-pending-btn {
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: rgba(247,251,255,0.5);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: not-allowed;
+}
+
+.friend-remove-btn {
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: rgba(247,251,255,0.6);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.friend-remove-btn:hover { background: rgba(255,255,255,0.1); }
+
+.friend-msg-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: #f7fbff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.friend-msg-btn:hover { background: rgba(255,255,255,0.12); }
+
+.friend-request-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.friend-accept-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #ffe29a, #d4a017);
+  color: #10131a;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.friend-accept-btn:hover { opacity: 0.85; }
+
+.friend-decline-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,80,80,0.35);
+  background: rgba(255,80,80,0.08);
+  color: rgba(255,120,120,0.9);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.friend-decline-btn:hover { background: rgba(255,80,80,0.15); }
+
+.friends-empty {
+  font-size: 0.86rem;
+  color: rgba(247,251,255,0.38);
+  padding: 8px 0;
+  margin: 0;
+}
+
+.profile-friends-section {
+  padding-bottom: 24px;
+}
+
 .tweet-handle,
 .tweet-dot,
 .tweet-time {
@@ -4876,6 +5129,85 @@ textarea:focus {
   justify-content: center;
   padding: 9px;
 }
+
+.ig-profile-btn-gold {
+  background: linear-gradient(135deg, #ffe29a, #d4a017) !important;
+  color: #10131a !important;
+  border-color: transparent !important;
+  font-weight: 800 !important;
+}
+.ig-profile-btn-gold:hover { opacity: 0.88; }
+
+.ig-profile-btn-dimmed {
+  background: rgba(255,255,255,0.04) !important;
+  color: rgba(247,251,255,0.45) !important;
+  cursor: not-allowed !important;
+}
+
+.ig-stat-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.ig-stat-btn:hover { background: rgba(255,255,255,0.06); }
+
+.profile-req-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e53e3e;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 900;
+  border-radius: 999px;
+  padding: 0 5px;
+  min-width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+
+.ig-profile-tab {
+  position: relative;
+}
+
+.ig-tab-badge {
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e53e3e;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 900;
+  border-radius: 999px;
+  padding: 0 4px;
+  min-width: 14px;
+  height: 14px;
+}
+
+.user-profile-back {
+  background: none;
+  border: none;
+  color: rgba(247,251,255,0.6);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 16px 8px;
+  display: block;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+.user-profile-back:hover { color: var(--gold); }
 
 .ig-profile-edit-panel {
   margin: 0 16px 16px;

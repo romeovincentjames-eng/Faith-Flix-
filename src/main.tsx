@@ -64,7 +64,7 @@ type Page =
   | "admin-login"
   | "admin-studio"
   | "rules";
-type CommunityView = "feed" | "prayer" | "upload" | "groups" | "friends" | "messages";
+type CommunityView = "feed" | "prayer" | "upload" | "groups" | "friends" | "messages" | "userprofile";
 type StudioView = "dashboard" | "upload" | "videos" | "series" | "categories" | "reviews" | "takedown" | "rules";
 type Status = "Draft" | "Published" | "Hidden";
 type UploadStatus = "Pending Review" | "Approved" | "Rejected" | "Edits Requested";
@@ -2569,6 +2569,7 @@ function CommunityScreen() {
         )}
         {communityView === "friends" && <FriendsPanel />}
         {communityView === "messages" && <MessagesPanel />}
+        {communityView === "userprofile" && <UserProfilePage />}
       </>}
 
       <button className="comm-fab" aria-label="Create post" onClick={() => { setSheetTab("post"); setShowPostSheet(true); }}>
@@ -3183,50 +3184,105 @@ function DiscussionRooms() {
   return publicVideos.length ? <div className="content-grid">{publicVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => { setSelectedVideoId(video.id); go("watch"); }} extra={<span className="meta">{comments.filter((item) => item.targetId === video.id).length} comments</span>} />)}</div> : <EmptyState icon={MessageCircle} title={t("comm.noDiscussions")} body={t("comm.noDiscussionsBody")} action={t("nav.watch")} onAction={() => go("watch")} />;
 }
 
-function FriendsPanel() {
-  const { currentUser, users, friendRequests, setFriendRequests, selectedCommunityUser, setSelectedCommunityUser, setSelectedMessageUser, setCommunityView, notify, t } = useApp();
-  if (!currentUser) return <EmptyState icon={UserPlus} title={t("comm.noFriends")} body={t("comm.noFriendsBody")} action={t("profile.eyebrow")} onAction={() => notify(t("profile.eyebrow"))} />;
-  const others = users.filter((user) => user.id !== currentUser.id && user.role !== "admin");
-  const incoming = friendRequests.filter((request) => request.toId === currentUser.id && request.status === "pending");
-  const accepted = friendRequests.filter((request) => request.status === "accepted" && [request.fromId, request.toId].includes(currentUser.id));
-  const requestFriend = (toId: string) => {
-    if (friendRequests.some((request) => [request.fromId, request.toId].includes(currentUser.id) && [request.fromId, request.toId].includes(toId))) return notify(t("comm.friendExists"));
-    setFriendRequests([...friendRequests, { id: uid("friend"), fromId: currentUser.id, toId, status: "pending" }]);
+function FriendMemberCard({ user, isMyProfile }: { user: Profile; isMyProfile?: boolean }) {
+  const { currentUser, friendRequests, setFriendRequests, setSelectedCommunityUser, setCommunityView, setSelectedMessageUser, notify, t } = useApp();
+  if (!currentUser) return null;
+  const initials = user.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+  const handle = "@" + (user.username || user.name.split(" ")[0].toLowerCase());
+  const accepted = friendRequests.filter((r) => r.status === "accepted" && [r.fromId, r.toId].includes(currentUser.id));
+  const acceptedIds = accepted.map((r) => r.fromId === currentUser.id ? r.toId : r.fromId);
+  const pendingOut = friendRequests.filter((r) => r.fromId === currentUser.id && r.status === "pending").map((r) => r.toId);
+  const isFriend = acceptedIds.includes(user.id);
+  const isPending = pendingOut.includes(user.id);
+  const friendReq = accepted.find((r) => [r.fromId, r.toId].includes(user.id));
+  const requestFriend = () => {
+    if (friendRequests.some((r) => [r.fromId, r.toId].includes(currentUser.id) && [r.fromId, r.toId].includes(user.id))) return notify(t("comm.friendExists"));
+    setFriendRequests([...friendRequests, { id: uid("friend"), fromId: currentUser.id, toId: user.id, status: "pending" }]);
     notify(t("comm.friendRequestSent"));
   };
-  const selectedMember = users.find((user) => user.id === selectedCommunityUser && user.role !== "admin");
-  if (selectedMember) {
-    const friendship = friendRequests.find((request) => [request.fromId, request.toId].includes(currentUser.id) && [request.fromId, request.toId].includes(selectedMember.id));
-    const canMessage = friendship?.status === "accepted";
-    const actionLabel = friendship?.status === "accepted" ? "Friends" : friendship?.status === "pending" ? "Request Sent" : "Add Friend";
-    return (
-      <div className="content-panel community-profile-card">
-        <button className="text-button inline-text-button" onClick={() => setSelectedCommunityUser("")}>← Back to members</button>
-        <div className="community-profile-head">
-          <div className="community-profile-avatar">{selectedMember.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</div>
-          <div>
-            <p className="eyebrow">@{selectedMember.username || "faithmember"}</p>
-            <h2>{selectedMember.name}</h2>
-            {selectedMember.location && <p>{selectedMember.location}</p>}
-          </div>
-        </div>
-        {selectedMember.bio && <p>{selectedMember.bio}</p>}
-        <div className="profile-info-grid">
-          {selectedMember.favoriteScripture && <InfoLine label="Favorite scripture" value={selectedMember.favoriteScripture} />}
-          {selectedMember.ministry && <InfoLine label="Ministry" value={selectedMember.ministry} />}
-        </div>
-        <div className="button-row">
-          <button className={friendship ? "secondary-button" : "primary-button"} disabled={Boolean(friendship)} onClick={() => requestFriend(selectedMember.id)}><UserPlus size={17} /> {actionLabel}</button>
-          {canMessage && <button className="secondary-button" onClick={() => { setSelectedMessageUser(selectedMember.id); setCommunityView("messages"); }}><Inbox size={17} /> Message</button>}
-        </div>
-      </div>
-    );
-  }
+  const openProfile = () => { setSelectedCommunityUser(user.id); setCommunityView("userprofile"); };
   return (
-    <div className="panel-grid">
-      <div className="content-panel"><h2>{t("comm.friends")}</h2>{accepted.length ? accepted.map((request) => <FriendRow key={request.id} request={request} />) : <p>{t("comm.noFriendsYet")}</p>}</div>
-      <div className="content-panel"><h2>{t("comm.requests")}</h2>{incoming.length ? incoming.map((request) => <button className="secondary-button" key={request.id} onClick={() => { setFriendRequests(friendRequests.map((item) => item.id === request.id ? { ...item, status: "accepted" } : item)); notify("Friend request accepted."); }}>Accept {users.find((user) => user.id === request.fromId)?.name}</button>) : <p>{t("comm.noRequestsYet")}</p>}</div>
-      <div className="content-panel"><h2>{t("comm.otherMembers")}</h2>{others.length ? others.map((user) => <button className="secondary-button" key={user.id} onClick={() => setSelectedCommunityUser(user.id)}>Open {user.name}</button>) : <p>{t("comm.noOtherUsers")}</p>}</div>
+    <div className="friend-member-card">
+      <button className="friend-member-avatar-btn" onClick={openProfile} aria-label={`View ${user.name}`}>{initials}</button>
+      <button className="friend-member-info-btn" onClick={openProfile}>
+        <p className="friend-member-name">{user.name}</p>
+        <p className="friend-member-handle">{handle}</p>
+      </button>
+      <div className="friend-member-actions">
+        {isMyProfile ? null : isFriend ? (
+          <>
+            <button className="friend-msg-btn" aria-label="Message" onClick={() => { setSelectedMessageUser(user.id); setCommunityView("messages"); }}><Inbox size={15} /></button>
+            <button className="friend-remove-btn" onClick={() => { if (friendReq) { setFriendRequests(friendRequests.filter((r) => r.id !== friendReq.id)); notify(t("comm.friendRemoved")); } }}>✓ Friends</button>
+          </>
+        ) : isPending ? (
+          <button className="friend-pending-btn" disabled>Pending…</button>
+        ) : (
+          <button className="friend-add-btn" onClick={requestFriend}><UserPlus size={14} /> Add</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FriendsPanel() {
+  const { currentUser, users, friendRequests, setFriendRequests, setSelectedCommunityUser, setCommunityView, notify, t } = useApp();
+  const [search, setSearch] = React.useState("");
+  if (!currentUser) return <EmptyState icon={UserPlus} title={t("comm.noFriends")} body={t("comm.noFriendsBody")} action={t("profile.eyebrow")} onAction={() => notify(t("profile.eyebrow"))} />;
+
+  const others = users.filter((u) => u.id !== currentUser.id && u.role !== "admin");
+  const incoming = friendRequests.filter((r) => r.toId === currentUser.id && r.status === "pending");
+  const accepted = friendRequests.filter((r) => r.status === "accepted" && [r.fromId, r.toId].includes(currentUser.id));
+  const acceptedIds = accepted.map((r) => r.fromId === currentUser.id ? r.toId : r.fromId);
+
+  const filtered = search.trim()
+    ? others.filter((u) => [u.name, u.username ?? ""].join(" ").toLowerCase().includes(search.toLowerCase()))
+    : others;
+
+  const acceptRequest = (id: string) => { setFriendRequests(friendRequests.map((r) => r.id === id ? { ...r, status: "accepted" } : r)); notify("Friend request accepted! 🙏"); };
+  const declineRequest = (id: string) => { setFriendRequests(friendRequests.filter((r) => r.id !== id)); notify("Request declined."); };
+
+  return (
+    <div className="friends-panel">
+      <div className="friend-search-row">
+        <Search size={16} className="friend-search-icon" />
+        <input className="friend-search-input" placeholder="Search members by name…" value={search} onChange={(e) => setSearch(e.target.value)} />
+      </div>
+
+      {!search && incoming.length > 0 && (
+        <div className="friends-section">
+          <p className="friends-section-title">Friend Requests <span className="friends-badge">{incoming.length}</span></p>
+          {incoming.map((req) => {
+            const from = users.find((u) => u.id === req.fromId);
+            if (!from) return null;
+            const initials = from.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+            return (
+              <div key={req.id} className="friend-request-card">
+                <button className="friend-member-avatar-btn" onClick={() => { setSelectedCommunityUser(from.id); setCommunityView("userprofile"); }} aria-label={from.name}>{initials}</button>
+                <button className="friend-member-info-btn" onClick={() => { setSelectedCommunityUser(from.id); setCommunityView("userprofile"); }}>
+                  <p className="friend-member-name">{from.name}</p>
+                  <p className="friend-member-handle">@{from.username || from.name.split(" ")[0].toLowerCase()}</p>
+                </button>
+                <div className="friend-request-actions">
+                  <button className="friend-accept-btn" onClick={() => acceptRequest(req.id)}>Accept</button>
+                  <button className="friend-decline-btn" onClick={() => declineRequest(req.id)}>Decline</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!search && acceptedIds.length > 0 && (
+        <div className="friends-section">
+          <p className="friends-section-title">My Friends <span className="friends-badge">{acceptedIds.length}</span></p>
+          {acceptedIds.map((id) => { const u = users.find((u) => u.id === id); return u ? <FriendMemberCard key={id} user={u} /> : null; })}
+        </div>
+      )}
+
+      <div className="friends-section">
+        <p className="friends-section-title">{search.trim() ? `Results for "${search}"` : "Find Members"}</p>
+        {filtered.length ? filtered.map((u) => <FriendMemberCard key={u.id} user={u} />) : <p className="friends-empty">No members found.</p>}
+      </div>
     </div>
   );
 }
@@ -3259,11 +3315,99 @@ function MessagesPanel() {
   );
 }
 
+function UserProfilePage() {
+  const { users, posts, publicVideos, uploads, currentUser, friendRequests, setFriendRequests, setSelectedCommunityUser, setCommunityView, setSelectedMessageUser, notify, t } = useApp();
+  const { selectedCommunityUser } = useApp();
+  const [profileTab, setProfileTab] = React.useState<"posts" | "videos">("posts");
+
+  const member = users.find((u) => u.id === selectedCommunityUser);
+  if (!member) return <EmptyState icon={User} title="Profile not found" body="This member doesn't exist." action="Back" onAction={() => setCommunityView("feed")} />;
+
+  const initials = member.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+  const handle = "@" + (member.username || member.name.split(" ")[0].toLowerCase());
+  const memberPosts = posts.filter((p) => p.userId === member.id);
+  const memberVideos = publicVideos.filter((v) => v.creator === member.name);
+  const memberUploads = uploads.filter((u) => u.userId === member.id);
+  const allVideos = [...memberVideos, ...memberUploads.filter((u) => !memberVideos.some((v) => v.title === u.title))];
+
+  const friendship = currentUser ? friendRequests.find((r) => [r.fromId, r.toId].includes(currentUser.id) && [r.fromId, r.toId].includes(member.id)) : null;
+  const canMessage = friendship?.status === "accepted";
+  const friendLabel = friendship?.status === "accepted" ? "Friends ✓" : friendship?.status === "pending" ? "Request Sent" : "Add Friend";
+
+  const requestFriend = () => {
+    if (!currentUser) return notify("Sign in to add friends.");
+    if (friendship) return;
+    setFriendRequests([...friendRequests, { id: uid("friend"), fromId: currentUser.id, toId: member.id, status: "pending" }]);
+    notify(`Friend request sent to ${member.name}! 🙏`);
+  };
+
+  return (
+    <section className="ig-profile-screen">
+      <button className="user-profile-back" onClick={() => setCommunityView("feed")}>← Back</button>
+
+      <div className="ig-profile-header">
+        <div className="ig-profile-avatar-wrap">
+          {member.image
+            ? <img src={member.image} alt={member.name} className="ig-profile-avatar-img" />
+            : <div className="ig-profile-avatar-initials">{initials}</div>}
+        </div>
+        <div className="ig-profile-stats">
+          <div className="ig-stat"><span className="ig-stat-num">{memberPosts.length}</span><span className="ig-stat-label">Posts</span></div>
+          <div className="ig-stat"><span className="ig-stat-num">{allVideos.length}</span><span className="ig-stat-label">Videos</span></div>
+        </div>
+      </div>
+
+      <div className="ig-profile-bio-block">
+        <p className="ig-profile-name">{member.name}</p>
+        <p className="ig-profile-username">{handle}</p>
+        {member.bio && <p className="ig-profile-bio-text">{member.bio}</p>}
+        {member.favoriteScripture && <p className="ig-profile-detail">📖 {member.favoriteScripture}</p>}
+        {member.location && <p className="ig-profile-detail">📍 {member.location}</p>}
+        {member.ministry && <p className="ig-profile-detail">⛪ {member.ministry}</p>}
+      </div>
+
+      <div className="ig-profile-actions">
+        {currentUser && currentUser.id !== member.id && (
+          <>
+            <button
+              className={friendship ? "ig-profile-btn ig-profile-btn-dimmed" : "ig-profile-btn ig-profile-btn-gold"}
+              disabled={Boolean(friendship)}
+              onClick={requestFriend}
+            ><UserPlus size={15} /> {friendLabel}</button>
+            {canMessage && (
+              <button className="ig-profile-btn" onClick={() => { setSelectedMessageUser(member.id); setCommunityView("messages"); }}>
+                <Inbox size={15} /> Message
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="ig-profile-tabs">
+        <button className={`ig-profile-tab${profileTab === "posts" ? " active" : ""}`} onClick={() => setProfileTab("posts")} aria-label="Posts"><LayoutDashboard size={20} /></button>
+        <button className={`ig-profile-tab${profileTab === "videos" ? " active" : ""}`} onClick={() => setProfileTab("videos")} aria-label="Videos"><Film size={20} /></button>
+      </div>
+
+      {profileTab === "posts" && (
+        memberPosts.length > 0
+          ? <div className="ig-profile-grid">{memberPosts.map((post) => <div key={post.id} className="ig-profile-grid-cell">{post.imageUrl ? <img src={post.imageUrl} alt="" /> : <div className="ig-profile-grid-placeholder"><span>{post.text.slice(0, 55)}{post.text.length > 55 ? "…" : ""}</span></div>}</div>)}</div>
+          : <EmptyState icon={MessagesSquare} title="No posts yet" body={`${member.name} hasn't posted yet.`} action="" onAction={() => {}} />
+      )}
+
+      {profileTab === "videos" && (
+        allVideos.length > 0
+          ? <div className="ig-profile-grid">{allVideos.map((v) => <div key={v.id} className="ig-profile-grid-cell ig-profile-grid-video-cell">{"thumbnailUrl" in v && v.thumbnailUrl ? <img src={v.thumbnailUrl} alt={v.title} /> : <div className="ig-profile-grid-placeholder"><Film size={22} style={{ opacity: 0.5 }} /><span style={{ fontSize: "0.7rem", marginTop: 4, textAlign: "center" }}>{v.title}</span></div>}</div>)}</div>
+          : <EmptyState icon={Film} title="No videos yet" body={`${member.name} hasn't uploaded any videos yet.`} action="" onAction={() => {}} />
+      )}
+    </section>
+  );
+}
+
 function ProfileScreen() {
-  const { currentUser, users, setUsers, setSessionId, isAdmin, uploads, posts, signOut, go, notify, t } = useApp();
+  const { currentUser, users, setUsers, setSessionId, isAdmin, uploads, posts, friendRequests, setFriendRequests, setSelectedCommunityUser, setCommunityView, setSelectedMessageUser, signOut, go, notify, t } = useApp();
   const [mode, setMode] = React.useState<"signup" | "login">("login");
   const [editOpen, setEditOpen] = React.useState(false);
-  const [profileTab, setProfileTab] = React.useState<"posts" | "uploads">("posts");
+  const [profileTab, setProfileTab] = React.useState<"posts" | "uploads" | "friends">("posts");
 
   if (!currentUser) {
     return (
@@ -3290,6 +3434,9 @@ function ProfileScreen() {
   const initials = currentUser.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
   const myPosts = posts.filter((p) => p.userId === currentUser.id);
   const myUploads = uploads.filter((u) => u.userId === currentUser.id);
+  const myFriends = friendRequests.filter((r) => r.status === "accepted" && [r.fromId, r.toId].includes(currentUser.id));
+  const myFriendIds = myFriends.map((r) => r.fromId === currentUser.id ? r.toId : r.fromId);
+  const incomingRequests = friendRequests.filter((r) => r.toId === currentUser.id && r.status === "pending");
 
   return (
     <section className="screen ig-profile-screen">
@@ -3302,8 +3449,11 @@ function ProfileScreen() {
         </div>
         <div className="ig-profile-stats">
           <div className="ig-stat"><span className="ig-stat-num">{myPosts.length}</span><span className="ig-stat-label">Posts</span></div>
-          <div className="ig-stat"><span className="ig-stat-num">128</span><span className="ig-stat-label">Followers</span></div>
-          <div className="ig-stat"><span className="ig-stat-num">47</span><span className="ig-stat-label">Following</span></div>
+          <div className="ig-stat"><span className="ig-stat-num">{myUploads.length}</span><span className="ig-stat-label">Videos</span></div>
+          <button className="ig-stat ig-stat-btn" onClick={() => setProfileTab("friends")}>
+            <span className="ig-stat-num">{myFriendIds.length}</span>
+            <span className="ig-stat-label">Friends {incomingRequests.length > 0 && <span className="profile-req-badge">{incomingRequests.length}</span>}</span>
+          </button>
         </div>
       </div>
 
@@ -3348,6 +3498,10 @@ function ProfileScreen() {
         <button className={`ig-profile-tab${profileTab === "uploads" ? " active" : ""}`} onClick={() => setProfileTab("uploads")} aria-label="Uploads">
           <Film size={20} />
         </button>
+        <button className={`ig-profile-tab${profileTab === "friends" ? " active" : ""}`} onClick={() => setProfileTab("friends")} aria-label="Friends">
+          <UserPlus size={20} />
+          {incomingRequests.length > 0 && <span className="ig-tab-badge">{incomingRequests.length}</span>}
+        </button>
       </div>
 
       {/* ── Posts grid ── */}
@@ -3383,6 +3537,46 @@ function ProfileScreen() {
         ) : (
           <EmptyState icon={Film} title="No uploads yet" body="Upload a video to share your faith." action="Upload" onAction={() => go("community")} />
         )
+      )}
+
+      {/* ── Friends section ── */}
+      {profileTab === "friends" && (
+        <div className="profile-friends-section">
+          {incomingRequests.length > 0 && (
+            <div className="friends-section">
+              <p className="friends-section-title">Friend Requests <span className="friends-badge">{incomingRequests.length}</span></p>
+              {incomingRequests.map((req) => {
+                const from = users.find((u) => u.id === req.fromId);
+                if (!from) return null;
+                const initials2 = from.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+                return (
+                  <div key={req.id} className="friend-request-card">
+                    <button className="friend-member-avatar-btn" onClick={() => { setSelectedCommunityUser(from.id); setCommunityView("userprofile"); go("community"); }} aria-label={from.name}>{initials2}</button>
+                    <button className="friend-member-info-btn" onClick={() => { setSelectedCommunityUser(from.id); setCommunityView("userprofile"); go("community"); }}>
+                      <p className="friend-member-name">{from.name}</p>
+                      <p className="friend-member-handle">@{from.username || from.name.split(" ")[0].toLowerCase()}</p>
+                    </button>
+                    <div className="friend-request-actions">
+                      <button className="friend-accept-btn" onClick={() => { setFriendRequests(friendRequests.map((r) => r.id === req.id ? { ...r, status: "accepted" } : r)); notify("Friend request accepted! 🙏"); }}>Accept</button>
+                      <button className="friend-decline-btn" onClick={() => { setFriendRequests(friendRequests.filter((r) => r.id !== req.id)); notify("Request declined."); }}>Decline</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {myFriendIds.length > 0 ? (
+            <div className="friends-section">
+              <p className="friends-section-title">My Friends <span className="friends-badge">{myFriendIds.length}</span></p>
+              {myFriendIds.map((id) => {
+                const u = users.find((u) => u.id === id);
+                return u ? <FriendMemberCard key={id} user={u} /> : null;
+              })}
+            </div>
+          ) : (
+            !incomingRequests.length && <EmptyState icon={UserPlus} title="No friends yet" body="Go to Community → Friends to find and connect with other believers." action="Find Friends" onAction={() => { go("community"); setCommunityView("friends"); }} />
+          )}
+        </div>
       )}
     </section>
   );
@@ -4026,21 +4220,24 @@ function CommentBox({ targetId, comments, value, setValue }: { targetId: string;
 
 function PostCard({ post, comments, onToggle }: { post: CommunityPost; comments: CommentItem[]; onToggle: (id: string, field: "likes" | "saves" | "reports", message: string) => void }) {
   const [comment, setComment] = React.useState("");
-  const { currentUser, notify } = useApp();
+  const { currentUser, notify, setSelectedCommunityUser, setCommunityView, go } = useApp();
   const actor = currentUser?.id ?? "guest";
   const initials = post.author.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   const isLiked = post.likes.includes(actor);
   const isSaved = post.saves.includes(actor);
   const handle = "@" + post.author.split(" ")[0].toLowerCase();
+  const openProfile = () => { if (post.userId) { setSelectedCommunityUser(post.userId); setCommunityView("userprofile"); go("community"); } };
 
   return (
     <article className="tweet-card">
       <div className="tweet-left">
-        <div className="post-avatar tweet-avatar">{initials}</div>
+        <button className="tweet-avatar-btn" onClick={openProfile} aria-label={`View ${post.author}'s profile`}>
+          <div className="post-avatar tweet-avatar">{initials}</div>
+        </button>
       </div>
       <div className="tweet-right">
         <div className="tweet-header">
-          <span className="tweet-name">{post.author}</span>
+          <button className="tweet-name-btn" onClick={openProfile}>{post.author}</button>
           <span className="tweet-handle">{handle}</span>
           <span className="tweet-dot">·</span>
           <span className="tweet-time">now</span>
