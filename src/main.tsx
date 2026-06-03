@@ -894,34 +894,6 @@ function App() {
         {uploadProgress.active && <div className="upload-progress" role="status" aria-live="polite"><div><span>{uploadProgress.label}</span><strong>{uploadProgress.value}%</strong></div><progress value={uploadProgress.value} max={100} /></div>}
         <div className="ambient ambient-one" />
         <div className="ambient ambient-two" />
-        <header className={`topbar${showMainSearch && !isSignInPage ? " topbar-search-open" : ""}`}>
-          {showMainSearch && !isSignInPage ? (
-            <div className="topbar-search-row">
-              <Search size={17} className="topbar-search-icon" />
-              <input
-                className="topbar-search-input"
-                placeholder={topSearchPlaceholder}
-                autoFocus
-                value={topSearchValue}
-                onChange={(e) => setTopSearchValue(e.target.value)}
-              />
-              <button className="icon-button" aria-label="Close search" onClick={() => { setShowMainSearch(false); setTopSearchValue(""); }}>
-                <X size={19} />
-              </button>
-            </div>
-          ) : (
-            <>
-              <button className="brand" onClick={() => { if (!isSignInPage) go(isAdmin ? "admin-studio" : "home"); }} aria-label="Faith Flix home">
-                <span className="brand-mark brand-mark-img-wrap"><img src="/brand-icon.png" alt="Faith Flix" className="brand-mark-img" /></span>
-                <span>Faith Flix</span>
-              </button>
-              {!isSignInPage && <div className="top-actions">
-                <button className="icon-button" aria-label="Search" onClick={() => setShowMainSearch(true)}><Search size={19} /></button>
-                <button className="icon-button" aria-label="Notifications" onClick={() => notify(t("toast.noNotifications"))}><Bell size={19} /></button>
-              </div>}
-            </>
-          )}
-        </header>
 
         <main className={`main-stage${visiblePage === "home" ? " home-page" : ""}${visiblePage === "watch" ? " watch-page" : ""}`}>
           {visiblePage === "home" && <HomeScreen />}
