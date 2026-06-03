@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "JEWHmwoG6lTnGyudTYpXr"
+uri = "file://attached_assets/Screenshot_2026-06-03_at_8.46.00_AM_1780465574827.png"
+type = "image"
+title = "Your app on a real iPhone (Worship Center)"
