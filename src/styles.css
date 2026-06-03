@@ -5286,7 +5286,8 @@ textarea:focus {
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
-  padding: 4px 18px 18px;
+  scroll-padding-inline: calc(50% - 74px);
+  padding: 4px max(18px, calc(50% - 84px)) 18px;
   scrollbar-width: none;
 }
 
@@ -5295,13 +5296,14 @@ textarea:focus {
 }
 
 .home-poster-row > * {
-  scroll-snap-align: start;
+  scroll-snap-align: center;
 }
 
 @media (max-width: 390px) {
   .home-poster-row {
     grid-auto-columns: 136px;
-    padding: 4px 14px 18px;
+    scroll-padding-inline: calc(50% - 68px);
+    padding: 4px calc(50% - 78px) 18px;
   }
 }
 
@@ -5390,7 +5392,8 @@ textarea:focus {
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
-  padding: 4px 18px 18px;
+  scroll-padding-inline: calc(50% - 115px);
+  padding: 4px max(18px, calc(50% - 125px)) 18px;
   scrollbar-width: none;
 }
 
@@ -5399,7 +5402,7 @@ textarea:focus {
 }
 
 .home-series-shelf > * {
-  scroll-snap-align: start;
+  scroll-snap-align: center;
 }
 
 @media (max-width: 390px) {
