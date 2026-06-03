@@ -818,6 +818,12 @@ function App() {
     setPage(nextPage);
   };
 
+  const [showSplash, setShowSplash] = React.useState(false);
+  const triggerSplash = () => {
+    setShowSplash(true);
+    window.setTimeout(() => { setShowSplash(false); setPage("home"); }, 2700);
+  };
+
   React.useEffect(() => {
     if (isAdmin && page !== "admin-studio") setPage("admin-studio");
   }, [isAdmin, page]);
@@ -890,6 +896,7 @@ function App() {
     setWorshipSongs,
     notify,
     signOut,
+    triggerSplash,
     t,
   };
 
@@ -951,7 +958,7 @@ function App() {
         </main>
 
         {!isAdmin && !(visiblePage === "profile" && !currentUser) && !(visiblePage === "forgot-password" && !currentUser) && (
-          <nav className="bottom-nav seven" aria-label="Primary navigation">
+          <nav className="bottom-nav" aria-label="Primary navigation">
             <NavButton label={t("nav.home")} icon={Home} active={visiblePage === "home"} onClick={() => go("home")} />
             <NavButton label={t("nav.watch")} icon={Film} active={visiblePage === "watch"} onClick={() => go("watch")} />
             <NavButton label={t("nav.series")} icon={Clapperboard} active={visiblePage === "series"} onClick={() => go("series")} />
@@ -960,6 +967,12 @@ function App() {
             <NavButton label={t("nav.saved")} icon={Bookmark} active={visiblePage === "saved"} onClick={() => go("saved")} />
             <NavButton label={t("nav.profile")} icon={User} active={visiblePage === "profile" || visiblePage === "admin-login" || visiblePage === "admin-studio"} onClick={() => go("profile")} />
           </nav>
+        )}
+        {showSplash && (
+          <div className="login-splash">
+            <div className="login-splash-logo">Faith<span className="login-splash-flix">Flix</span></div>
+            <p className="login-splash-tagline">Watch. Believe. Share.</p>
+          </div>
         )}
         {toast && <div className="toast">{toast}</div>}
       </div>
@@ -1029,6 +1042,7 @@ function buildContextShape() {
     setWorshipSongs: React.Dispatch<React.SetStateAction<WorshipSong[]>>;
     notify: (message: string) => void;
     signOut: () => void;
+    triggerSplash: () => void;
     t: (key: string) => string;
   };
 }
@@ -3082,7 +3096,7 @@ function ProfileScreen() {
 }
 
 function SignupForm() {
-  const { users, setUsers, setSessionId, notify, go, t } = useApp();
+  const { users, setUsers, setSessionId, notify, go, triggerSplash, t } = useApp();
   const [form, setForm] = React.useState({ name: "", username: "", email: "", password: "", confirmPassword: "" });
   const [busy, setBusy] = React.useState(false);
   const [confirmationEmail, setConfirmationEmail] = React.useState("");
@@ -3113,8 +3127,8 @@ function SignupForm() {
       const localUser = await getOrCreateUserProfile(data.user);
       setUsers(upsertLocalUser(users, localUser));
       setSessionId(localUser.id);
-      notify("Account created.");
-      go("home");
+      notify("Welcome to Faith Flix!");
+      triggerSplash();
     } else {
       setConfirmationEmail(email);
       notify("Account created. Check your email to confirm before logging in.");
@@ -3141,7 +3155,7 @@ function SignupForm() {
 }
 
 function LoginForm() {
-  const { users, setUsers, setSessionId, notify, go, t } = useApp();
+  const { users, setUsers, setSessionId, notify, go, triggerSplash, t } = useApp();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [busy, setBusy] = React.useState(false);
@@ -3157,7 +3171,7 @@ function LoginForm() {
     setUsers(upsertLocalUser(users, localUser));
     setSessionId(localUser.id);
     notify("Logged in.");
-    go(localUser.role === "admin" ? "admin-studio" : "home");
+    if (localUser.role === "admin") go("admin-studio"); else triggerSplash();
     setBusy(false);
   };
 
