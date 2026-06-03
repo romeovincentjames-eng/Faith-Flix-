@@ -921,7 +921,7 @@ function App() {
           )}
         </header>
 
-        <main className="main-stage">
+        <main className={`main-stage${visiblePage === "home" ? " home-page" : ""}`}>
           {visiblePage === "home" && <HomeScreen />}
           {visiblePage === "watch" && <WatchScreen />}
           {visiblePage === "series" && <SeriesScreen />}
@@ -1262,78 +1262,148 @@ function categoryFromDb(item: DbCategory): CategoryItem {
 function NavButton({ label, icon: Icon, active, onClick }: { label: string; icon: React.ElementType; active: boolean; onClick: () => void }) {
   return (
     <button className={`nav-button ${active ? "active" : ""}`} onClick={onClick}>
-      <Icon size={20} />
+      <Icon size={22} />
       <span>{label}</span>
     </button>
   );
 }
 
-function HomeScreen() {
-  const { isAdmin, publicVideos, publicSeries, go, setSelectedVideoId, setSelectedSeriesId, mainSearchQuery, t } = useApp();
-  const adminVideos = publicVideos.filter((v) => v.source === "admin");
-  const featuredVideos = adminVideos.filter((video) => video.featured).slice(-10).reverse();
-  const featuredSeries = publicSeries.filter((item) => item.featured);
+function FeedCard({ video, onOpen }: { video: VideoItem; onOpen: () => void }) {
+  const { likes, setLikes, saved, setSaved, currentUser, notify } = useApp();
+  const actorId = currentUser?.id ?? "guest";
+  const likedIds = likes[actorId] ?? [];
+  const savedIds = saved[actorId] ?? [];
+  const isLiked = likedIds.includes(video.id);
+  const isSaved = savedIds.includes(video.id);
+  const likeCount = Object.values(likes).flat().filter((id) => id === video.id).length;
 
-
-  const openHomeVideoNormal = (video: VideoItem) => {
-    setSelectedVideoId(video.id);
-    go("watch");
+  const toggleLike = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLikes({ ...likes, [actorId]: isLiked ? likedIds.filter((id) => id !== video.id) : [...likedIds, video.id] });
+    notify(isLiked ? "Like removed." : "Liked! ✦");
   };
 
-  const openHomeVideo = (video: VideoItem) => {
+  const toggleSave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!currentUser) { notify("Log in to save videos."); return; }
+    setSaved({ ...saved, [actorId]: isSaved ? savedIds.filter((id) => id !== video.id) : [...savedIds, video.id] });
+    notify(isSaved ? "Removed from saved." : "Saved! ✦");
+  };
+
+  const share = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard?.writeText(`faithflix://video/${video.id}`);
+    notify("Link copied!");
+  };
+
+  return (
+    <div className="feed-card">
+      {video.thumbnailUrl
+        ? <img className="feed-card-bg" src={video.thumbnailUrl} alt="" />
+        : <div className="feed-card-bg-empty" />}
+      <div className="feed-card-gradient" />
+
+      <button className="feed-card-tap" aria-label={`Play ${video.title}`} onClick={onOpen}>
+        <div className="feed-card-play-btn"><Play size={26} fill="currentColor" /></div>
+      </button>
+
+      <div className="feed-card-footer">
+        <span className={`feed-card-badge${video.source === "user" ? " feed-card-badge-community" : ""}`}>
+          {video.source === "admin" ? "✦ Official" : "Community"}
+        </span>
+        <h3 className="feed-card-title">{video.title}</h3>
+        <p className="feed-card-creator">{video.creator}</p>
+        {video.scripture && <p className="feed-card-scripture">"{video.scripture}"</p>}
+        <div className="feed-card-meta">
+          {video.duration && <span className="feed-card-duration">{video.duration}</span>}
+          <span className="feed-card-category">{video.category}</span>
+        </div>
+      </div>
+
+      <div className="feed-card-actions">
+        <button className={`feed-action-btn${isLiked ? " active" : ""}`} onClick={toggleLike}>
+          <Heart size={28} fill={isLiked ? "currentColor" : "none"} />
+          <span>{likeCount > 0 ? likeCount : "Like"}</span>
+        </button>
+        <button className={`feed-action-btn${isSaved ? " active" : ""}`} onClick={toggleSave}>
+          <Bookmark size={28} fill={isSaved ? "currentColor" : "none"} />
+          <span>{isSaved ? "Saved" : "Save"}</span>
+        </button>
+        <button className="feed-action-btn" onClick={share}>
+          <Share2 size={26} />
+          <span>Share</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HomeScreen() {
+  const { publicVideos, publicSeries, go, setSelectedVideoId, setSelectedSeriesId, mainSearchQuery, t } = useApp();
+  const adminVideos = publicVideos.filter((v) => v.source === "admin" && v.status === "Published");
+  const feedVideos = adminVideos.length > 0 ? adminVideos : publicVideos.filter((v) => v.status === "Published");
+
+  const openVideo = (video: VideoItem) => {
     flushSync(() => {
       setSelectedVideoId(video.id);
       go("watch");
-    });
-
-    window.requestAnimationFrame(() => {
-      const player = document.querySelector<HTMLVideoElement>(`.feed-video[data-video-id="${video.id}"]`);
-      if (!player) return;
-      void player.play();
-      void player.requestFullscreen().catch(() => undefined);
     });
   };
 
   const q = mainSearchQuery.trim().toLowerCase();
   if (q) {
     const matchVideos = publicVideos.filter((v) => [v.title, v.description, v.category, v.seriesId].join(" ").toLowerCase().includes(q));
-    const matchSeries = publicSeries.filter((seriesItem) => [seriesItem.title, seriesItem.description, seriesItem.category, seriesItem.scriptureTheme].join(" ").toLowerCase().includes(q));
+    const matchSeries = publicSeries.filter((s) => [s.title, s.description, s.category, s.scriptureTheme].join(" ").toLowerCase().includes(q));
     return (
-      <section className="screen search-results-screen">
+      <section className="screen home-search-screen">
         <div className="search-results-header">
           <Search size={16} />
           <span>Results for <strong>"{mainSearchQuery}"</strong></span>
         </div>
         {matchVideos.length === 0 && matchSeries.length === 0 && (
-          <EmptyState icon={Search} title={t("search.noResults")} body={`Nothing matches "${mainSearchQuery}". Try a different keyword.`} action="" onAction={() => {}} />
+          <EmptyState icon={Search} title={t("search.noResults")} body={`Nothing matches "${mainSearchQuery}".`} action="" onAction={() => {}} />
         )}
         {matchVideos.length > 0 && (
           <>
             <SectionHeader title={t("search.videos")} action={`${matchVideos.length} ${t("home.found")}`} />
-            <div className="content-grid">{matchVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} onTitleOpen={() => openHomeVideoNormal(video)} />)}</div>
+            <div className="content-grid">
+              {matchVideos.map((video) => (
+                <VideoCard key={video.id} video={video} onOpen={() => openVideo(video)} onTitleOpen={() => openVideo(video)} />
+              ))}
+            </div>
           </>
         )}
         {matchSeries.length > 0 && (
           <>
             <SectionHeader title={t("search.series")} action={`${matchSeries.length} ${t("home.found")}`} />
-            <div className="series-grid">{matchSeries.map((item) => <button key={item.id} className="series-grid-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>{item.posterUrl ? <img className="series-grid-poster" src={item.posterUrl} alt={item.title} /> : <div className="series-grid-poster series-grid-poster-empty"><Clapperboard size={36} /></div>}<div className="series-grid-info"><p className="eyebrow">{item.category || item.status}</p><h3 className="series-grid-title">{item.title}</h3>{item.scriptureTheme && <p className="series-grid-verse">&#10022; {item.scriptureTheme}</p>}</div><ChevronRight size={18} className="series-grid-arrow" /></button>)}</div>
+            <div className="series-grid">
+              {matchSeries.map((item) => (
+                <button key={item.id} className="series-grid-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>
+                  {item.posterUrl ? <img className="series-grid-poster" src={item.posterUrl} alt={item.title} /> : <div className="series-grid-poster series-grid-poster-empty"><Clapperboard size={36} /></div>}
+                  <div className="series-grid-info"><p className="eyebrow">{item.category}</p><h3 className="series-grid-title">{item.title}</h3>{item.scriptureTheme && <p className="series-grid-verse">✦ {item.scriptureTheme}</p>}</div>
+                  <ChevronRight size={18} className="series-grid-arrow" />
+                </button>
+              ))}
+            </div>
           </>
         )}
       </section>
     );
   }
 
-  return (
-    <section className="screen">
-      <SectionHeader title="Featured videos" action={`${featuredVideos.length} featured`} />
-      {featuredVideos.length ? (
-        <div className="horizontal-video-row published-row home-stream-row">
-          {featuredVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openHomeVideo(video)} onTitleOpen={() => openHomeVideoNormal(video)} />)}
-        </div>
-      ) : <EmptyState icon={Film} title="No featured videos yet." body="Mark platform videos as Featured in Admin Studio and they will appear here." action={isAdmin ? "Add Platform Video" : "Log In"} onAction={() => isAdmin ? go("admin-studio", "upload") : go("profile")} />}
+  if (!feedVideos.length) {
+    return (
+      <section className="screen home-search-screen">
+        <EmptyState icon={Film} title="No videos yet." body="Content will appear here once published." action="Browse Series" onAction={() => go("series")} />
+      </section>
+    );
+  }
 
-      <SectionHeader title="Featured series" action={`${featuredSeries.length} featured`} />
-      {featuredSeries.length ? <div className="horizontal-series-row home-series-row">{featuredSeries.map((item) => <HomeSeriesCard key={item.id} item={item} episodeCount={publicVideos.filter((video) => video.seriesId === item.title).length} onOpen={() => { setSelectedSeriesId(item.id); go("series"); }} />)}</div> : <EmptyState icon={Clapperboard} title="No featured series yet." body="Mark series as Featured in Admin Studio and they will appear here." action={t("nav.series")} onAction={() => go("series")} />}
+  return (
+    <section className="feed-screen">
+      {feedVideos.map((video) => (
+        <FeedCard key={video.id} video={video} onOpen={() => openVideo(video)} />
+      ))}
     </section>
   );
 }

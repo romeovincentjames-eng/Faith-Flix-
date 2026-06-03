@@ -1,1 +1,2 @@
 - [i18n system](i18n-system.md) — full 11-language i18n via src/i18n.ts + AppContext t() function; lang persisted in localStorage
+- [design system](design-system.md) — color tokens in :root CSS vars; #080C18 bg, #D4A017 gold, #4A90D9 blue; TikTok vertical feed on Home; premium bottom nav
