@@ -19,6 +19,7 @@ import {
   Heart,
   HeartHandshake,
   Home,
+  Image as ImageIcon,
   Inbox,
   LayoutDashboard,
   Lock,
@@ -2597,7 +2598,7 @@ function CommunityUpload({ onDone }: { onDone?: () => void } = {}) {
 }
 
 function PostComposerSheet({ defaultTab, onClose }: { defaultTab: "post" | "video" | "prayer"; onClose: () => void }) {
-  const { currentUser, posts, setPosts, prayers, setPrayers, notify, go } = useApp();
+  const { currentUser, posts, setPosts, prayers, setPrayers, setUploads, setVideos, setSelectedVideoId, setUploadProgress, notify, go } = useApp();
   const [tab, setTab] = React.useState<"post" | "video" | "prayer">(defaultTab);
   const [text, setText] = React.useState("");
   const [scripture, setScripture] = React.useState("");
@@ -2606,11 +2607,55 @@ function PostComposerSheet({ defaultTab, onClose }: { defaultTab: "post" | "vide
   const [prayerTitle, setPrayerTitle] = React.useState("");
   const [prayerText, setPrayerText] = React.useState("");
   const [prayerVisibility, setPrayerVisibility] = React.useState<"Public" | "Private">("Public");
+  const [vidForm, setVidForm] = React.useState({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], testimonyType: "Testimony", tags: "", consent: false, rules: false });
+  const [videoFile, setVideoFile] = React.useState<File | null>(null);
+  const [thumbFile, setThumbFile] = React.useState<File | null>(null);
+  const [thumbPreview, setThumbPreview] = React.useState("");
 
   React.useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
+
+  const submitVideo = () => {
+    if (!currentUser) return notify("Sign in to share a video.");
+    if (!vidForm.title.trim()) return notify("Add a title for your video.");
+    if (!videoFile) return notify("Choose a video file first.");
+    if (!vidForm.consent || !vidForm.rules) return notify("Please confirm both checkboxes.");
+    const uploadUser = currentUser;
+    const uploadForm = { ...vidForm };
+    const uploadVideoFile = videoFile;
+    const uploadThumbFile = thumbFile;
+    const progress = startUploadProgress(setUploadProgress, "Uploading in background");
+    setVidForm({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], testimonyType: "Testimony", tags: "", consent: false, rules: false });
+    setVideoFile(null); setThumbFile(null); setThumbPreview("");
+    notify("Uploading in background. Keep the app open.");
+    onClose();
+    void (async () => {
+      try {
+        progress.step("Checking login", 20);
+        const authUser = await getActiveAuthUser();
+        progress.step("Uploading video", 8);
+        const video = await uploadMediaFile(uploadVideoFile, authUser.id, "videos", (percent) => progress.percent("Uploading video", percent));
+        progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving post", 94);
+        const thumb = uploadThumbFile ? await uploadMediaFile(uploadThumbFile, authUser.id, "thumbnails") : { name: "Cloudflare thumbnail", url: video.thumbnailUrl || "" };
+        progress.step("Publishing", 92);
+        const uploadId = uid("upload");
+        const publicVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "user", title: uploadForm.title, description: uploadForm.description, scripture: uploadForm.scripture, category: uploadForm.category, seriesId: "", episode: "", duration: "", creator: uploadUser.name, tags: uploadForm.tags, status: "Published", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: "9:16", cropRatio: "9 / 16" };
+        const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, authUser.id)).select("*").single();
+        if (error) throw error;
+        const savedVideo = videoFromDb(data as DbVideo);
+        setUploads((current) => [...current, { id: uploadId, userId: uploadUser.id, ...uploadForm, visibility: "Public", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, status: "Approved", adminNote: "Published instantly." }]);
+        setVideos((current) => [...current.filter((item) => item.id !== savedVideo.id), savedVideo]);
+        setSelectedVideoId(savedVideo.id);
+        progress.done("Posted");
+        notify("Posted! Video may take a minute to process.");
+      } catch (err) {
+        progress.fail("Upload failed");
+        notify(err instanceof Error ? err.message : "Upload failed.");
+      }
+    })();
+  };
 
   const sharePost = () => {
     if (!currentUser) return notify("Sign in to post.");
@@ -2732,7 +2777,78 @@ function PostComposerSheet({ defaultTab, onClose }: { defaultTab: "post" | "vide
 
         {tab === "video" && (
           <div className="post-sheet-body post-sheet-video-body">
-            <CommunityUpload onDone={onClose} />
+            {!currentUser ? (
+              <div className="post-sheet-signin">
+                <Film size={34} style={{ color: "var(--gold)", marginBottom: 8 }} />
+                <p>Sign in to share a faith video</p>
+                <button className="primary-button" onClick={() => { go("profile"); onClose(); }}>Sign In</button>
+              </div>
+            ) : (
+              <>
+                <div className="prayer-sheet-intro">
+                  <Film size={20} style={{ color: "var(--gold)", flexShrink: 0 }} />
+                  <p>Share a testimony, devotional, worship clip, or faith video with the community.</p>
+                </div>
+                <div className="prayer-sheet-form">
+                  <input
+                    className="post-sheet-scripture-input prayer-title-input"
+                    placeholder="Video title"
+                    value={vidForm.title}
+                    onChange={(e) => setVidForm({ ...vidForm, title: e.target.value })}
+                  />
+                  <textarea
+                    className="prayer-body-textarea"
+                    placeholder="Description (optional)"
+                    value={vidForm.description}
+                    onChange={(e) => setVidForm({ ...vidForm, description: e.target.value })}
+                    rows={3}
+                  />
+                  <input
+                    className="post-sheet-scripture-input"
+                    placeholder="Scripture reference (optional)"
+                    value={vidForm.scripture}
+                    onChange={(e) => setVidForm({ ...vidForm, scripture: e.target.value })}
+                  />
+                  <select
+                    className="post-sheet-scripture-input"
+                    value={vidForm.category}
+                    onChange={(e) => setVidForm({ ...vidForm, category: e.target.value })}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {COMMUNITY_VIDEO_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <div className="vid-sheet-file-row">
+                    <label className="vid-sheet-file-btn">
+                      <Video size={16} />
+                      {videoFile ? videoFile.name : "Choose video file"}
+                      <input type="file" accept="video/*" style={{ display: "none" }} onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)} />
+                    </label>
+                    <label className="vid-sheet-file-btn vid-sheet-thumb-btn">
+                      <ImageIcon size={16} />
+                      {thumbPreview ? "Thumbnail set" : "Thumbnail (optional)"}
+                      <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0] ?? null; setThumbFile(f); setThumbPreview(f ? URL.createObjectURL(f) : ""); }} />
+                    </label>
+                  </div>
+                  {thumbPreview && <img src={thumbPreview} alt="Thumb preview" style={{ width: "100%", borderRadius: 10, maxHeight: 120, objectFit: "cover", marginTop: 4 }} />}
+                  <div className="vid-sheet-checks">
+                    <label className="vid-sheet-check-row">
+                      <input type="checkbox" checked={vidForm.consent} onChange={(e) => setVidForm({ ...vidForm, consent: e.target.checked })} />
+                      <span>I have permission to share this content</span>
+                    </label>
+                    <label className="vid-sheet-check-row">
+                      <input type="checkbox" checked={vidForm.rules} onChange={(e) => setVidForm({ ...vidForm, rules: e.target.checked })} />
+                      <span>This follows Faith Flix content rules</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="post-sheet-bottom-bar">
+                  <span className="post-sheet-char">{videoFile ? "Video ready" : "No video chosen"}</span>
+                  <button className="comm-post-btn" onClick={submitVideo} disabled={!vidForm.title.trim() || !videoFile || !vidForm.consent || !vidForm.rules}>
+                    Post Video
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

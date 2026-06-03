@@ -3181,6 +3181,65 @@ textarea:focus {
   gap: 6px;
 }
 
+/* ── Video sheet file pickers & checks ───────────── */
+.vid-sheet-file-row {
+  display: flex;
+  gap: 8px;
+}
+
+.vid-sheet-file-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.11);
+  border-radius: 12px;
+  color: rgba(247,251,255,0.65);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.vid-sheet-file-btn:hover {
+  border-color: rgba(212,160,23,0.35);
+  background: rgba(212,160,23,0.07);
+}
+
+.vid-sheet-thumb-btn {
+  flex: 0 0 auto;
+  max-width: 50%;
+}
+
+.vid-sheet-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.vid-sheet-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: rgba(247,251,255,0.65);
+  cursor: pointer;
+}
+
+.vid-sheet-check-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--gold);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
 .prayer-vis-btn {
   padding: 7px 14px;
   border-radius: 999px;
