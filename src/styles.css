@@ -4358,6 +4358,493 @@ textarea:focus {
   margin: 18px 0;
 }
 
+/* ── Instagram-style Profile Screen ─────────────────── */
+.ig-profile-screen {
+  padding: 0 !important;
+  display: block !important;
+}
+
+.ig-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 22px 20px 12px;
+}
+
+.ig-profile-avatar-wrap {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2.5px solid rgba(212,160,23,0.6);
+  box-shadow: 0 0 0 4px rgba(212,160,23,0.1), 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.ig-profile-avatar-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ig-profile-avatar-initials {
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(212,160,23,0.22), rgba(74,144,217,0.18));
+  color: var(--gold);
+  font-size: 1.65rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.ig-profile-stats {
+  flex: 1;
+  display: flex;
+  justify-content: space-around;
+}
+
+.ig-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.ig-stat-num {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #f7fbff;
+  letter-spacing: -0.02em;
+}
+
+.ig-stat-label {
+  font-size: 0.7rem;
+  color: rgba(247,251,255,0.45);
+  font-weight: 600;
+}
+
+.ig-profile-bio-block {
+  padding: 0 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ig-profile-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #f7fbff;
+  margin: 0;
+}
+
+.ig-profile-username {
+  font-size: 0.82rem;
+  color: rgba(247,251,255,0.42);
+  margin: 0;
+}
+
+.ig-profile-bio-text {
+  font-size: 0.86rem;
+  color: rgba(247,251,255,0.78);
+  line-height: 1.45;
+  margin: 3px 0 0;
+}
+
+.ig-profile-detail {
+  font-size: 0.82rem;
+  color: rgba(247,251,255,0.5);
+  margin: 0;
+}
+
+.ig-admin-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(212,160,23,0.16);
+  border: 1px solid rgba(212,160,23,0.35);
+  color: var(--gold);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  width: fit-content;
+}
+
+.ig-profile-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+
+.ig-profile-btn {
+  flex: 1;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.07);
+  color: #f7fbff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.ig-profile-btn:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.28);
+}
+
+.ig-profile-btn-sq {
+  flex: 0;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px;
+}
+
+.ig-profile-edit-panel {
+  margin: 0 16px 16px;
+  padding: 18px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ig-profile-tabs {
+  display: flex;
+  border-top: 1px solid rgba(255,255,255,0.09);
+  border-bottom: 1px solid rgba(255,255,255,0.09);
+}
+
+.ig-profile-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  border: none;
+  background: transparent;
+  color: rgba(247,251,255,0.3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.18s, border-color 0.18s;
+}
+
+.ig-profile-tab.active {
+  color: #f7fbff;
+  border-bottom-color: #f7fbff;
+}
+
+.ig-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.ig-profile-grid-cell {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #0c1020;
+}
+
+.ig-profile-grid-cell img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.22s ease;
+}
+
+.ig-profile-grid-cell:hover img { transform: scale(1.05); }
+
+.ig-profile-grid-placeholder {
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  font-size: 0.72rem;
+  color: rgba(247,251,255,0.55);
+  text-align: center;
+  line-height: 1.3;
+  background: linear-gradient(135deg, #0d1228, #111828);
+  overflow: hidden;
+}
+
+.ig-profile-grid-video-cell .ig-upload-status-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  letter-spacing: 0.04em;
+}
+
+.ig-upload-status-badge.approved { background: rgba(34,197,94,0.85); }
+.ig-upload-status-badge.rejected { background: rgba(239,68,68,0.85); }
+
+/* ── TikTok-style Saved Screen ───────────────────────── */
+.tt-saved-screen {
+  padding: 0 !important;
+  display: block !important;
+}
+
+.tt-saved-header {
+  padding: 22px 20px 6px;
+}
+
+.tt-saved-title {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #f7fbff;
+  margin: 0 0 2px;
+  letter-spacing: -0.03em;
+}
+
+.tt-saved-meta {
+  font-size: 0.78rem;
+  color: rgba(247,251,255,0.38);
+  font-weight: 600;
+  margin: 0;
+}
+
+.tt-saved-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.tt-saved-tab {
+  padding: 7px 18px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: rgba(247,251,255,0.4);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.tt-saved-tab.active {
+  background: rgba(255,255,255,0.1);
+  color: #f7fbff;
+}
+
+.tt-saved-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.tt-saved-cell {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  background: #0c1020;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: block;
+}
+
+.tt-saved-cell img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.22s ease;
+}
+
+.tt-saved-cell:hover img { transform: scale(1.05); }
+
+.tt-saved-cell-empty {
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0d1228, #111828);
+  color: rgba(212,160,23,0.4);
+}
+
+.tt-saved-cell-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0; right: 0;
+  padding: 20px 6px 6px;
+  background: linear-gradient(to top, rgba(0,0,0,0.72), transparent);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+
+.tt-saved-remove {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+
+.tt-saved-cell:hover .tt-saved-remove { opacity: 1; }
+
+.tt-collections {
+  padding: 14px 16px 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tt-collections-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: rgba(247,251,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 10px 0 2px;
+}
+
+.tt-collection-card {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  transition: background 0.18s;
+}
+
+.tt-collection-card:hover { background: rgba(255,255,255,0.07); }
+
+.tt-collection-thumbnails {
+  width: 90px;
+  height: 58px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tt-collection-thumbnails img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tt-coll-thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(212,160,23,0.1);
+  color: rgba(212,160,23,0.45);
+}
+
+.tt-coll-thumb-full { grid-column: 1 / -1; }
+
+.tt-collection-info { min-width: 0; }
+
+.tt-collection-name {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #f7fbff;
+  margin: 0 0 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tt-collection-count {
+  font-size: 0.76rem;
+  color: rgba(247,251,255,0.38);
+  margin: 0;
+}
+
+.tt-collection-delete {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: rgba(247,251,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.18s, background 0.18s;
+  flex-shrink: 0;
+}
+
+.tt-collection-delete:hover {
+  color: #ef4444;
+  background: rgba(239,68,68,0.1);
+}
+
+.tt-new-list-bar {
+  position: fixed;
+  bottom: var(--nav-h);
+  left: 0; right: 0;
+  z-index: 40;
+  padding: 16px 20px;
+  background: rgba(8,11,22,0.97);
+  backdrop-filter: blur(28px);
+  border-top: 1px solid rgba(255,255,255,0.09);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tt-new-list-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #f7fbff;
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.18s;
+}
+
+.tt-new-list-input:focus { border-color: rgba(212,160,23,0.5); }
+
+.tt-new-list-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.tt-new-list-btns .primary-button,
+.tt-new-list-btns .secondary-button { flex: 1; }
+
 
 /* ── Spotify-style Worship Center ────────────────────── */
 .sp-screen {

@@ -22,6 +22,7 @@ import {
   Inbox,
   LayoutDashboard,
   Lock,
+  LogOut,
   MessageCircle,
   MessagesSquare,
   MoreHorizontal,
@@ -2192,14 +2193,15 @@ function WorshipUploadSheet({ onClose }: { onClose: () => void }) {
 }
 
 function SavedScreen() {
-  const { currentUser, saved, savedLists, videos, setSaved, setSavedLists, setSelectedVideoId, go, notify, t } = useApp();
+  const { currentUser, saved, savedLists, videos, setSaved, setSavedLists, setSelectedVideoId, go, notify } = useApp();
+  const [activeFilter, setActiveFilter] = React.useState<"all" | "videos" | "lists">("all");
+  const [showNewList, setShowNewList] = React.useState(false);
   const [listName, setListName] = React.useState("");
 
   if (!currentUser) {
     return (
       <section className="screen">
-        <SectionIntro eyebrow={t("saved.eyebrow")} title={t("saved.title")} body="Log in to save videos and build your own lists." />
-        <EmptyState icon={Bookmark} title="No saved videos for guests." body="Saved videos are only kept for logged-in accounts." action="Log In" onAction={() => go("profile")} />
+        <EmptyState icon={Bookmark} title="Sign in to see your saved videos" body="Your saved videos and collections will appear here." action="Sign In" onAction={() => go("profile")} />
       </section>
     );
   }
@@ -2207,62 +2209,104 @@ function SavedScreen() {
   const actorId = currentUser.id;
   const generalIds = saved[actorId] ?? [];
   const userLists = savedLists[actorId] ?? [];
-  const generalVideos = videos.filter((video) => generalIds.includes(video.id));
+  const generalVideos = videos.filter((v) => generalIds.includes(v.id));
   const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
 
   const createList = () => {
     const name = listName.trim();
-    if (!name) return notify("Name your list first.");
-    if (userLists.some((list) => list.name.toLowerCase() === name.toLowerCase())) return notify("That list already exists.");
+    if (!name) return notify("Name your collection first.");
+    if (userLists.some((l) => l.name.toLowerCase() === name.toLowerCase())) return notify("Collection already exists.");
     setSavedLists({ ...savedLists, [actorId]: [...userLists, { id: uid("saved-list"), name, videoIds: [] }] });
-    setListName("");
-    notify("List created.");
+    setListName(""); setShowNewList(false); notify("Collection created.");
   };
 
-  const addToList = (listId: string, videoId: string) => {
-    setSavedLists({ ...savedLists, [actorId]: userLists.map((list) => list.id === listId ? { ...list, videoIds: Array.from(new Set([...list.videoIds, videoId])) } : list) });
-    notify("Added to list.");
-  };
-
-  const removeFromGeneral = (videoId: string) => {
-    setSaved({ ...saved, [actorId]: generalIds.filter((id) => id !== videoId) });
-    notify("Removed from General.");
-  };
-
-  const removeFromList = (listId: string, videoId: string) => {
-    setSavedLists({ ...savedLists, [actorId]: userLists.map((list) => list.id === listId ? { ...list, videoIds: list.videoIds.filter((id) => id !== videoId) } : list) });
-    notify("Removed from list.");
-  };
-
-  const deleteList = (listId: string) => {
-    setSavedLists({ ...savedLists, [actorId]: userLists.filter((list) => list.id !== listId) });
-    notify("List deleted.");
-  };
+  const removeFromGeneral = (videoId: string) => { setSaved({ ...saved, [actorId]: generalIds.filter((id) => id !== videoId) }); notify("Removed."); };
+  const deleteList = (listId: string) => { setSavedLists({ ...savedLists, [actorId]: userLists.filter((l) => l.id !== listId) }); notify("Collection deleted."); };
 
   return (
-    <section className="screen saved-library-screen">
-      <SectionIntro eyebrow={t("saved.eyebrow")} title={t("saved.title")} body="Saved videos go to General automatically. Create your own lists to organize them." />
-      <div className="saved-list-create">
-        <Field label="New list name" value={listName} onChange={setListName} />
-        <button className="primary-button" onClick={createList}>Create List</button>
+    <section className="screen tt-saved-screen">
+      <div className="tt-saved-header">
+        <h1 className="tt-saved-title">Saved</h1>
+        <p className="tt-saved-meta">{generalIds.length} video{generalIds.length !== 1 ? "s" : ""} · {userLists.length} collection{userLists.length !== 1 ? "s" : ""}</p>
       </div>
 
-      <SectionHeader title="General" action={generalVideos.length + " saved"} />
-      {generalVideos.length ? (
-        <div className="content-grid">
-          {generalVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video.id)} extra={<div className="saved-card-actions"><button className="secondary-button" onClick={() => removeFromGeneral(video.id)}>Remove</button>{userLists.map((list) => <button className="secondary-button" key={list.id} onClick={() => addToList(list.id, video.id)}>Add to {list.name}</button>)}</div>} />)}
-        </div>
-      ) : <EmptyState icon={Bookmark} title="No saved videos yet." body="When you save a video, it will appear in General." action="Open Watch" onAction={() => go("watch")} />}
+      <div className="tt-saved-tabs">
+        {(["all", "videos", "lists"] as const).map((f) => (
+          <button key={f} className={`tt-saved-tab${activeFilter === f ? " active" : ""}`} onClick={() => setActiveFilter(f)}>
+            {f === "all" ? "All" : f === "videos" ? "Videos" : "Collections"}
+          </button>
+        ))}
+      </div>
 
-      {userLists.map((list) => {
-        const listVideos = videos.filter((video) => list.videoIds.includes(video.id));
-        return (
-          <div className="saved-list-section" key={list.id}>
-            <SectionHeader title={list.name} action={listVideos.length + " videos"} />
-            {listVideos.length ? <div className="content-grid">{listVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video.id)} extra={<button className="secondary-button" onClick={() => removeFromList(list.id, video.id)}>Remove from {list.name}</button>} />)}</div> : <div className="content-panel"><p className="muted">Add videos from General to fill this list.</p><button className="secondary-button danger" onClick={() => deleteList(list.id)}>Delete List</button></div>}
+      {(activeFilter === "all" || activeFilter === "videos") && (
+        generalVideos.length > 0 ? (
+          <div className="tt-saved-grid">
+            {generalVideos.map((video) => (
+              <button key={video.id} className="tt-saved-cell" onClick={() => openVideo(video.id)}>
+                {video.thumbnailUrl
+                  ? <img src={video.thumbnailUrl} alt={video.title} />
+                  : <div className="tt-saved-cell-empty"><Film size={22} /></div>}
+                <div className="tt-saved-cell-overlay">
+                  <Play size={14} fill="white" strokeWidth={0} />
+                  {video.duration && <span>{video.duration}</span>}
+                </div>
+                <button className="tt-saved-remove" aria-label="Remove" onClick={(e) => { e.stopPropagation(); removeFromGeneral(video.id); }}>
+                  <X size={12} />
+                </button>
+              </button>
+            ))}
           </div>
-        );
-      })}
+        ) : (
+          <EmptyState icon={Bookmark} title="Nothing saved yet" body="Tap the bookmark on any video to save it here." action="Watch Videos" onAction={() => go("watch")} />
+        )
+      )}
+
+      {(activeFilter === "all" || activeFilter === "lists") && (
+        <div className="tt-collections">
+          {activeFilter === "all" && generalVideos.length > 0 && userLists.length > 0 && (
+            <p className="tt-collections-label">Collections</p>
+          )}
+          {userLists.map((list) => {
+            const listVideos = videos.filter((v) => list.videoIds.includes(v.id));
+            const previews = listVideos.slice(0, 3);
+            return (
+              <div key={list.id} className="tt-collection-card">
+                <div className="tt-collection-thumbnails">
+                  {previews.length > 0
+                    ? previews.map((v) => v.thumbnailUrl
+                        ? <img key={v.id} src={v.thumbnailUrl} alt="" />
+                        : <div key={v.id} className="tt-coll-thumb-empty"><Film size={13} /></div>)
+                    : <div className="tt-coll-thumb-empty tt-coll-thumb-full"><Bookmark size={18} /></div>}
+                </div>
+                <div className="tt-collection-info">
+                  <p className="tt-collection-name">{list.name}</p>
+                  <p className="tt-collection-count">{listVideos.length} video{listVideos.length !== 1 ? "s" : ""}</p>
+                </div>
+                <button className="tt-collection-delete" onClick={() => deleteList(list.id)} aria-label="Delete"><Trash2 size={16} /></button>
+              </div>
+            );
+          })}
+          {activeFilter === "lists" && userLists.length === 0 && (
+            <EmptyState icon={Bookmark} title="No collections yet" body="Tap + to create your first collection." action="" onAction={() => {}} />
+          )}
+        </div>
+      )}
+
+      {showNewList && (
+        <div className="tt-new-list-bar">
+          <input className="tt-new-list-input" placeholder="Collection name…" value={listName} autoFocus onChange={(e) => setListName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && createList()} />
+          <div className="tt-new-list-btns">
+            <button className="secondary-button" onClick={() => { setShowNewList(false); setListName(""); }}>Cancel</button>
+            <button className="primary-button" onClick={createList}>Create</button>
+          </div>
+        </div>
+      )}
+
+      {!showNewList && (
+        <button className="comm-fab" aria-label="New collection" onClick={() => setShowNewList(true)}>
+          <Plus size={24} />
+        </button>
+      )}
     </section>
   );
 }
@@ -2909,15 +2953,20 @@ function MessagesPanel() {
 }
 
 function ProfileScreen() {
-  const { currentUser, users, setUsers, setSessionId, isAdmin, signOut, go, notify, t } = useApp();
+  const { currentUser, users, setUsers, setSessionId, isAdmin, uploads, posts, signOut, go, notify, t } = useApp();
   const [mode, setMode] = React.useState<"signup" | "login">("login");
+  const [editOpen, setEditOpen] = React.useState(false);
+  const [profileTab, setProfileTab] = React.useState<"posts" | "uploads">("posts");
 
   if (!currentUser) {
     return (
       <section className="screen auth-screen">
         <div className="auth-card">
           <SectionIntro eyebrow="Faith Flix" title="Sign in" body="Log in to post, save, upload, and manage your Faith Flix account." />
-          <div className="button-row"><button className={mode === "login" ? "primary-button" : "secondary-button"} onClick={() => setMode("login")}>{t("profile.login")}</button><button className={mode === "signup" ? "primary-button" : "secondary-button"} onClick={() => setMode("signup")}>{t("profile.signup")}</button></div>
+          <div className="button-row">
+            <button className={mode === "login" ? "primary-button" : "secondary-button"} onClick={() => setMode("login")}>{t("profile.login")}</button>
+            <button className={mode === "signup" ? "primary-button" : "secondary-button"} onClick={() => setMode("signup")}>{t("profile.signup")}</button>
+          </div>
           {mode === "signup" ? <SignupForm /> : <LoginForm />}
           <button className="text-button" onClick={() => go("home")}>Continue as guest</button>
         </div>
@@ -2926,42 +2975,108 @@ function ProfileScreen() {
   }
 
   const update = (patch: Partial<Profile>) => {
-    setUsers(users.map((user) => user.id === currentUser.id ? { ...user, ...patch } : user));
-    void supabase
-      .from("profiles")
-      .update({
-        name: patch.name,
-        username: patch.username,
-        birthday: patch.birthday,
-        bio: patch.bio,
-        favorite_scripture: patch.favoriteScripture,
-        church_ministry_name: patch.ministry,
-        location: patch.location,
-        profile_image_url: patch.image,
-      })
-      .eq("id", currentUser.id);
+    setUsers(users.map((u) => u.id === currentUser.id ? { ...u, ...patch } : u));
+    void supabase.from("profiles").update({ name: patch.name, username: patch.username, birthday: patch.birthday, bio: patch.bio, favorite_scripture: patch.favoriteScripture, church_ministry_name: patch.ministry, location: patch.location, profile_image_url: patch.image }).eq("id", currentUser.id);
     notify(t("profile.profileUpdated"));
   };
 
+  const initials = currentUser.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+  const myPosts = posts.filter((p) => p.userId === currentUser.id);
+  const myUploads = uploads.filter((u) => u.userId === currentUser.id);
+
   return (
-    <section className="screen">
-      <SectionIntro eyebrow={isAdmin ? t("profile.adminEyebrow") : t("profile.eyebrow")} title={currentUser.name} body={`@${currentUser.username || "faithmember"}`} />
-      <div className="form-card">
-        <Field label={t("profile.nameLabel")} value={currentUser.name} onChange={(name) => update({ name })} />
-        <Field label={t("profile.usernameLabel")} value={currentUser.username} onChange={(username) => update({ username })} />
-        <Field label={t("profile.bioLabel")} value={currentUser.bio ?? ""} onChange={(bio) => update({ bio })} />
-        <Field label={t("profile.scriptureLabel")} value={currentUser.favoriteScripture ?? ""} onChange={(favoriteScripture) => update({ favoriteScripture })} />
-        <Field label={t("profile.churchLabel")} value={currentUser.ministry ?? ""} onChange={(ministry) => update({ ministry })} />
-        <Field label="Birthday" type="date" value={currentUser.birthday ?? ""} onChange={(birthday) => update({ birthday })} />
-        <Field label={t("profile.locationLabel")} value={currentUser.location ?? ""} onChange={(location) => update({ location })} />
-        <FileField label={t("profile.imageLabel")} onChange={(file) => update({ image: fileInfo(file).name })} />
-        <div className="button-row">
-          {isAdmin && <button className="primary-button" onClick={() => go("admin-studio")}>{t("profile.openAdminStudio")}</button>}
-          <button className="secondary-button" onClick={signOut}>{t("profile.signOut")}</button>
-          <button className="secondary-button" onClick={() => { setSessionId(currentUser.id); notify(t("profile.profileSaved")); }}>{t("profile.saveProfile")}</button>
+    <section className="screen ig-profile-screen">
+      {/* ── Header row: avatar + stats ── */}
+      <div className="ig-profile-header">
+        <div className="ig-profile-avatar-wrap">
+          {currentUser.image
+            ? <img src={currentUser.image} alt={currentUser.name} className="ig-profile-avatar-img" />
+            : <div className="ig-profile-avatar-initials">{initials}</div>}
+        </div>
+        <div className="ig-profile-stats">
+          <div className="ig-stat"><span className="ig-stat-num">{myPosts.length}</span><span className="ig-stat-label">Posts</span></div>
+          <div className="ig-stat"><span className="ig-stat-num">128</span><span className="ig-stat-label">Followers</span></div>
+          <div className="ig-stat"><span className="ig-stat-num">47</span><span className="ig-stat-label">Following</span></div>
         </div>
       </div>
-      {!isAdmin && <MyUploads />}
+
+      {/* ── Bio block ── */}
+      <div className="ig-profile-bio-block">
+        <p className="ig-profile-name">{currentUser.name}</p>
+        {currentUser.username && <p className="ig-profile-username">@{currentUser.username}</p>}
+        {currentUser.bio && <p className="ig-profile-bio-text">{currentUser.bio}</p>}
+        {currentUser.favoriteScripture && <p className="ig-profile-detail">📖 {currentUser.favoriteScripture}</p>}
+        {currentUser.location && <p className="ig-profile-detail">📍 {currentUser.location}</p>}
+        {currentUser.ministry && <p className="ig-profile-detail">⛪ {currentUser.ministry}</p>}
+        {isAdmin && <span className="ig-admin-badge">Admin</span>}
+      </div>
+
+      {/* ── Action buttons ── */}
+      <div className="ig-profile-actions">
+        <button className="ig-profile-btn" onClick={() => setEditOpen((v) => !v)}>{editOpen ? "Done Editing" : "Edit Profile"}</button>
+        {isAdmin && <button className="ig-profile-btn" onClick={() => go("admin-studio")}>Studio</button>}
+        <button className="ig-profile-btn ig-profile-btn-sq" onClick={signOut} aria-label="Sign out"><LogOut size={17} /></button>
+      </div>
+
+      {/* ── Edit panel (collapsible) ── */}
+      {editOpen && (
+        <div className="ig-profile-edit-panel">
+          <Field label={t("profile.nameLabel")} value={currentUser.name} onChange={(name) => update({ name })} />
+          <Field label={t("profile.usernameLabel")} value={currentUser.username} onChange={(username) => update({ username })} />
+          <Field label={t("profile.bioLabel")} value={currentUser.bio ?? ""} onChange={(bio) => update({ bio })} />
+          <Field label={t("profile.scriptureLabel")} value={currentUser.favoriteScripture ?? ""} onChange={(favoriteScripture) => update({ favoriteScripture })} />
+          <Field label={t("profile.churchLabel")} value={currentUser.ministry ?? ""} onChange={(ministry) => update({ ministry })} />
+          <Field label="Birthday" type="date" value={currentUser.birthday ?? ""} onChange={(birthday) => update({ birthday })} />
+          <Field label={t("profile.locationLabel")} value={currentUser.location ?? ""} onChange={(location) => update({ location })} />
+          <FileField label="Profile photo" onChange={(file) => update({ image: fileInfo(file).name })} />
+          <button className="primary-button" onClick={() => { setSessionId(currentUser.id); notify(t("profile.profileSaved")); setEditOpen(false); }}>Save Changes</button>
+        </div>
+      )}
+
+      {/* ── Tab bar ── */}
+      <div className="ig-profile-tabs">
+        <button className={`ig-profile-tab${profileTab === "posts" ? " active" : ""}`} onClick={() => setProfileTab("posts")} aria-label="Posts">
+          <LayoutDashboard size={20} />
+        </button>
+        <button className={`ig-profile-tab${profileTab === "uploads" ? " active" : ""}`} onClick={() => setProfileTab("uploads")} aria-label="Uploads">
+          <Film size={20} />
+        </button>
+      </div>
+
+      {/* ── Posts grid ── */}
+      {profileTab === "posts" && (
+        myPosts.length > 0 ? (
+          <div className="ig-profile-grid">
+            {myPosts.map((post) => (
+              <div key={post.id} className="ig-profile-grid-cell">
+                {post.imageUrl
+                  ? <img src={post.imageUrl} alt="" />
+                  : <div className="ig-profile-grid-placeholder"><span>{post.text.slice(0, 55)}{post.text.length > 55 ? "…" : ""}</span></div>}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={Camera} title="No posts yet" body="Share in the Community to see your posts here." action="Go to Community" onAction={() => go("community")} />
+        )
+      )}
+
+      {/* ── Uploads grid ── */}
+      {profileTab === "uploads" && (
+        myUploads.length > 0 ? (
+          <div className="ig-profile-grid">
+            {myUploads.map((upload) => (
+              <div key={upload.id} className="ig-profile-grid-cell ig-profile-grid-video-cell">
+                {upload.thumbnailUrl
+                  ? <img src={upload.thumbnailUrl} alt={upload.title} />
+                  : <div className="ig-profile-grid-placeholder"><Film size={22} style={{ opacity: 0.5 }} /></div>}
+                <span className={`ig-upload-status-badge${upload.status === "Approved" ? " approved" : upload.status === "Rejected" ? " rejected" : ""}`}>{upload.status}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={Film} title="No uploads yet" body="Upload a video to share your faith." action="Upload" onAction={() => go("community")} />
+        )
+      )}
     </section>
   );
 }
