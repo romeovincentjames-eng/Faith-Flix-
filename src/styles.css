@@ -1071,9 +1071,9 @@ select option {
 
 .home-series-card {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr);
+  grid-template-columns: 116px minmax(0, 1fr);
   gap: 13px;
-  min-height: 146px;
+  min-height: 180px;
   padding: 12px;
   overflow: hidden;
   color: #f7fbff;
@@ -1096,7 +1096,7 @@ select option {
   position: relative;
   overflow: hidden;
   align-self: stretch;
-  min-height: 122px;
+  min-height: 156px;
   aspect-ratio: 3 / 4;
   border-radius: 19px;
   background: #02040a;
@@ -1201,15 +1201,15 @@ select option {
 
 @media (max-width: 560px) {
   .home-series-card {
-    grid-template-columns: 86px minmax(0, 1fr);
-    min-height: 136px;
+    grid-template-columns: 106px minmax(0, 1fr);
+    min-height: 164px;
     gap: 10px;
     padding: 10px;
     border-radius: 22px;
   }
 
   .home-series-thumb {
-    min-height: 116px;
+    min-height: 140px;
     border-radius: 17px;
   }
 
@@ -5917,15 +5917,15 @@ textarea:focus {
 .home-series-shelf {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 230px;
+  grid-auto-columns: 268px;
   gap: 10px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
   scroll-padding-inline-start: 50%;
-  scroll-padding-inline-end: calc(50% - 115px);
+  scroll-padding-inline-end: calc(50% - 134px);
   padding-inline-start: 16px;
-  padding-inline-end: calc(50% - 115px);
+  padding-inline-end: calc(50% - 134px);
   padding-block: 4px 18px;
   scrollbar-width: none;
 }
@@ -5940,9 +5940,9 @@ textarea:focus {
 
 @media (max-width: 390px) {
   .home-series-shelf {
-    grid-auto-columns: 210px;
-    scroll-padding-inline-end: calc(50% - 105px);
-    padding-inline-end: calc(50% - 105px);
+    grid-auto-columns: 245px;
+    scroll-padding-inline-end: calc(50% - 122px);
+    padding-inline-end: calc(50% - 122px);
   }
 }
 
@@ -6544,6 +6544,16 @@ textarea:focus {
   font-size: 0.65rem;
   color: rgba(212, 160, 23, 0.7);
   font-weight: 700;
+}
+
+.netflix-ep-scripture {
+  margin: 2px 0 3px;
+  font-size: 0.68rem;
+  font-style: italic;
+  color: rgba(212, 160, 23, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .netflix-ep-desc {

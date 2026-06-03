@@ -1667,6 +1667,7 @@ function SeriesDetailView({ series, episodes, onBack }: { series: SeriesItem; ep
                     {video.duration && <span className="netflix-ep-duration">{video.duration}</span>}
                     {video.category && <span className="netflix-ep-cat">{video.category}</span>}
                   </div>
+                  {video.scripture && <p className="netflix-ep-scripture">✦ {video.scripture}</p>}
                   {video.description && <p className="netflix-ep-desc">{video.description}</p>}
                 </div>
                 <ChevronRight size={16} className="netflix-ep-arrow" />
