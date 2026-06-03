@@ -876,6 +876,14 @@ function App() {
   const publicVideos = videos.filter((video) => video.status === "Published" && !isPrayerVideo(video)).map(alignProfessionalVideoWithSeries);
   const publicSeries = series.filter((item) => item.status === "Published");
 
+  const [showSplash, setShowSplash] = React.useState(false);
+  const triggerSplash = () => {
+    setShowSplash(true);
+    window.setTimeout(() => { setShowSplash(false); setPage("home"); }, 2700);
+  };
+  const triggerSplashRef = React.useRef(triggerSplash);
+  triggerSplashRef.current = triggerSplash;
+
   React.useEffect(() => {
     let active = true;
 
@@ -891,6 +899,8 @@ function App() {
       if (localUser.role === "admin") {
         setPage("admin-studio");
         setStudioView("dashboard");
+      } else {
+        triggerSplashRef.current();
       }
     };
 
@@ -997,12 +1007,6 @@ function App() {
     }
     if (nextStudioView) setStudioView(nextStudioView);
     setPage(nextPage);
-  };
-
-  const [showSplash, setShowSplash] = React.useState(false);
-  const triggerSplash = () => {
-    setShowSplash(true);
-    window.setTimeout(() => { setShowSplash(false); setPage("home"); }, 2700);
   };
 
   React.useEffect(() => {
