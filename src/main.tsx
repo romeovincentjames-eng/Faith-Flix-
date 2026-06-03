@@ -1735,69 +1735,93 @@ function SeriesScreen() {
         </div>
       )}
 
-      {categories.length > 1 && (
-        <div className="series-category-filter">
-          {["All", ...categories].map((cat) => (
-            <button
-              key={cat}
-              className={`category-pill series-cat-pill${activeCategory === cat ? " active" : ""}`}
-              onClick={() => setActiveCategory(cat)}
-            >
-              {cat}
-            </button>
-          ))}
+      {categories.length > 0 && (
+        <div className="series-dropdown-row">
+          <select
+            className="series-category-dropdown"
+            value={activeCategory}
+            onChange={(e) => setActiveCategory(e.target.value)}
+          >
+            <option value="All">All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
         </div>
       )}
 
-      {visibleCategories.length > 0 ? visibleCategories.map((category) => {
-        const catSeries = publishedSeries.filter((s) => s.category === category);
-        return (
-          <div key={category} className="netflix-row">
-            <h2 className="netflix-row-title">{category}</h2>
-            <div className="netflix-row-scroll">
-              {catSeries.map((item) => {
-                const epCount = publicVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
-                return (
-                  <button key={item.id} className="netflix-series-card" onClick={() => setSelectedSeriesId(item.id)}>
-                    {item.posterUrl
-                      ? <img className="netflix-card-img" src={item.posterUrl} alt={item.title} />
-                      : <div className="netflix-card-img netflix-card-empty"><Clapperboard size={26} /></div>}
-                    <div className="netflix-card-gradient" />
-                    <div className="netflix-card-info">
-                      <p className="netflix-card-title">{item.title}</p>
-                      <p className="netflix-card-meta">{epCount} ep{epCount !== 1 ? "s" : ""}</p>
-                    </div>
-                  </button>
-                );
-              })}
+      {activeCategory === "All" ? (
+        visibleCategories.length > 0 ? visibleCategories.map((category) => {
+          const catSeries = publishedSeries.filter((s) => s.category === category);
+          return (
+            <div key={category} className="netflix-row">
+              <h2 className="netflix-row-title">{category}</h2>
+              <div className="netflix-row-scroll">
+                {catSeries.map((item) => {
+                  const epCount = publicVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+                  return (
+                    <button key={item.id} className="netflix-series-card" onClick={() => setSelectedSeriesId(item.id)}>
+                      {item.posterUrl
+                        ? <img className="netflix-card-img" src={item.posterUrl} alt={item.title} />
+                        : <div className="netflix-card-img netflix-card-empty"><Clapperboard size={26} /></div>}
+                      <div className="netflix-card-gradient" />
+                      <div className="netflix-card-info">
+                        <p className="netflix-card-title">{item.title}</p>
+                        <p className="netflix-card-meta">{epCount} ep{epCount !== 1 ? "s" : ""}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        );
-      }) : (
-        publishedSeries.length > 0 ? (
-          <div className="netflix-row">
-            <h2 className="netflix-row-title">All Series</h2>
-            <div className="netflix-row-scroll">
-              {publishedSeries.map((item) => {
-                const epCount = publicVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
-                return (
-                  <button key={item.id} className="netflix-series-card" onClick={() => setSelectedSeriesId(item.id)}>
-                    {item.posterUrl
-                      ? <img className="netflix-card-img" src={item.posterUrl} alt={item.title} />
-                      : <div className="netflix-card-img netflix-card-empty"><Clapperboard size={26} /></div>}
-                    <div className="netflix-card-gradient" />
-                    <div className="netflix-card-info">
-                      <p className="netflix-card-title">{item.title}</p>
-                      <p className="netflix-card-meta">{epCount} ep{epCount !== 1 ? "s" : ""}</p>
-                    </div>
-                  </button>
-                );
-              })}
+          );
+        }) : (
+          publishedSeries.length > 0 ? (
+            <div className="netflix-row">
+              <h2 className="netflix-row-title">All Series</h2>
+              <div className="netflix-row-scroll">
+                {publishedSeries.map((item) => {
+                  const epCount = publicVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+                  return (
+                    <button key={item.id} className="netflix-series-card" onClick={() => setSelectedSeriesId(item.id)}>
+                      {item.posterUrl
+                        ? <img className="netflix-card-img" src={item.posterUrl} alt={item.title} />
+                        : <div className="netflix-card-img netflix-card-empty"><Clapperboard size={26} /></div>}
+                      <div className="netflix-card-gradient" />
+                      <div className="netflix-card-info">
+                        <p className="netflix-card-title">{item.title}</p>
+                        <p className="netflix-card-meta">{epCount} ep{epCount !== 1 ? "s" : ""}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ) : (
-          <EmptyState icon={Clapperboard} title="No series yet." body="Series will appear here once published." action="" onAction={() => {}} />
+          ) : (
+            <EmptyState icon={Clapperboard} title="No series yet." body="Series will appear here once published." action="" onAction={() => {}} />
+          )
         )
+      ) : (
+        <div className="series-filtered-section">
+          <h2 className="netflix-row-title series-filtered-title">{activeCategory}</h2>
+          <div className="series-filtered-grid">
+            {publishedSeries.filter((s) => s.category === activeCategory).map((item) => {
+              const epCount = publicVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+              return (
+                <button key={item.id} className="netflix-series-card series-grid-card" onClick={() => setSelectedSeriesId(item.id)}>
+                  {item.posterUrl
+                    ? <img className="netflix-card-img" src={item.posterUrl} alt={item.title} />
+                    : <div className="netflix-card-img netflix-card-empty"><Clapperboard size={26} /></div>}
+                  <div className="netflix-card-gradient" />
+                  <div className="netflix-card-info">
+                    <p className="netflix-card-title">{item.title}</p>
+                    <p className="netflix-card-meta">{epCount} ep{epCount !== 1 ? "s" : ""}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
     </section>
   );
