@@ -1505,14 +1505,6 @@ function HomeScreen() {
 
   return (
     <section className="screen home-featured-screen">
-      <div className="home-hero">
-        <img src="/brand-icon.png" className="home-hero-logo" alt="Faith Flix" />
-        <div className="home-hero-text">
-          <h1 className="home-hero-title">Faith Flix</h1>
-          <p className="home-hero-tagline">Watch. Believe. Share.</p>
-        </div>
-      </div>
-
       {allFeatured.length > 0 && (
         <div className="home-section">
           <div className="home-section-header">
