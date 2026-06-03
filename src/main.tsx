@@ -387,6 +387,10 @@ const MOCK_SAVED: Record<string, string[]> = {
   "mock-user1": ["mock-v1", "mock-v2"],
 };
 
+const MOCK_SAVED_SERIES: Record<string, string[]> = {
+  "mock-user1": ["mock-s1"],
+};
+
 const MOCK_SAVED_LISTS: Record<string, SavedList[]> = {
   "mock-user1": [
     { id: "mock-list-worship", name: "Worship", videoIds: ["mock-v3", "mock-v8"] },
@@ -760,6 +764,7 @@ function App() {
   const [categories, setCategories] = useStoredState<CategoryItem[]>("faithflix-categories", defaultCategories);
   const [uploads, setUploads] = useStoredState<UserUpload[]>("faithflix-user-uploads", MOCK_UPLOADS);
   const [saved, setSaved] = useStoredState<Record<string, string[]>>("faithflix-saved", MOCK_SAVED);
+  const [savedSeries, setSavedSeries] = useStoredState<Record<string, string[]>>("faithflix-saved-series", MOCK_SAVED_SERIES);
   const [savedLists, setSavedLists] = useStoredState<Record<string, SavedList[]>>("faithflix-saved-lists", MOCK_SAVED_LISTS);
   const [likes, setLikes] = useStoredState<Record<string, string[]>>("faithflix-likes", MOCK_LIKES);
   const [comments, setComments] = useStoredState<CommentItem[]>("faithflix-comments", MOCK_COMMENTS);
@@ -879,10 +884,11 @@ function App() {
     setWorshipSongs((current) => mergeById(MOCK_WORSHIP_SONGS, current.filter((song) => !song.id.startsWith("mock-song-"))));
     setWorshipAlbums((current) => mergeById(MOCK_WORSHIP_ALBUMS, current));
     setSaved((current) => mergeRecordLists(MOCK_SAVED, current));
+    setSavedSeries((current) => mergeRecordLists(MOCK_SAVED_SERIES, current));
     setSavedLists((current) => ({ ...MOCK_SAVED_LISTS, ...current }));
     setLikes((current) => mergeRecordLists(MOCK_LIKES, current));
     localStorage.setItem(demoVersion, "loaded");
-  }, [setUsers, setVideos, setSeries, setCategories, setUploads, setPosts, setPrayers, setComments, setFriendRequests, setMessages, setWorshipSongs, setSaved, setSavedLists, setLikes]);
+  }, [setUsers, setVideos, setSeries, setCategories, setUploads, setPosts, setPrayers, setComments, setFriendRequests, setMessages, setWorshipSongs, setSaved, setSavedSeries, setSavedLists, setLikes]);
 
   const currentUser = users.find((user) => user.id === sessionId);
   const isAdmin = currentUser?.role === "admin";
@@ -1077,6 +1083,8 @@ function App() {
     setUploads,
     saved,
     setSaved,
+    savedSeries,
+    setSavedSeries,
     savedLists,
     setSavedLists,
     likes,
@@ -1234,6 +1242,8 @@ function buildContextShape() {
     setUploads: React.Dispatch<React.SetStateAction<UserUpload[]>>;
     saved: Record<string, string[]>;
     setSaved: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
+    savedSeries: Record<string, string[]>;
+    setSavedSeries: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
     savedLists: Record<string, SavedList[]>;
     setSavedLists: React.Dispatch<React.SetStateAction<Record<string, SavedList[]>>>;
     likes: Record<string, string[]>;
@@ -1867,11 +1877,20 @@ function WatchScreen() {
 }
 
 function SeriesDetailView({ series, episodes, onBack }: { series: SeriesItem; episodes: VideoItem[]; onBack: () => void }) {
-  const { setSelectedVideoId, go } = useApp();
+  const { currentUser, savedSeries, setSavedSeries, setSelectedVideoId, go, notify } = useApp();
+  const actorId = currentUser?.id ?? "guest";
+  const savedSeriesIds = savedSeries[actorId] ?? [];
+  const isSaved = savedSeriesIds.includes(series.id);
 
   const playEpisode = (video: VideoItem) => {
     setSelectedVideoId(video.id);
     go("watch");
+  };
+
+  const toggleSeriesSave = () => {
+    if (!currentUser) { notify("Log in to save series."); return; }
+    setSavedSeries({ ...savedSeries, [actorId]: isSaved ? savedSeriesIds.filter((id) => id !== series.id) : [...savedSeriesIds, series.id] });
+    notify(isSaved ? "Series removed." : "Series saved.");
   };
 
   return (
@@ -1897,6 +1916,9 @@ function SeriesDetailView({ series, episodes, onBack }: { series: SeriesItem; ep
               onClick={() => episodes.length && playEpisode(episodes[0])}
             >
               <Play size={16} fill="currentColor" /> Play Episode 1
+            </button>
+            <button className="netflix-info-btn" onClick={toggleSeriesSave}>
+              <Bookmark size={16} fill={isSaved ? "currentColor" : "none"} /> {isSaved ? "Saved" : "Save"}
             </button>
           </div>
         </div>
@@ -1939,9 +1961,11 @@ function SeriesDetailView({ series, episodes, onBack }: { series: SeriesItem; ep
 }
 
 function SeriesScreen() {
-  const { publicSeries, publicVideos, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId } = useApp();
+  const { currentUser, savedSeries, setSavedSeries, publicSeries, publicVideos, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId, notify } = useApp();
   const [activeCategory, setActiveCategory] = React.useState("All");
   const officialVideos = publicVideos.filter((video) => video.source === "admin");
+  const actorId = currentUser?.id ?? "guest";
+  const savedSeriesIds = savedSeries[actorId] ?? [];
 
   const focusedSeries = selectedSeriesId ? publicSeries.find((s) => s.id === selectedSeriesId) : null;
   const focusedEpisodes = focusedSeries
@@ -1964,6 +1988,16 @@ function SeriesScreen() {
     else setSelectedSeriesId(item.id);
   };
 
+  const toggleSeriesSave = (item: SeriesItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!currentUser) { notify("Log in to save series."); return; }
+    const nextSaved = savedSeriesIds.includes(item.id)
+      ? savedSeriesIds.filter((id) => id !== item.id)
+      : [...savedSeriesIds, item.id];
+    setSavedSeries({ ...savedSeries, [actorId]: nextSaved });
+    notify(savedSeriesIds.includes(item.id) ? "Series removed." : "Series saved.");
+  };
+
   return (
     <section className="screen netflix-series-screen">
       {featuredSeries && (
@@ -1983,6 +2017,9 @@ function SeriesScreen() {
               </button>
               <button className="netflix-info-btn" onClick={(e) => { e.stopPropagation(); setSelectedSeriesId(featuredSeries.id); }}>
                 <ChevronRight size={15} /> More Info
+              </button>
+              <button className="netflix-info-btn" onClick={(e) => toggleSeriesSave(featuredSeries, e)}>
+                <Bookmark size={15} fill={savedSeriesIds.includes(featuredSeries.id) ? "currentColor" : "none"} /> {savedSeriesIds.includes(featuredSeries.id) ? "Saved" : "Save"}
               </button>
             </div>
           </div>
@@ -2015,6 +2052,9 @@ function SeriesScreen() {
                   const epCount = officialVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
                   return (
                     <button key={item.id} className="netflix-series-card" onClick={() => setSelectedSeriesId(item.id)}>
+                      <span className={`series-save-pill${savedSeriesIds.includes(item.id) ? " active" : ""}`} onClick={(e) => toggleSeriesSave(item, e)} aria-label={savedSeriesIds.includes(item.id) ? "Unsave series" : "Save series"} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleSeriesSave(item, e as unknown as React.MouseEvent); }}>
+                        <Bookmark size={15} fill={savedSeriesIds.includes(item.id) ? "currentColor" : "none"} />
+                      </span>
                       {item.posterUrl
                         ? <img className="netflix-card-img" src={item.posterUrl} alt={item.title} />
                         : <div className="netflix-card-img netflix-card-empty"><Clapperboard size={26} /></div>}
@@ -2038,6 +2078,9 @@ function SeriesScreen() {
                   const epCount = officialVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
                   return (
                     <button key={item.id} className="netflix-series-card" onClick={() => setSelectedSeriesId(item.id)}>
+                      <span className={`series-save-pill${savedSeriesIds.includes(item.id) ? " active" : ""}`} onClick={(e) => toggleSeriesSave(item, e)} aria-label={savedSeriesIds.includes(item.id) ? "Unsave series" : "Save series"} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleSeriesSave(item, e as unknown as React.MouseEvent); }}>
+                        <Bookmark size={15} fill={savedSeriesIds.includes(item.id) ? "currentColor" : "none"} />
+                      </span>
                       {item.posterUrl
                         ? <img className="netflix-card-img" src={item.posterUrl} alt={item.title} />
                         : <div className="netflix-card-img netflix-card-empty"><Clapperboard size={26} /></div>}
@@ -2063,6 +2106,9 @@ function SeriesScreen() {
               const epCount = officialVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
               return (
                 <button key={item.id} className="netflix-series-card series-grid-card" onClick={() => setSelectedSeriesId(item.id)}>
+                  <span className={`series-save-pill${savedSeriesIds.includes(item.id) ? " active" : ""}`} onClick={(e) => toggleSeriesSave(item, e)} aria-label={savedSeriesIds.includes(item.id) ? "Unsave series" : "Save series"} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleSeriesSave(item, e as unknown as React.MouseEvent); }}>
+                    <Bookmark size={15} fill={savedSeriesIds.includes(item.id) ? "currentColor" : "none"} />
+                  </span>
                   {item.posterUrl
                     ? <img className="netflix-card-img" src={item.posterUrl} alt={item.title} />
                     : <div className="netflix-card-img netflix-card-empty"><Clapperboard size={26} /></div>}
@@ -2608,23 +2654,25 @@ function WorshipUploadSheet({ onClose }: { onClose: () => void }) {
 }
 
 function SavedScreen() {
-  const { currentUser, saved, savedLists, videos, setSaved, setSavedLists, setSelectedVideoId, go, notify } = useApp();
-  const [activeFilter, setActiveFilter] = React.useState<"all" | "videos" | "lists">("all");
+  const { currentUser, saved, savedSeries, savedLists, videos, publicSeries, setSaved, setSavedSeries, setSavedLists, setSelectedVideoId, setSelectedSeriesId, go, notify } = useApp();
+  const [activeFilter, setActiveFilter] = React.useState<"all" | "videos" | "series" | "lists">("all");
   const [showNewList, setShowNewList] = React.useState(false);
   const [listName, setListName] = React.useState("");
 
   if (!currentUser) {
     return (
       <section className="screen">
-        <EmptyState icon={Bookmark} title="Sign in to see your saved videos" body="Your saved videos and collections will appear here." action="Sign In" onAction={() => go("profile")} />
+        <EmptyState icon={Bookmark} title="Sign in to see your saved library" body="Your saved videos, series, and collections will appear here." action="Sign In" onAction={() => go("profile")} />
       </section>
     );
   }
 
   const actorId = currentUser.id;
   const generalIds = saved[actorId] ?? [];
+  const savedSeriesIds = savedSeries[actorId] ?? [];
   const userLists = savedLists[actorId] ?? [];
   const generalVideos = videos.filter((v) => generalIds.includes(v.id));
+  const generalSeries = publicSeries.filter((item) => savedSeriesIds.includes(item.id));
 
   const createList = () => {
     const name = listName.trim();
@@ -2635,20 +2683,22 @@ function SavedScreen() {
   };
 
   const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
+  const openSeries = (id: string) => { setSelectedSeriesId(id); go("series"); };
   const removeFromGeneral = (videoId: string) => { setSaved({ ...saved, [actorId]: generalIds.filter((id) => id !== videoId) }); notify("Removed."); };
+  const removeSeries = (seriesId: string) => { setSavedSeries({ ...savedSeries, [actorId]: savedSeriesIds.filter((id) => id !== seriesId) }); notify("Series removed."); };
   const deleteList = (listId: string) => { setSavedLists({ ...savedLists, [actorId]: userLists.filter((l) => l.id !== listId) }); notify("Collection deleted."); };
 
   return (
     <section className="screen tt-saved-screen">
       <div className="tt-saved-header">
         <h1 className="tt-saved-title">Saved</h1>
-        <p className="tt-saved-meta">{generalIds.length} video{generalIds.length !== 1 ? "s" : ""} · {userLists.length} collection{userLists.length !== 1 ? "s" : ""}</p>
+        <p className="tt-saved-meta">{generalIds.length} video{generalIds.length !== 1 ? "s" : ""} · {savedSeriesIds.length} series · {userLists.length} collection{userLists.length !== 1 ? "s" : ""}</p>
       </div>
 
       <div className="tt-saved-tabs">
-        {(["all", "videos", "lists"] as const).map((f) => (
+        {(["all", "videos", "series", "lists"] as const).map((f) => (
           <button key={f} className={`tt-saved-tab${activeFilter === f ? " active" : ""}`} onClick={() => setActiveFilter(f)}>
-            {f === "all" ? "All" : f === "videos" ? "Videos" : "Collections"}
+            {f === "all" ? "All" : f === "videos" ? "Videos" : f === "series" ? "Series" : "Collections"}
           </button>
         ))}
       </div>
@@ -2671,9 +2721,36 @@ function SavedScreen() {
               </button>
             ))}
           </div>
-        ) : (
+        ) : activeFilter === "videos" || generalSeries.length === 0 ? (
           <EmptyState icon={Bookmark} title="Nothing saved yet" body="Tap the bookmark on any video to save it here." action="Watch Videos" onAction={() => go("watch")} />
-        )
+        ) : null
+      )}
+
+      {(activeFilter === "all" || activeFilter === "series") && (
+        generalSeries.length > 0 ? (
+          <div className="tt-saved-series-grid">
+            {generalSeries.map((item) => {
+              const episodeCount = videos.filter((video) => video.seriesId === item.title && video.status === "Published").length;
+              return (
+                <button key={item.id} className="tt-saved-series-card" onClick={() => openSeries(item.id)}>
+                  {item.posterUrl
+                    ? <img src={item.posterUrl} alt={item.title} />
+                    : <div className="tt-saved-series-empty"><Clapperboard size={26} /></div>}
+                  <div className="tt-saved-series-gradient" />
+                  <div className="tt-saved-series-info">
+                    <p>{item.title}</p>
+                    <span>{episodeCount} episode{episodeCount !== 1 ? "s" : ""} · {item.category}</span>
+                  </div>
+                  <button className="tt-saved-remove" aria-label="Remove series" onClick={(e) => { e.stopPropagation(); removeSeries(item.id); }}>
+                    <X size={12} />
+                  </button>
+                </button>
+              );
+            })}
+          </div>
+        ) : activeFilter === "series" ? (
+          <EmptyState icon={Clapperboard} title="No saved series yet" body="Tap the bookmark on any series to save it here." action="Browse Series" onAction={() => go("series")} />
+        ) : null
       )}
 
       {(activeFilter === "all" || activeFilter === "lists") && (
