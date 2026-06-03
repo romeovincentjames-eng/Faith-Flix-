@@ -3239,7 +3239,7 @@ function CommunityUpload({ onDone }: { onDone?: () => void } = {}) {
         const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, authUser.id)).select("*").single();
         if (error) throw error;
         const savedVideo = videoFromDb(data as DbVideo);
-        setUploads((current) => [...current, { id: uploadId, userId: uploadUser.id, ...uploadForm, visibility: "Public", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, status: "Approved", adminNote: "Published instantly." }]);
+        setUploads((current) => [...current, { id: uploadId, userId: uploadUser.id, ...uploadForm, visibility: "Public", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: publicVideo.cropDimension || "9:16", cropRatio: publicVideo.cropRatio || "9 / 16", status: "Approved", adminNote: "Published instantly." }]);
         setVideos((current) => [...current.filter((item) => item.id !== savedVideo.id), savedVideo]);
         setSelectedVideoId(savedVideo.id);
         progress.done("Posted");
@@ -3324,7 +3324,7 @@ function PostComposerSheet({ defaultTab, onClose }: { defaultTab: "post" | "vide
         const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, authUser.id)).select("*").single();
         if (error) throw error;
         const savedVideo = videoFromDb(data as DbVideo);
-        setUploads((current) => [...current, { id: uploadId, userId: uploadUser.id, ...uploadForm, visibility: "Public", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, status: "Approved", adminNote: "Published instantly." }]);
+        setUploads((current) => [...current, { id: uploadId, userId: uploadUser.id, ...uploadForm, visibility: "Public", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: publicVideo.cropDimension || "9:16", cropRatio: publicVideo.cropRatio || "9 / 16", status: "Approved", adminNote: "Published instantly." }]);
         setVideos((current) => [...current.filter((item) => item.id !== savedVideo.id), savedVideo]);
         setSelectedVideoId(savedVideo.id);
         progress.done("Posted");
