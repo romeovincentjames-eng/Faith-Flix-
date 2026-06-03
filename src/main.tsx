@@ -8,7 +8,9 @@ import {
   Bookmark,
   Camera,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Clapperboard,
   Cross,
   Crown,
@@ -27,6 +29,7 @@ import {
   MessageCircle,
   MessagesSquare,
   MoreHorizontal,
+  Disc3,
   Music2,
   Pause,
   Play,
@@ -146,7 +149,8 @@ type FriendRequest = { id: string; fromId: string; toId: string; status: "pendin
 type Message = { id: string; fromId: string; toId: string; text: string; createdAt: string };
 type SavedList = { id: string; name: string; videoIds: string[] };
 type UploadProgress = { active: boolean; value: number; label: string };
-type WorshipSong = { id: string; title: string; artist: string; description: string; category: string; duration: string; audioName: string; audioUrl?: string; coverName: string; coverUrl?: string; uploadedBy: string; createdAt: string };
+type WorshipAlbum = { id: string; title: string; artist: string; coverUrl?: string; type: "Single" | "EP" | "Album"; year: string; trackIds: string[]; description?: string };
+type WorshipSong = { id: string; title: string; artist: string; description: string; category: string; duration: string; audioName: string; audioUrl?: string; coverName: string; coverUrl?: string; uploadedBy: string; createdAt: string; albumId?: string; albumType?: "Single" | "EP" | "Album" };
 
 const adminEmail = "romeovgalasso@gmail.com";
 const adminPassword = "Rvjg123100";
@@ -374,34 +378,23 @@ const USER_SERIES_MOCK_VIDEOS: VideoItem[] = USER_SERIES_MOCK.flatMap((series, i
 );
 
 const MOCK_WORSHIP_SONGS: WorshipSong[] = [
-  {
-    id: "song-all-my-life",
-    title: "All My Life",
-    artist: "Romeo Galasso",
-    description: "Original worship song uploaded for Faith Flix.",
-    category: "Worship",
-    duration: "",
-    audioName: "all-my-life.mp3",
-    audioUrl: "/worship/all-my-life.mp3",
-    coverName: "faith-cross-background.png",
-    coverUrl: "/faith-cross-background.png",
-    uploadedBy: "Romeo Galasso",
-    createdAt: "2026-06-02",
-  },
-  {
-    id: "song-hear-the-father-say",
-    title: "Hear the Father Say",
-    artist: "Romeo Galasso",
-    description: "Original worship song uploaded for Faith Flix.",
-    category: "Worship",
-    duration: "",
-    audioName: "hear-the-father-say.mp3",
-    audioUrl: "/worship/hear-the-father-say.mp3",
-    coverName: "faith-cross-background.png",
-    coverUrl: "/faith-cross-background.png",
-    uploadedBy: "Romeo Galasso",
-    createdAt: "2026-06-02",
-  },
+  { id: "song-all-my-life", title: "All My Life", artist: "Romeo Galasso", description: "Original worship song uploaded for Faith Flix.", category: "Worship", duration: "", audioName: "all-my-life.mp3", audioUrl: "/worship/all-my-life.mp3", coverName: "faith-cross-background.png", coverUrl: "/faith-cross-background.png", uploadedBy: "Romeo Galasso", createdAt: "2026-06-02", albumId: "album-faith-rising", albumType: "EP" },
+  { id: "song-hear-the-father-say", title: "Hear the Father Say", artist: "Romeo Galasso", description: "Original worship song uploaded for Faith Flix.", category: "Worship", duration: "", audioName: "hear-the-father-say.mp3", audioUrl: "/worship/hear-the-father-say.mp3", coverName: "faith-cross-background.png", coverUrl: "/faith-cross-background.png", uploadedBy: "Romeo Galasso", createdAt: "2026-06-02", albumId: "album-faith-rising", albumType: "EP" },
+  { id: "song-mock-holy-ground", title: "Holy Ground", artist: "Elevation Worship", description: "Standing in the holy presence of God.", category: "Worship", duration: "4:12", audioName: "", audioUrl: "", coverName: "holy-ground.jpg", coverUrl: "https://images.unsplash.com/photo-1555685812-4b943f1cb0eb?w=400&q=80", uploadedBy: "Admin", createdAt: "2024-01-14", albumId: "album-holy-ground", albumType: "Single" },
+  { id: "song-mock-worthy", title: "Worthy Is the Lamb", artist: "Faith Flix Worship", description: "Exalting the risen Lamb of God.", category: "Worship", duration: "3:58", audioName: "", audioUrl: "", coverName: "worthy.jpg", coverUrl: "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=400&q=80", uploadedBy: "Admin", createdAt: "2025-01-01", albumId: "album-worthy", albumType: "Single" },
+  { id: "song-mock-grace1", title: "Amazing Grace (My Chains Are Gone)", artist: "Hillsong Creative", description: "A timeless hymn reimagined for modern worship.", category: "Praise", duration: "5:02", audioName: "", audioUrl: "", coverName: "grace-songs.jpg", coverUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=400&q=80", uploadedBy: "Admin", createdAt: "2024-01-24", albumId: "album-grace-songs", albumType: "Album" },
+  { id: "song-mock-grace2", title: "Oceans (Where Feet May Fail)", artist: "Hillsong Creative", description: "Walking on water by faith alone.", category: "Praise", duration: "4:45", audioName: "", audioUrl: "", coverName: "grace-songs.jpg", coverUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=400&q=80", uploadedBy: "Admin", createdAt: "2024-01-24", albumId: "album-grace-songs", albumType: "Album" },
+  { id: "song-mock-grace3", title: "What a Beautiful Name", artist: "Hillsong Creative", description: "Worshipping at the powerful name of Jesus.", category: "Praise", duration: "5:20", audioName: "", audioUrl: "", coverName: "grace-songs.jpg", coverUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=400&q=80", uploadedBy: "Admin", createdAt: "2024-01-24", albumId: "album-grace-songs", albumType: "Album" },
+  { id: "song-mock-raise-ep1", title: "Raise a Hallelujah", artist: "Bethel Music", description: "A battle cry of praise in the storm.", category: "Worship", duration: "4:30", audioName: "", audioUrl: "", coverName: "raise-ep.jpg", coverUrl: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=400&q=80", uploadedBy: "Admin", createdAt: "2024-03-10", albumId: "album-raise-ep", albumType: "EP" },
+  { id: "song-mock-raise-ep2", title: "Goodness of God", artist: "Bethel Music", description: "Declaring the unending goodness of God.", category: "Worship", duration: "5:14", audioName: "", audioUrl: "", coverName: "raise-ep.jpg", coverUrl: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=400&q=80", uploadedBy: "Admin", createdAt: "2024-03-10", albumId: "album-raise-ep", albumType: "EP" },
+];
+
+const MOCK_WORSHIP_ALBUMS: WorshipAlbum[] = [
+  { id: "album-faith-rising", title: "Faith Rising", artist: "Romeo Galasso", coverUrl: "/faith-cross-background.png", type: "EP", year: "2026", trackIds: ["song-all-my-life", "song-hear-the-father-say"], description: "Original worship music from Faith Flix founder Romeo Galasso." },
+  { id: "album-holy-ground", title: "Holy Ground", artist: "Elevation Worship", coverUrl: "https://images.unsplash.com/photo-1555685812-4b943f1cb0eb?w=400&q=80", type: "Single", year: "2024", trackIds: ["song-mock-holy-ground"], description: "A powerful declaration of standing in God's presence." },
+  { id: "album-worthy", title: "Worthy Is the Lamb", artist: "Faith Flix Worship", coverUrl: "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=400&q=80", type: "Single", year: "2025", trackIds: ["song-mock-worthy"], description: "Exalting the risen Lamb of God." },
+  { id: "album-grace-songs", title: "Songs of Grace", artist: "Hillsong Creative", coverUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=400&q=80", type: "Album", year: "2024", trackIds: ["song-mock-grace1", "song-mock-grace2", "song-mock-grace3"], description: "A full worship album exploring the depth of God's grace." },
+  { id: "album-raise-ep", title: "Raise a Hallelujah", artist: "Bethel Music", coverUrl: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=400&q=80", type: "EP", year: "2024", trackIds: ["song-mock-raise-ep1", "song-mock-raise-ep2"], description: "Two anthems of praise and declaration." },
 ];
 
 const ALL_MOCK_SERIES = mergeById(mergeById(MOCK_SERIES, CATEGORY_MOCK_SERIES), USER_SERIES_MOCK);
@@ -659,6 +652,7 @@ function App() {
   const [friendRequests, setFriendRequests] = useStoredState<FriendRequest[]>("faithflix-friends", MOCK_FRIEND_REQUESTS);
   const [messages, setMessages] = useStoredState<Message[]>("faithflix-messages", MOCK_MESSAGES);
   const [worshipSongs, setWorshipSongs] = useStoredState<WorshipSong[]>("faithflix-worship-songs", MOCK_WORSHIP_SONGS);
+  const [worshipAlbums, setWorshipAlbums] = useStoredState<WorshipAlbum[]>("faithflix-worship-albums", MOCK_WORSHIP_ALBUMS);
   const [mainSearchQuery, setMainSearchQuery] = React.useState("");
   const t = React.useCallback((key: string) => translate("en", key), []);
   const [commSearchQuery, setCommSearchQuery] = React.useState("");
@@ -895,6 +889,8 @@ function App() {
     setMessages,
     worshipSongs,
     setWorshipSongs,
+    worshipAlbums,
+    setWorshipAlbums,
     notify,
     signOut,
     triggerSplash,
@@ -1041,6 +1037,8 @@ function buildContextShape() {
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
     worshipSongs: WorshipSong[];
     setWorshipSongs: React.Dispatch<React.SetStateAction<WorshipSong[]>>;
+    worshipAlbums: WorshipAlbum[];
+    setWorshipAlbums: React.Dispatch<React.SetStateAction<WorshipAlbum[]>>;
     notify: (message: string) => void;
     signOut: () => void;
     triggerSplash: () => void;
@@ -2008,13 +2006,15 @@ function UserSeriesBuilder() {
 }
 
 function WorshipScreen() {
-  const { worshipSongs, worshipSearchQuery } = useApp();
+  const { worshipSongs, worshipAlbums, worshipSearchQuery } = useApp();
   const [currentSongId, setCurrentSongId] = React.useState<string | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
   const [audioDuration, setAudioDuration] = React.useState(0);
   const [activeCategory, setActiveCategory] = React.useState("All");
   const [showUploadSheet, setShowUploadSheet] = React.useState(false);
+  const [showExpandedPlayer, setShowExpandedPlayer] = React.useState(false);
+  const [selectedAlbumId, setSelectedAlbumId] = React.useState<string | null>(null);
   const audioRef = React.useRef<HTMLAudioElement>(null);
 
   React.useEffect(() => {
@@ -2033,6 +2033,10 @@ function WorshipScreen() {
   const currentIndex = filteredSongs.findIndex((s) => s.id === currentSongId);
   const categories = ["All", ...Array.from(new Set(worshipSongs.map((s) => s.category).filter(Boolean)))];
   const featuredSong = currentSong ?? filteredSongs[0] ?? null;
+
+  const singles = worshipAlbums.filter((a) => a.type === "Single");
+  const eps = worshipAlbums.filter((a) => a.type === "EP");
+  const albums = worshipAlbums.filter((a) => a.type === "Album");
 
   const playSong = React.useCallback((song: WorshipSong) => {
     if (currentSongId === song.id) {
@@ -2062,6 +2066,12 @@ function WorshipScreen() {
       audioRef.current.currentTime = (pct / 100) * audioDuration;
       setProgress(pct);
     }
+  };
+
+  const fmtTime = (pct: number) => {
+    if (!audioDuration) return "0:00";
+    const secs = Math.round((pct / 100) * audioDuration);
+    return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`;
   };
 
   return (
@@ -2120,11 +2130,17 @@ function WorshipScreen() {
             isActive={currentSongId === song.id}
             isPlaying={isPlaying && currentSongId === song.id}
             onPlay={() => playSong(song)}
+            onOpenAlbum={song.albumId ? () => setSelectedAlbumId(song.albumId!) : undefined}
           />
         ))}
       </div>
 
-      {/* Upload FAB — hidden while a song is playing */}
+      {/* Album shelves */}
+      {singles.length > 0 && <WorshipAlbumRow title="Singles" albums={singles} songs={worshipSongs} onPlayAll={playSong} onOpenAlbum={setSelectedAlbumId} />}
+      {eps.length > 0 && <WorshipAlbumRow title="EPs" albums={eps} songs={worshipSongs} onPlayAll={playSong} onOpenAlbum={setSelectedAlbumId} />}
+      {albums.length > 0 && <WorshipAlbumRow title="Albums" albums={albums} songs={worshipSongs} onPlayAll={playSong} onOpenAlbum={setSelectedAlbumId} />}
+
+      {/* Upload FAB */}
       {!isPlaying && (
         <button className="comm-fab" aria-label="Upload worship song" onClick={() => setShowUploadSheet(true)}>
           <Plus size={24} />
@@ -2132,6 +2148,22 @@ function WorshipScreen() {
       )}
 
       {showUploadSheet && <WorshipUploadSheet onClose={() => setShowUploadSheet(false)} />}
+
+      {/* Album detail sheet */}
+      {selectedAlbumId && (() => {
+        const album = worshipAlbums.find((a) => a.id === selectedAlbumId);
+        const albumSongs = album ? worshipSongs.filter((s) => album.trackIds.includes(s.id)) : [];
+        return album ? (
+          <AlbumDetailSheet
+            album={album}
+            songs={albumSongs}
+            currentSongId={currentSongId}
+            isPlaying={isPlaying}
+            onPlay={playSong}
+            onClose={() => setSelectedAlbumId(null)}
+          />
+        ) : null;
+      })()}
 
       {/* Now Playing Bar */}
       {currentSong && (
@@ -2145,15 +2177,36 @@ function WorshipScreen() {
           onNext={nextSong}
           onTogglePlay={togglePlay}
           onSeek={seek}
+          onExpand={() => setShowExpandedPlayer(true)}
+        />
+      )}
+
+      {/* Expanded full-screen player */}
+      {showExpandedPlayer && currentSong && (
+        <ExpandedPlayerOverlay
+          song={currentSong}
+          album={worshipAlbums.find((a) => a.id === currentSong.albumId)}
+          isPlaying={isPlaying}
+          progress={progress}
+          currentTime={fmtTime(progress)}
+          totalTime={fmtTime(100)}
+          hasPrev={currentIndex > 0}
+          hasNext={currentIndex < filteredSongs.length - 1}
+          onPrev={prevSong}
+          onNext={nextSong}
+          onTogglePlay={togglePlay}
+          onSeek={seek}
+          onClose={() => setShowExpandedPlayer(false)}
+          onOpenAlbum={(id) => { setSelectedAlbumId(id); setShowExpandedPlayer(false); }}
         />
       )}
     </section>
   );
 }
 
-function WorshipTrackRow({ song, index, isActive, isPlaying, onPlay }: { song: WorshipSong; index: number; isActive: boolean; isPlaying: boolean; onPlay: () => void }) {
+function WorshipTrackRow({ song, index, isActive, isPlaying, onPlay, onOpenAlbum }: { song: WorshipSong; index: number; isActive: boolean; isPlaying: boolean; onPlay: () => void; onOpenAlbum?: () => void }) {
   return (
-    <button className={`sp-track-row${isActive ? " active" : ""}`} onClick={onPlay}>
+    <div className={`sp-track-row${isActive ? " active" : ""}`} onClick={onPlay} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onPlay()}>
       <div className="sp-col-num">
         {isPlaying
           ? <span className="sp-eq" aria-label="Now playing"><span /><span /><span /></span>
@@ -2167,39 +2220,198 @@ function WorshipTrackRow({ song, index, isActive, isPlaying, onPlay }: { song: W
       <div className="sp-track-info">
         <span className="sp-track-title">{song.title}</span>
         <span className="sp-track-artist">{song.artist}</span>
+        {song.albumId && onOpenAlbum && (
+          <button className="sp-track-album-tag" onClick={(e) => { e.stopPropagation(); onOpenAlbum(); }}>
+            <Disc3 size={10} />{song.albumType}
+          </button>
+        )}
       </div>
       <div className="sp-col-dur">{song.duration || "—"}</div>
-    </button>
+    </div>
   );
 }
 
-function NowPlayingBar({ song, isPlaying, progress, hasPrev, hasNext, onPrev, onNext, onTogglePlay, onSeek }: {
+function NowPlayingBar({ song, isPlaying, progress, hasPrev, hasNext, onPrev, onNext, onTogglePlay, onSeek, onExpand }: {
   song: WorshipSong; isPlaying: boolean; progress: number;
   hasPrev: boolean; hasNext: boolean;
-  onPrev: () => void; onNext: () => void; onTogglePlay: () => void; onSeek: (pct: number) => void;
+  onPrev: () => void; onNext: () => void; onTogglePlay: () => void; onSeek: (pct: number) => void; onExpand: () => void;
 }) {
   return (
     <div className="now-playing-bar">
-      <div className="np-left">
-        <div className="np-art">
-          {song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="np-art-empty"><Music2 size={15} /></div>}
-        </div>
-        <div className="np-info">
-          <span className="np-title">{song.title}</span>
-          <span className="np-artist">{song.artist}</span>
-        </div>
+      <div className="np-progress-stripe">
+        <div className="np-progress-fill" style={{ width: `${progress}%` }} />
+        <input className="np-progress-input" type="range" min={0} max={100} value={Math.round(progress)} onChange={(e) => onSeek(Number(e.target.value))} aria-label="Seek" />
       </div>
-      <div className="np-center">
-        <button className="np-ctrl" onClick={onPrev} disabled={!hasPrev} aria-label="Previous"><SkipBack size={17} /></button>
-        <button className="np-play" onClick={onTogglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
-          {isPlaying ? <Pause size={19} /> : <Play size={19} />}
+      <div className="np-body">
+        <button className="np-left" onClick={onExpand} aria-label="Open full player">
+          <div className="np-art">
+            {song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="np-art-empty"><Music2 size={16} /></div>}
+          </div>
+          <div className="np-info">
+            <span className="np-title">{song.title}</span>
+            <span className="np-artist">{song.artist}</span>
+          </div>
         </button>
-        <button className="np-ctrl" onClick={onNext} disabled={!hasNext} aria-label="Next"><SkipForward size={17} /></button>
-      </div>
-      <div className="np-right">
-        <input className="np-progress" type="range" min={0} max={100} value={Math.round(progress)} onChange={(e) => onSeek(Number(e.target.value))} aria-label="Seek" />
+        <div className="np-center">
+          <button className="np-ctrl" onClick={onPrev} disabled={!hasPrev} aria-label="Previous"><SkipBack size={17} /></button>
+          <button className="np-play" onClick={onTogglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
+            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+          </button>
+          <button className="np-ctrl" onClick={onNext} disabled={!hasNext} aria-label="Next"><SkipForward size={17} /></button>
+        </div>
+        <div className="np-right">
+          <button className="np-expand-btn" onClick={onExpand} aria-label="Expand"><ChevronUp size={20} /></button>
+        </div>
       </div>
     </div>
+  );
+}
+
+function ExpandedPlayerOverlay({ song, album, isPlaying, progress, currentTime, totalTime, hasPrev, hasNext, onPrev, onNext, onTogglePlay, onSeek, onClose, onOpenAlbum }: {
+  song: WorshipSong; album?: WorshipAlbum; isPlaying: boolean; progress: number; currentTime: string; totalTime: string;
+  hasPrev: boolean; hasNext: boolean;
+  onPrev: () => void; onNext: () => void; onTogglePlay: () => void; onSeek: (pct: number) => void;
+  onClose: () => void; onOpenAlbum: (id: string) => void;
+}) {
+  return (
+    <div className="ep-overlay">
+      <div className="ep-bg" style={song.coverUrl ? { backgroundImage: `url(${song.coverUrl})` } : undefined} />
+      <div className="ep-bg-dim" />
+      <div className="ep-content">
+        <div className="ep-topbar">
+          <button className="ep-close-btn" onClick={onClose} aria-label="Close"><ChevronDown size={24} /></button>
+          <span className="ep-topbar-label">Now Playing</span>
+          <div style={{ width: 40 }} />
+        </div>
+
+        <div className="ep-art-wrap">
+          <div className={`ep-art${isPlaying ? " ep-art-playing" : ""}`}>
+            {song.coverUrl ? <img src={song.coverUrl} alt={song.title} /> : <div className="ep-art-empty"><Music2 size={56} /></div>}
+          </div>
+        </div>
+
+        <div className="ep-song-meta">
+          <div>
+            <h2 className="ep-song-title">{song.title}</h2>
+            <p className="ep-song-artist">{song.artist}</p>
+          </div>
+          {album && (
+            <button className="ep-album-badge" onClick={() => onOpenAlbum(album.id)}>
+              <Disc3 size={13} />
+              <span>{album.type} · {album.title}</span>
+              <ChevronRight size={13} />
+            </button>
+          )}
+        </div>
+
+        <div className="ep-progress-section">
+          <div className="ep-progress-track">
+            <div className="ep-progress-fill" style={{ width: `${progress}%` }} />
+            <input className="ep-progress-input" type="range" min={0} max={100} value={Math.round(progress)} onChange={(e) => onSeek(Number(e.target.value))} aria-label="Seek" />
+          </div>
+          <div className="ep-time-row">
+            <span>{currentTime}</span>
+            <span>{song.duration || totalTime}</span>
+          </div>
+        </div>
+
+        <div className="ep-controls">
+          <button className="ep-ctrl-btn" onClick={onPrev} disabled={!hasPrev} aria-label="Previous"><SkipBack size={26} /></button>
+          <button className="ep-play-btn" onClick={onTogglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
+            {isPlaying ? <Pause size={28} /> : <Play size={28} />}
+          </button>
+          <button className="ep-ctrl-btn" onClick={onNext} disabled={!hasNext} aria-label="Next"><SkipForward size={26} /></button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WorshipAlbumRow({ title, albums, songs, onPlayAll, onOpenAlbum }: { title: string; albums: WorshipAlbum[]; songs: WorshipSong[]; onPlayAll: (s: WorshipSong) => void; onOpenAlbum: (id: string) => void }) {
+  if (albums.length === 0) return null;
+  return (
+    <div className="wa-shelf">
+      <h3 className="wa-shelf-title">{title}</h3>
+      <div className="wa-shelf-row">
+        {albums.map((album) => {
+          const first = songs.find((s) => album.trackIds.includes(s.id));
+          return (
+            <div key={album.id} className="wa-card" onClick={() => onOpenAlbum(album.id)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onOpenAlbum(album.id)}>
+              <div className="wa-card-art">
+                {album.coverUrl ? <img src={album.coverUrl} alt={album.title} /> : <div className="wa-card-art-empty"><Music2 size={28} /></div>}
+                <button className="wa-card-play" onClick={(e) => { e.stopPropagation(); if (first) onPlayAll(first); }} aria-label="Play">
+                  <Play size={16} />
+                </button>
+              </div>
+              <p className="wa-card-title">{album.title}</p>
+              <p className="wa-card-artist">{album.artist}</p>
+              <p className="wa-card-meta">{album.year} · {album.trackIds.length} {album.trackIds.length === 1 ? "track" : "tracks"}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, onClose }: { album: WorshipAlbum; songs: WorshipSong[]; currentSongId: string | null; isPlaying: boolean; onPlay: (s: WorshipSong) => void; onClose: () => void }) {
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  const first = songs[0];
+
+  return (
+    <>
+      <div className="post-sheet-overlay" onClick={onClose} />
+      <div className="album-sheet">
+        <div className="post-sheet-drag-bar" />
+        <div className="album-sheet-header">
+          <div className="album-sheet-art">
+            {album.coverUrl ? <img src={album.coverUrl} alt={album.title} /> : <div className="album-sheet-art-empty"><Music2 size={32} /></div>}
+          </div>
+          <div className="album-sheet-meta">
+            <span className="album-type-badge">{album.type}</span>
+            <h2 className="album-sheet-title">{album.title}</h2>
+            <p className="album-sheet-artist">{album.artist} · {album.year}</p>
+            {album.description && <p className="album-sheet-desc">{album.description}</p>}
+            {first && (
+              <button className="sp-play-btn" style={{ marginTop: 10 }} onClick={() => { onPlay(first); onClose(); }}>
+                <Play size={15} /> Play All
+              </button>
+            )}
+          </div>
+          <button className="icon-button" style={{ alignSelf: "flex-start", marginLeft: "auto" }} onClick={onClose} aria-label="Close"><X size={20} /></button>
+        </div>
+        <div className="album-sheet-tracks">
+          {songs.length === 0 && <p style={{ padding: "16px 20px", color: "rgba(247,251,255,0.4)", fontSize: "0.85rem" }}>No tracks yet.</p>}
+          {songs.map((song, idx) => {
+            const active = currentSongId === song.id;
+            const playing = active && isPlaying;
+            return (
+              <button key={song.id} className={`album-sheet-track${active ? " active" : ""}`} onClick={() => { onPlay(song); onClose(); }}>
+                <div className="album-sheet-track-num">
+                  {playing
+                    ? <span className="sp-eq"><span /><span /><span /></span>
+                    : active
+                      ? <Play size={12} style={{ color: "var(--gold)" }} />
+                      : <span>{idx + 1}</span>}
+                </div>
+                <div className="album-sheet-track-art">
+                  {song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="album-sheet-track-art-empty"><Music2 size={13} /></div>}
+                </div>
+                <div className="album-sheet-track-info">
+                  <span className={`album-sheet-track-title${active ? " active" : ""}`}>{song.title}</span>
+                  <span className="album-sheet-track-artist">{song.artist}</span>
+                </div>
+                <span className="album-sheet-track-dur">{song.duration || "—"}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
   );
 }
 
