@@ -6988,10 +6988,10 @@ textarea:focus {
 
 .watch-feed-footer {
   position: absolute;
-  bottom: 0;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
   left: 0;
   right: 80px;
-  padding: 20px 18px calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px);
+  padding: 20px 18px 18px;
   pointer-events: none;
 }
 
