@@ -8658,6 +8658,13 @@ body.music-player-open .bottom-nav {
   transition: opacity 0.22s ease, bottom 0.28s ease;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .topbar,
+  .bottom-nav {
+    transition: opacity 0.22s ease;
+  }
+}
+
 /* ── Drop footer + actions to the true bottom when bars are hidden ── */
 body.video-fullscreen .watch-feed-footer {
   padding-bottom: calc(env(safe-area-inset-bottom) + 24px) !important;
