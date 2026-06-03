@@ -2438,6 +2438,47 @@ function playVideoFullscreen(video: VideoItem, notify: (message: string) => void
   void player.requestFullscreen?.().catch(() => undefined);
 }
 
+function ReelCard({ video, onOpen }: { video: VideoItem; onOpen: () => void }) {
+  const { currentUser, notify } = useApp();
+  const [liked, setLiked] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+  return (
+    <article className="reel-card">
+      <button className="reel-play-zone" onClick={onOpen} aria-label={`Play ${video.title}`}>
+        {video.thumbnailUrl
+          ? <img className="reel-thumb" src={video.thumbnailUrl} alt={video.title} />
+          : <div className="reel-thumb reel-thumb-empty"><Clapperboard size={42} /></div>}
+        <div className="reel-overlay" />
+        <div className="reel-center-play"><Play size={36} fill="white" /></div>
+      </button>
+      <div className="reel-right-actions">
+        <button className={`reel-action-btn${liked ? " reel-liked" : ""}`} onClick={() => { if (!currentUser) return notify("Sign in to like."); setLiked((v) => !v); }}>
+          <Heart size={26} fill={liked ? "currentColor" : "none"} />
+          <span>Like</span>
+        </button>
+        <button className="reel-action-btn" onClick={() => notify("Comments coming soon.")}>
+          <MessageCircle size={26} />
+          <span>Comment</span>
+        </button>
+        <button className={`reel-action-btn${saved ? " reel-saved" : ""}`} onClick={() => { if (!currentUser) return notify("Sign in to save."); setSaved((v) => !v); }}>
+          <Bookmark size={26} fill={saved ? "currentColor" : "none"} />
+          <span>Save</span>
+        </button>
+        <button className="reel-action-btn" onClick={() => notify("Share coming soon.")}>
+          <Share2 size={24} />
+          <span>Share</span>
+        </button>
+      </div>
+      <div className="reel-bottom-info">
+        <p className="reel-creator">@{(video.creator || "faithmember").split(" ")[0].toLowerCase()}</p>
+        <p className="reel-title">{video.title}</p>
+        {video.scripture && <p className="reel-scripture">✦ {video.scripture}</p>}
+        {video.category && <span className="reel-category-tag">{video.category}</span>}
+      </div>
+    </article>
+  );
+}
+
 function CommunitySharesScreen({ compact = false }: { compact?: boolean }) {
   const { publicVideos, notify, go, t } = useApp();
   const [selectedCategory, setSelectedCategory] = React.useState("All");
@@ -2445,7 +2486,7 @@ function CommunitySharesScreen({ compact = false }: { compact?: boolean }) {
   const filteredVideos = selectedCategory === "All" ? userVideos : userVideos.filter((video) => video.category === selectedCategory);
   const openVideo = (video: VideoItem) => playVideoFullscreen(video, notify);
   return (
-    <div className="community-shares-screen">
+    <div className={compact ? "reel-feed" : "community-shares-screen"}>
       {!compact && <div className="community-shares-intro">
         <Share2 size={28} className="community-shares-icon" />
         <div>
@@ -2453,7 +2494,6 @@ function CommunitySharesScreen({ compact = false }: { compact?: boolean }) {
           <p className="community-shares-body">Testimonies and videos shared by members of the Faith Flix community. New videos can take a minute to finish processing.</p>
         </div>
       </div>}
-      {compact && <SectionHeader title="Shared videos" action={userVideos.length + " live"} />}
       {userVideos.length > 0 && (
         <div className="community-share-filter" aria-label="Filter community shares by category">
           <button className={selectedCategory === "All" ? "community-share-pill active" : "community-share-pill"} onClick={() => setSelectedCategory("All")}>All</button>
@@ -2463,9 +2503,15 @@ function CommunitySharesScreen({ compact = false }: { compact?: boolean }) {
         </div>
       )}
       {userVideos.length ? (
-        <div className="content-grid community-shares-grid">
-          {filteredVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video)} />)}
-        </div>
+        compact ? (
+          <div className="reel-list">
+            {filteredVideos.map((video) => <ReelCard key={video.id} video={video} onOpen={() => openVideo(video)} />)}
+          </div>
+        ) : (
+          <div className="content-grid community-shares-grid">
+            {filteredVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video)} />)}
+          </div>
+        )
       ) : (
         <EmptyState icon={Share2} title="No community shares yet" body="When members submit testimonies and videos they will appear here." action={t("hero.submitTestimony")} onAction={() => go("upload")} />
       )}
@@ -3909,38 +3955,42 @@ function PostCard({ post, comments, onToggle }: { post: CommunityPost; comments:
   const initials = post.author.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   const isLiked = post.likes.includes(actor);
   const isSaved = post.saves.includes(actor);
+  const handle = "@" + post.author.split(" ")[0].toLowerCase();
 
   return (
-    <article className="ig-post">
-      <div className="ig-post-header">
-        <div className="ig-avatar-ring">
-          <div className="post-avatar">{initials}</div>
-        </div>
-        <div className="ig-post-user">
-          <span className="ig-post-name">{post.author}</span>
-          {post.scripture && <span className="ig-post-location">{post.scripture}</span>}
-        </div>
-        <button className="icon-button" aria-label="Post options" onClick={() => onToggle(post.id, "reports", "Post reported to admins.")}><MoreHorizontal size={20} /></button>
+    <article className="tweet-card">
+      <div className="tweet-left">
+        <div className="post-avatar tweet-avatar">{initials}</div>
       </div>
-
-      {post.imageUrl && <img className="ig-post-image" src={post.imageUrl} alt="" />}
-
-      <div className="ig-post-actions">
-        <div className="ig-post-actions-left">
-          <button className={`ig-action-btn${isLiked ? " liked" : ""}`} aria-label="Like" onClick={() => onToggle(post.id, "likes", isLiked ? "Like removed." : "Post liked.")}>
-            <Heart size={24} fill={isLiked ? "currentColor" : "none"} strokeWidth={isLiked ? 0 : 2} />
+      <div className="tweet-right">
+        <div className="tweet-header">
+          <span className="tweet-name">{post.author}</span>
+          <span className="tweet-handle">{handle}</span>
+          <span className="tweet-dot">·</span>
+          <span className="tweet-time">now</span>
+          <button className="tweet-more icon-button" aria-label="Options" onClick={() => onToggle(post.id, "reports", "Post reported to admins.")}><MoreHorizontal size={16} /></button>
+        </div>
+        {post.scripture && <p className="tweet-scripture">✦ {post.scripture}</p>}
+        <p className="tweet-text">{post.text}</p>
+        {post.imageUrl && <img className="tweet-image" src={post.imageUrl} alt="" />}
+        <div className="tweet-actions">
+          <button className="tweet-action-btn" aria-label="Comment">
+            <MessageCircle size={17} />
+            {comments.length > 0 && <span>{comments.length}</span>}
           </button>
-          <button className="ig-action-btn" aria-label="Comment"><MessageCircle size={24} /></button>
-          <button className="ig-action-btn" aria-label="Share" onClick={() => notify("Share coming soon.")}><Send size={22} /></button>
+          <button className={`tweet-action-btn${isLiked ? " tweet-liked" : ""}`} aria-label="Like" onClick={() => onToggle(post.id, "likes", isLiked ? "Like removed." : "Post liked.")}>
+            <Heart size={17} fill={isLiked ? "currentColor" : "none"} />
+            {post.likes.length > 0 && <span>{post.likes.length}</span>}
+          </button>
+          <button className={`tweet-action-btn${isSaved ? " tweet-saved" : ""}`} aria-label="Save" onClick={() => onToggle(post.id, "saves", isSaved ? "Removed from saved." : "Post saved.")}>
+            <Bookmark size={17} fill={isSaved ? "currentColor" : "none"} />
+          </button>
+          <button className="tweet-action-btn" aria-label="Share" onClick={() => notify("Share coming soon.")}>
+            <Share2 size={17} />
+          </button>
         </div>
-        <button className={`ig-action-btn${isSaved ? " saved" : ""}`} aria-label="Save" onClick={() => onToggle(post.id, "saves", isSaved ? "Removed from saved." : "Post saved.")}>
-          <Bookmark size={24} fill={isSaved ? "currentColor" : "none"} strokeWidth={isSaved ? 0 : 2} />
-        </button>
+        <CommentBox targetId={post.id} comments={comments} value={comment} setValue={setComment} />
       </div>
-
-      {post.likes.length > 0 && <p className="ig-post-likes">{post.likes.length} like{post.likes.length !== 1 ? "s" : ""}</p>}
-      <p className="ig-post-caption"><strong>{post.author}</strong> {post.text}</p>
-      <CommentBox targetId={post.id} comments={comments} value={comment} setValue={setComment} />
     </article>
   );
 }
