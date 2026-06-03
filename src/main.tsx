@@ -1592,91 +1592,174 @@ function WatchScreen() {
   );
 }
 
-function SeriesScreen() {
-  const { publicSeries, publicVideos, visibleCategories, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId, t } = useApp();
-  const [selectedCategory, setSelectedCategory] = React.useState(visibleCategories[0]?.name ?? "");
-  const [showCategoryGrid, setShowCategoryGrid] = React.useState(false);
-  const focusedSeries = selectedSeriesId ? publicSeries.find((s) => s.id === selectedSeriesId) : null;
-  const focusedEpisodes = focusedSeries ? publicVideos.filter((v) => v.seriesId === focusedSeries.title) : [];
-  const selectedCategorySeries = publicSeries.filter((item) => item.category === selectedCategory);
+function SeriesDetailView({ series, episodes, onBack }: { series: SeriesItem; episodes: VideoItem[]; onBack: () => void }) {
+  const { setSelectedVideoId, go } = useApp();
 
-  React.useEffect(() => {
-    if (!selectedCategory && visibleCategories[0]) setSelectedCategory(visibleCategories[0].name);
-  }, [selectedCategory, visibleCategories]);
-
-  const chooseSeriesCategory = (category: CategoryItem) => {
-    setSelectedCategory(category.name);
-    setShowCategoryGrid(false);
-    window.requestAnimationFrame(() => {
-      document.getElementById(`series-category-button-${category.id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-    });
+  const playEpisode = (video: VideoItem) => {
+    setSelectedVideoId(video.id);
+    go("watch");
   };
 
-  if (focusedSeries) {
-    return (
-      <section className="screen series-detail-screen">
-        <button className="series-back-btn" onClick={() => setSelectedSeriesId("")}>
-          <ChevronRight size={18} style={{ transform: "rotate(180deg)" }} /> All Series
+  return (
+    <section className="screen netflix-detail-screen">
+      <div className="netflix-detail-hero">
+        {series.posterUrl
+          ? <img className="netflix-detail-bg" src={series.posterUrl} alt="" />
+          : <div className="netflix-detail-bg netflix-detail-bg-empty" />}
+        <div className="netflix-detail-gradient" />
+        <button className="netflix-back-btn" onClick={onBack}>
+          <ChevronRight size={20} style={{ transform: "rotate(180deg)" }} /> Series
         </button>
-        <div className="series-detail-hero">
-          {focusedSeries.posterUrl
-            ? <img className="series-detail-poster" src={focusedSeries.posterUrl} alt={focusedSeries.title} />
-            : <div className="series-detail-poster series-detail-poster-empty"><Clapperboard size={48} /></div>}
-          <div className="series-detail-meta">
-            <p className="eyebrow">{focusedSeries.category || "Series"}</p>
-            <h2 className="series-detail-title">{focusedSeries.title}</h2>
-            {focusedSeries.description && <p className="series-detail-desc">{focusedSeries.description}</p>}
-            {focusedSeries.scriptureTheme && <p className="series-detail-verse">&#10022; {focusedSeries.scriptureTheme}</p>}
-            <p className="series-detail-count">{focusedEpisodes.length} episode{focusedEpisodes.length !== 1 ? "s" : ""}</p>
+        <div className="netflix-detail-content">
+          {series.category && <span className="netflix-badge">{series.category}</span>}
+          <h1 className="netflix-detail-title">{series.title}</h1>
+          {series.scriptureTheme && <p className="netflix-detail-verse">✦ {series.scriptureTheme}</p>}
+          {series.description && <p className="netflix-detail-desc">{series.description}</p>}
+          <p className="netflix-detail-count">{episodes.length} episode{episodes.length !== 1 ? "s" : ""}</p>
+          <div className="netflix-detail-actions">
+            <button
+              className="netflix-play-btn"
+              disabled={!episodes.length}
+              onClick={() => episodes.length && playEpisode(episodes[0])}
+            >
+              <Play size={16} fill="currentColor" /> Play Episode 1
+            </button>
           </div>
         </div>
-        <h3 className="series-episodes-heading">Episodes</h3>
-        {focusedEpisodes.length ? (
-          <div className="episode-row series-detail-episode-row">
-            {focusedEpisodes.map((video, i) => (
-              <div key={video.id} className="series-episode-item">
-                <span className="episode-num">Ep {i + 1}</span>
-                <VideoCard video={video} onOpen={() => { setSelectedVideoId(video.id); go("watch"); }} />
-              </div>
+      </div>
+
+      <div className="netflix-episodes-section">
+        <h2 className="netflix-episodes-heading">
+          Episodes <span className="netflix-episodes-count">{episodes.length}</span>
+        </h2>
+        {episodes.length ? (
+          <div className="netflix-episodes-list">
+            {episodes.map((video, i) => (
+              <button key={video.id} className="netflix-ep-row" onClick={() => playEpisode(video)}>
+                <span className="netflix-ep-num">{i + 1}</span>
+                <div className="netflix-ep-thumb">
+                  {video.thumbnailUrl
+                    ? <img src={video.thumbnailUrl} alt={video.title} />
+                    : <div className="netflix-ep-thumb-empty"><Play size={16} fill="currentColor" /></div>}
+                  <div className="netflix-ep-play-overlay"><Play size={18} fill="currentColor" /></div>
+                </div>
+                <div className="netflix-ep-info">
+                  <p className="netflix-ep-title">{video.title}</p>
+                  <div className="netflix-ep-meta">
+                    {video.duration && <span className="netflix-ep-duration">{video.duration}</span>}
+                    {video.category && <span className="netflix-ep-cat">{video.category}</span>}
+                  </div>
+                  {video.description && <p className="netflix-ep-desc">{video.description}</p>}
+                </div>
+                <ChevronRight size={16} className="netflix-ep-arrow" />
+              </button>
             ))}
           </div>
         ) : (
-          <EmptyState icon={Film} title={t("series.noEpisodes")} body={t("series.noEpisodesBody")} action={t("nav.watch")} onAction={() => go("watch")} />
+          <EmptyState icon={Film} title="No episodes yet." body="Episodes will appear here once added." action="" onAction={() => {}} />
         )}
-      </section>
-    );
+      </div>
+    </section>
+  );
+}
+
+function SeriesScreen() {
+  const { publicSeries, publicVideos, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId } = useApp();
+
+  const focusedSeries = selectedSeriesId ? publicSeries.find((s) => s.id === selectedSeriesId) : null;
+  const focusedEpisodes = focusedSeries
+    ? publicVideos.filter((v) => v.seriesId === focusedSeries.title && v.status === "Published")
+    : [];
+
+  if (focusedSeries) {
+    return <SeriesDetailView series={focusedSeries} episodes={focusedEpisodes} onBack={() => setSelectedSeriesId("")} />;
   }
 
-  return (
-    <section className="screen">
-      <SectionIntro eyebrow={t("series.eyebrow")} title={t("series.title")} body={t("series.body")} />
+  const publishedSeries = publicSeries.filter((s) => s.status === "Published");
+  const featuredSeries = publishedSeries.find((s) => s.featured) ?? publishedSeries[0];
+  const categories = Array.from(new Set(publishedSeries.map((s) => s.category).filter(Boolean)));
 
-      <SectionHeader title={t("home.categories")} action={`${visibleCategories.length} ${t("home.visible")}`} onAction={() => setShowCategoryGrid((open) => !open)} />
-      {showCategoryGrid && (
-        <div className="category-grid-expanded">
-          {visibleCategories.map((category) => (
-            <button className={selectedCategory === category.name ? "category-grid-option active" : "category-grid-option"} key={category.id} onClick={() => chooseSeriesCategory(category)}>{category.name}</button>
-          ))}
-        </div>
-      )}
-      {!showCategoryGrid && (
-        <div className="category-grid category-top-row series-category-row">
-          {visibleCategories.map((category) => (
-            <button id={`series-category-button-${category.id}`} className={selectedCategory === category.name ? "category-pill active" : "category-pill"} key={category.id} onClick={() => chooseSeriesCategory(category)}>{category.name}</button>
-          ))}
-        </div>
-      )}
-      <div className="content-panel category-drop-panel active series-category-panel">
-        <SectionHeader title={selectedCategory || "Category"} action={`${selectedCategorySeries.length} series`} />
-        {selectedCategorySeries.length ? (
-          <div className="category-series-grid category-series-home-row">
-            {selectedCategorySeries.map((item) => {
-              const count = publicVideos.filter((video) => video.seriesId === item.title).length;
-              return <HomeSeriesCard key={item.id} item={item} episodeCount={count} onOpen={() => setSelectedSeriesId(item.id)} />;
-            })}
+  const playFirstEpisode = (item: SeriesItem) => {
+    const firstEp = publicVideos.find((v) => v.seriesId === item.title && v.status === "Published");
+    if (firstEp) { setSelectedVideoId(firstEp.id); go("watch"); }
+    else setSelectedSeriesId(item.id);
+  };
+
+  return (
+    <section className="screen netflix-series-screen">
+      {featuredSeries && (
+        <div className="netflix-hero" onClick={() => setSelectedSeriesId(featuredSeries.id)}>
+          {featuredSeries.posterUrl
+            ? <img className="netflix-hero-bg" src={featuredSeries.posterUrl} alt="" />
+            : <div className="netflix-hero-bg netflix-hero-bg-empty" />}
+          <div className="netflix-hero-gradient" />
+          <div className="netflix-hero-content">
+            {featuredSeries.category && <span className="netflix-badge">{featuredSeries.category}</span>}
+            <h1 className="netflix-hero-title">{featuredSeries.title}</h1>
+            {featuredSeries.scriptureTheme && <p className="netflix-hero-verse">✦ {featuredSeries.scriptureTheme}</p>}
+            {featuredSeries.description && <p className="netflix-hero-desc">{featuredSeries.description}</p>}
+            <div className="netflix-hero-actions">
+              <button className="netflix-play-btn" onClick={(e) => { e.stopPropagation(); playFirstEpisode(featuredSeries); }}>
+                <Play size={15} fill="currentColor" /> Play Now
+              </button>
+              <button className="netflix-info-btn" onClick={(e) => { e.stopPropagation(); setSelectedSeriesId(featuredSeries.id); }}>
+                <ChevronRight size={15} /> More Info
+              </button>
+            </div>
           </div>
-        ) : <EmptyState icon={Clapperboard} title="No series in this category yet." body="Series assigned to this category will appear here." action="Choose Category" onAction={() => setShowCategoryGrid(true)} />}
-      </div>
+        </div>
+      )}
+
+      {categories.length > 0 ? categories.map((category) => {
+        const catSeries = publishedSeries.filter((s) => s.category === category);
+        return (
+          <div key={category} className="netflix-row">
+            <h2 className="netflix-row-title">{category}</h2>
+            <div className="netflix-row-scroll">
+              {catSeries.map((item) => {
+                const epCount = publicVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+                return (
+                  <button key={item.id} className="netflix-series-card" onClick={() => setSelectedSeriesId(item.id)}>
+                    {item.posterUrl
+                      ? <img className="netflix-card-img" src={item.posterUrl} alt={item.title} />
+                      : <div className="netflix-card-img netflix-card-empty"><Clapperboard size={26} /></div>}
+                    <div className="netflix-card-gradient" />
+                    <div className="netflix-card-info">
+                      <p className="netflix-card-title">{item.title}</p>
+                      <p className="netflix-card-meta">{epCount} ep{epCount !== 1 ? "s" : ""}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }) : (
+        publishedSeries.length > 0 ? (
+          <div className="netflix-row">
+            <h2 className="netflix-row-title">All Series</h2>
+            <div className="netflix-row-scroll">
+              {publishedSeries.map((item) => {
+                const epCount = publicVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+                return (
+                  <button key={item.id} className="netflix-series-card" onClick={() => setSelectedSeriesId(item.id)}>
+                    {item.posterUrl
+                      ? <img className="netflix-card-img" src={item.posterUrl} alt={item.title} />
+                      : <div className="netflix-card-img netflix-card-empty"><Clapperboard size={26} /></div>}
+                    <div className="netflix-card-gradient" />
+                    <div className="netflix-card-info">
+                      <p className="netflix-card-title">{item.title}</p>
+                      <p className="netflix-card-meta">{epCount} ep{epCount !== 1 ? "s" : ""}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <EmptyState icon={Clapperboard} title="No series yet." body="Series will appear here once published." action="" onAction={() => {}} />
+        )
+      )}
     </section>
   );
 }
