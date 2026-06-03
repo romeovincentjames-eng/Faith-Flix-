@@ -3688,35 +3688,42 @@ function CommunitySeriesShelf() {
 function PrayerWall() {
   const { currentUser, prayers, setPrayers, notify, commSearchQuery, t } = useApp();
   const [form, setForm] = React.useState({ title: "", text: "", visibility: "Public" });
+  const [composerOpen, setComposerOpen] = React.useState(false);
   const create = () => {
     if (!currentUser) return notify("Create an account before posting prayer requests.");
     if (!form.title || !form.text) return notify("Add a title and request.");
     setPrayers([{ id: uid("prayer"), userId: currentUser.id, ...form, actions: {} }, ...prayers]);
     setForm({ title: "", text: "", visibility: "Public" });
+    setComposerOpen(false);
     notify("Prayer request posted.");
   };
 
   return (
     <>
       <div className="inline-dark-composer">
-        <div className="inline-dark-composer-header">
+        <button className="inline-dark-composer-header prayer-accordion-toggle" onClick={() => setComposerOpen(o => !o)} aria-expanded={composerOpen}>
           <HeartHandshake size={18} style={{ color: "var(--gold)" }} />
           <span>Post a Prayer Request</span>
-        </div>
-        <div className="prayer-sheet-form">
-          <input className="post-sheet-scripture-input prayer-title-input" placeholder="Prayer title (e.g. Healing for my family)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          <textarea className="prayer-body-textarea" placeholder="Share your prayer request…" rows={3} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} />
-          <div className="prayer-visibility-row">
-            <span className="prayer-visibility-label">Visibility</span>
-            <div className="prayer-visibility-toggle">
-              <button className={`prayer-vis-btn${form.visibility === "Public" ? " active" : ""}`} onClick={() => setForm({ ...form, visibility: "Public" })}>🌐 Public</button>
-              <button className={`prayer-vis-btn${form.visibility === "Private" ? " active" : ""}`} onClick={() => setForm({ ...form, visibility: "Private" })}>🔒 Private</button>
+          <span className={`prayer-chevron${composerOpen ? " open" : ""}`}><ChevronDown size={16} /></span>
+        </button>
+        {composerOpen && (
+          <div className="prayer-accordion-body">
+            <div className="prayer-sheet-form">
+              <input className="post-sheet-scripture-input prayer-title-input" placeholder="Prayer title (e.g. Healing for my family)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <textarea className="prayer-body-textarea" placeholder="Share your prayer request…" rows={3} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} />
+              <div className="prayer-visibility-row">
+                <span className="prayer-visibility-label">Visibility</span>
+                <div className="prayer-visibility-toggle">
+                  <button className={`prayer-vis-btn${form.visibility === "Public" ? " active" : ""}`} onClick={() => setForm({ ...form, visibility: "Public" })}>🌐 Public</button>
+                  <button className={`prayer-vis-btn${form.visibility === "Private" ? " active" : ""}`} onClick={() => setForm({ ...form, visibility: "Private" })}>🔒 Private</button>
+                </div>
+              </div>
+            </div>
+            <div className="inline-dark-composer-footer">
+              <button className="comm-post-btn prayer-post-btn" onClick={create} disabled={!form.title.trim() || !form.text.trim()}>Post Prayer</button>
             </div>
           </div>
-        </div>
-        <div className="inline-dark-composer-footer">
-          <button className="comm-post-btn prayer-post-btn" onClick={create} disabled={!form.title.trim() || !form.text.trim()}>Post Prayer</button>
-        </div>
+        )}
       </div>
       {(() => {
         const filtered = commSearchQuery
