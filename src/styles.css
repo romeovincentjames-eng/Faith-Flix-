@@ -7414,12 +7414,14 @@ textarea:focus {
 /* ── Hero banner ─────────────────────────────────── */
 .netflix-hero {
   position: relative;
-  width: 100%;
+  width: calc(100% - 28px);
+  margin: 12px 14px 4px;
   aspect-ratio: 16 / 9;
   min-height: 220px;
   max-height: 370px;
   overflow: hidden;
   cursor: pointer;
+  border-radius: 20px;
 }
 
 @media (max-width: 430px) {
