@@ -71,7 +71,7 @@ type Page =
   | "admin-login"
   | "admin-studio"
   | "rules";
-type CommunityView = "feed" | "prayer" | "upload" | "groups" | "friends" | "messages" | "userprofile";
+type CommunityView = "feed" | "prayer" | "groups" | "friends" | "messages" | "userprofile";
 type StudioView = "dashboard" | "upload" | "videos" | "series" | "categories" | "reviews" | "takedown" | "rules";
 type Status = "Draft" | "Published" | "Hidden";
 type UploadStatus = "Pending Review" | "Approved" | "Rejected" | "Edits Requested";
@@ -208,9 +208,6 @@ const MOCK_VIDEOS: VideoItem[] = [
   { id: "mock-v7", source: "admin", title: "Sermon on the Mount", description: "A visual Bible study through the Beatitudes and the Kingdom way.", scripture: "Matthew 5:3-12", category: "Bible Study Content", seriesId: "Red Letter Series", episode: "2", duration: "22:08", creator: "The Bible Project", tags: "sermon, beatitudes", status: "Published", videoName: "sermon-mount.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", thumbnailName: "bible-open.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1543286386-2e659306cd6c?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-22" },
   { id: "mock-v8", source: "admin", title: "Grace Like Rain", description: "A cinematic worship visual experience set to original music about God's grace.", scripture: "Ephesians 2:8", category: "Faith Music Visuals", seriesId: "Faith Music Visuals Origins", episode: "1", duration: "5:33", creator: "Hillsong Creative", tags: "grace, music", status: "Published", featured: true, videoName: "grace-like-rain.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", thumbnailName: "candles.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1511516412963-801b050c3434?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-24" },
   { id: "mock-v9", source: "admin", title: "The Prodigal Son", description: "A short cinematic film retelling the parable of the prodigal son in a modern setting.", scripture: "Luke 15:11-32", category: "Christian Short Films", seriesId: "Parables of Jesus", episode: "1", duration: "28:14", creator: "RedemptionFilms", tags: "prodigal, film", status: "Published", videoName: "prodigal-son.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4", thumbnailName: "church-interior.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-01-26" },
-  { id: "mock-u1", source: "user", title: "God Helped Me Forgive", description: "A personal testimony about forgiveness after years of bitterness.", scripture: "Colossians 3:13", category: "Testimonies", seriesId: "", episode: "", duration: "2:12", creator: "Grace Walker", tags: "forgiveness, testimony", status: "Published", videoName: "forgiveness-testimony.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", thumbnailName: "forgiveness.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", createdAt: "2024-02-05" },
-  { id: "mock-u2", source: "user", title: "Morning Scripture Walk", description: "A short reflection recorded during a morning walk with Psalm 23.", scripture: "Psalm 23:1", category: "Devotional Clips", seriesId: "", episode: "", duration: "1:44", creator: "David Chen", tags: "devotional, psalm", status: "Published", videoName: "morning-scripture.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4", thumbnailName: "morning-walk.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=500&q=80", cropDimension: "4:5", cropRatio: "4 / 5", createdAt: "2024-02-07" },
-  { id: "mock-u3", source: "user", title: "Worship Clip From Church", description: "A community worship moment shared after Sunday service.", scripture: "Psalm 100:2", category: "Church Clips", seriesId: "", episode: "", duration: "0:58", creator: "Miriam Johnson", tags: "church, worship", status: "Published", videoName: "church-worship.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", thumbnailName: "church-clip.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=500&q=80", cropDimension: "1:1", cropRatio: "1 / 1", createdAt: "2024-02-09" },
 ];
 
 const categoryMockImages = [
@@ -252,36 +249,6 @@ const CATEGORY_MOCK_VIDEOS: VideoItem[] = defaultCategories.map((category, index
   cropRatio: "9 / 16",
   createdAt: `2024-03-${String(index + 1).padStart(2, "0")}`,
 }));
-
-const COMMUNITY_SHARE_MOCK_VIDEOS: VideoItem[] = COMMUNITY_VIDEO_CATEGORIES.map((categoryName, index) => {
-  const category = { name: categoryName };
-  return ({
-  id: `mock-share-video-${index}`,
-  source: "user",
-  title: `${category.name} Community Share`,
-  description: `Mock community share for ${category.name} so the Shares filter has content in this category.`,
-  scripture: ["Psalm 34:8", "Philippians 4:13", "John 3:16", "Proverbs 3:5"][index % 4],
-  category: category.name,
-  seriesId: "",
-  episode: "",
-  duration: `${1 + (index % 4)}:${String(20 + index).padStart(2, "0")}`,
-  creator: ["Grace Walker", "David Chen", "Miriam Johnson", "Pastor Samuel", "Ruth Adeyemi"][index % 5],
-  tags: `community, share, ${category.name.toLowerCase()}`,
-  status: "Published",
-  featured: false,
-  videoName: `${category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-community-share.mp4`,
-  videoUrl: [
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-  ][index % 3],
-  thumbnailName: `${category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-community.jpg`,
-  thumbnailUrl: categoryMockImages[(index + 3) % categoryMockImages.length],
-  cropDimension: ["9:16", "4:5", "1:1"][index % 3],
-  cropRatio: ["9 / 16", "4 / 5", "1 / 1"][index % 3],
-  createdAt: `2024-05-${String((index % 25) + 1).padStart(2, "0")}`,
-});
-});
 
 const MOCK_SERIES: SeriesItem[] = [
   { id: "mock-s1", title: "Faith Journey", description: "A 6-part series on the foundations of Christian faith for believers at every stage of their walk.", posterName: "faith-journey.jpg", posterUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80", scriptureTheme: "Hebrews 11:1", category: "Sermons", status: "Published", featured: true },
@@ -344,46 +311,6 @@ const CATEGORY_SERIES_MOCK_VIDEOS: VideoItem[] = CATEGORY_MOCK_SERIES.flatMap((s
   }))
 );
 
-const USER_SERIES_MOCK: SeriesItem[] = defaultCategories.map((category, index) => ({
-  id: `mock-user-series-${index}`,
-  title: `${category.name} Community Series`,
-  description: `Mock user-created series for ${category.name}.`,
-  posterName: `${category.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-community-series.jpg`,
-  posterUrl: seriesMockImages[index % seriesMockImages.length],
-  scriptureTheme: ["Psalm 96:1", "Romans 12:2", "Matthew 28:19"][index % 3],
-  category: category.name,
-  status: "Published" as Status,
-  featured: index % 5 === 0,
-}));
-
-const USER_SERIES_MOCK_VIDEOS: VideoItem[] = USER_SERIES_MOCK.flatMap((series, index) =>
-  [1, 2].map((episodeNumber) => ({
-    id: `mock-user-series-video-${index}-${episodeNumber}`,
-    source: "user" as const,
-    title: `${series.title} Episode ${episodeNumber}`,
-    description: `Community-made episode ${episodeNumber} for ${series.title}.`,
-    scripture: series.scriptureTheme,
-    category: series.category,
-    seriesId: series.title,
-    episode: String(episodeNumber),
-    duration: `${3 + (index % 6)}:${String(episodeNumber * 13).padStart(2, "0")}`,
-    creator: ["Grace Walker", "David Chen", "Miriam Johnson", "Pastor Samuel", "Ruth Adeyemi"][index % 5],
-    tags: `community series, ${series.category.toLowerCase()}`,
-    status: "Published" as Status,
-    featured: false,
-    videoName: `${series.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${episodeNumber}.mp4`,
-    videoUrl: [
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
-    ][episodeNumber - 1],
-    thumbnailName: `${series.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${episodeNumber}.jpg`,
-    thumbnailUrl: series.posterUrl,
-    cropDimension: "9:16",
-    cropRatio: "9 / 16",
-    createdAt: `2024-06-${String((index % 25) + 1).padStart(2, "0")}`,
-  }))
-);
-
 const DEMO_AUDIO_A = "https://storage.googleapis.com/media-session/sintel/snow-fight.mp3";
 const DEMO_AUDIO_B = "https://storage.googleapis.com/media-session/elephants-dream/the-wires.mp3";
 const DEMO_AUDIO_C = "https://storage.googleapis.com/media-session/big-buck-bunny/prelude.mp3";
@@ -413,8 +340,8 @@ const MOCK_WORSHIP_ALBUMS: WorshipAlbum[] = [
   { id: "album-demo-psalms", title: "Psalms Collection", artist: "Faith Flix Demo", coverUrl: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80", type: "Album", year: "2026", trackIds: ["song-demo-album-1", "song-demo-album-2"], description: "A two-track demo album for testing playback, save, and playlists." },
 ];
 
-const ALL_MOCK_SERIES = mergeById(mergeById(MOCK_SERIES, CATEGORY_MOCK_SERIES), USER_SERIES_MOCK);
-const ALL_MOCK_VIDEOS = mergeById(mergeById(mergeById(mergeById(MOCK_VIDEOS, CATEGORY_MOCK_VIDEOS), CATEGORY_SERIES_MOCK_VIDEOS), COMMUNITY_SHARE_MOCK_VIDEOS), USER_SERIES_MOCK_VIDEOS);
+const ALL_MOCK_SERIES = mergeById(MOCK_SERIES, CATEGORY_MOCK_SERIES);
+const ALL_MOCK_VIDEOS = mergeById(mergeById(MOCK_VIDEOS, CATEGORY_MOCK_VIDEOS), CATEGORY_SERIES_MOCK_VIDEOS);
 
 const MOCK_POSTS: CommunityPost[] = [
   { id: "mock-p1", userId: "mock-user1", author: "Grace Walker", text: "God has been so faithful this week. After months of waiting, my prayers were answered in the most unexpected way. Never stop trusting Him!", scripture: "Psalm 27:14", imageName: "sunrise-testimony.jpg", imageUrl: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=800&q=80", likes: ["a", "b", "c", "d"], saves: ["a"], reports: [] },
@@ -432,23 +359,14 @@ const MOCK_PRAYERS: PrayerRequest[] = [
 ];
 
 const MOCK_USERS: Profile[] = [
-  { id: "mock-user1", role: "user", name: "Grace Walker", username: "gracewalks", email: "grace@faithflix.demo", bio: "Sharing testimonies and daily encouragement.", favoriteScripture: "Psalm 27:14", ministry: "Faith Flix Community", location: "Nashville, TN" },
-  { id: "mock-user2", role: "user", name: "David Chen", username: "davidchen", email: "david@faithflix.demo", bio: "Bible study leader and worship volunteer.", favoriteScripture: "Romans 8:28", ministry: "Hope City Church", location: "Austin, TX" },
-  { id: "mock-user3", role: "user", name: "Miriam Johnson", username: "miriamj", email: "miriam@faithflix.demo", bio: "Loves worship, prayer nights, and scripture journaling.", favoriteScripture: "Lamentations 3:22-23", ministry: "Awakening Prayer Network", location: "Charlotte, NC" },
-  { id: "mock-user4", role: "user", name: "Pastor Samuel", username: "pastorsamuel", email: "samuel@faithflix.demo", bio: "Pastor sharing short teachings for everyday discipleship.", favoriteScripture: "Jeremiah 29:11", ministry: "Grace Chapel", location: "Phoenix, AZ" },
-  { id: "mock-user5", role: "user", name: "Ruth Adeyemi", username: "ruthfaith", email: "ruth@faithflix.demo", bio: "Encouraging women to walk boldly with Christ.", favoriteScripture: "Proverbs 3:5-6", ministry: "Daughters of Grace", location: "Atlanta, GA" },
 ];
 
 const MOCK_UPLOADS: UserUpload[] = [
-  { id: "mock-upload-1", userId: "mock-user1", title: "God Helped Me Forgive", description: "A testimony about forgiveness and freedom.", scripture: "Colossians 3:13", category: "Testimonies", testimonyType: "Testimony", visibility: "Public", tags: "forgiveness,testimony", videoName: "forgiveness-testimony.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", thumbnailName: "forgiveness.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=500&q=80", cropDimension: "9:16", cropRatio: "9 / 16", status: "Approved", adminNote: "Demo published user content" },
-  { id: "mock-upload-2", userId: "mock-user2", title: "Morning Scripture Walk", description: "Psalm 23 reflection during a morning walk.", scripture: "Psalm 23:1", category: "Devotional Clips", testimonyType: "Devotional", visibility: "Public", tags: "psalm,devotional", videoName: "morning-scripture.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4", thumbnailName: "morning-walk.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=500&q=80", cropDimension: "4:5", cropRatio: "4 / 5", status: "Approved", adminNote: "Demo published user content" },
-  { id: "mock-upload-3", userId: "mock-user3", title: "Church Worship Clip", description: "Short worship moment from Sunday service.", scripture: "Psalm 100:2", category: "Church Clips", testimonyType: "Worship", visibility: "Public", tags: "worship,church", videoName: "church-worship.mp4", videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", thumbnailName: "church-clip.jpg", thumbnailUrl: "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=500&q=80", cropDimension: "1:1", cropRatio: "1 / 1", status: "Approved", adminNote: "Demo published user content" },
 ];
 
 const MOCK_COMMENTS: CommentItem[] = [
   { id: "mock-c1", targetId: "mock-v1", author: "Grace Walker", text: "This message met me exactly where I am.", createdAt: "Jan 11" },
   { id: "mock-c2", targetId: "mock-v2", author: "David Chen", text: "The cross changes everything. Amen.", createdAt: "Jan 12" },
-  { id: "mock-c3", targetId: "mock-u1", author: "Ruth Adeyemi", text: "Thank you for being brave enough to share this.", createdAt: "Feb 6" },
   { id: "mock-c4", targetId: "mock-p1", author: "Pastor Samuel", text: "Standing with you in faith.", createdAt: "Feb 6" },
   { id: "mock-c5", targetId: "mock-p4", author: "Miriam Johnson", text: "Needed this encouragement today.", createdAt: "Feb 8" },
 ];
@@ -466,7 +384,7 @@ const MOCK_MESSAGES: Message[] = [
 ];
 
 const MOCK_SAVED: Record<string, string[]> = {
-  "mock-user1": ["mock-v1", "mock-v2", "mock-u1"],
+  "mock-user1": ["mock-v1", "mock-v2"],
 };
 
 const MOCK_SAVED_LISTS: Record<string, SavedList[]> = {
@@ -477,8 +395,8 @@ const MOCK_SAVED_LISTS: Record<string, SavedList[]> = {
 };
 
 const MOCK_LIKES: Record<string, string[]> = {
-  guest: ["mock-v1", "mock-v2", "mock-u1", "mock-u2"],
-  "mock-user1": ["mock-v3", "mock-v8", "mock-u3"],
+  guest: ["mock-v1", "mock-v2"],
+  "mock-user1": ["mock-v3", "mock-v8"],
 };
 
 function mergeById<T extends { id: string }>(base: T[], incoming: T[]) {
@@ -946,11 +864,11 @@ function App() {
   };
 
   React.useEffect(() => {
-    const demoVersion = "faithflix-demo-content-v10";
+    const demoVersion = "faithflix-demo-content-v11";
     if (localStorage.getItem(demoVersion)) return;
     setUsers((current) => mergeById(MOCK_USERS, current));
-    setVideos((current) => mergeById(ALL_MOCK_VIDEOS, current.filter((video) => !video.id.startsWith("mock-share-video-") || COMMUNITY_VIDEO_CATEGORIES.includes(video.category))));
-    setSeries((current) => mergeById(ALL_MOCK_SERIES, current));
+    setVideos((current) => mergeById(ALL_MOCK_VIDEOS, current.filter((video) => !video.id.startsWith("mock-u") && !video.id.startsWith("mock-share-video-") && !video.id.startsWith("mock-user-series-video-"))));
+    setSeries((current) => mergeById(ALL_MOCK_SERIES, current.filter((item) => !item.id.startsWith("mock-user-series-"))));
     setCategories((current) => uniqueCategoriesByName([...defaultCategories, ...current]));
     setUploads((current) => mergeById(MOCK_UPLOADS, current));
     setPosts((current) => mergeById(MOCK_POSTS, current));
@@ -1097,7 +1015,7 @@ function App() {
       return;
     }
     if (nextPage === "upload") {
-      setCommunityView("upload");
+      setCommunityView("feed");
       setPage("community");
       return;
     }
@@ -1790,6 +1708,7 @@ function HomePosterCard({ video, onOpen }: { video: VideoItem; onOpen: () => voi
 
 function HomeScreen() {
   const { publicVideos, publicSeries, go, setSelectedVideoId, setSelectedSeriesId, mainSearchQuery, t } = useApp();
+  const officialVideos = publicVideos.filter((video) => video.source === "admin");
 
   const openVideo = (video: VideoItem) => {
     flushSync(() => {
@@ -1805,7 +1724,7 @@ function HomeScreen() {
 
   const q = mainSearchQuery.trim().toLowerCase();
   if (q) {
-    const matchVideos = publicVideos.filter((v) => [v.title, v.description, v.category, v.seriesId].join(" ").toLowerCase().includes(q));
+    const matchVideos = officialVideos.filter((v) => [v.title, v.description, v.category, v.seriesId].join(" ").toLowerCase().includes(q));
     const matchSeries = publicSeries.filter((s) => [s.title, s.description, s.category, s.scriptureTheme].join(" ").toLowerCase().includes(q));
     return (
       <section className="screen home-search-screen">
@@ -1831,7 +1750,7 @@ function HomeScreen() {
             <SectionHeader title={t("search.series")} action={`${matchSeries.length} ${t("home.found")}`} />
             <div className="home-series-shelf">
               {matchSeries.map((item) => {
-                const epCount = publicVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+                const epCount = officialVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
                 return (
                   <button key={item.id} className="home-series-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>
                     {item.posterUrl ? <img className="home-series-poster" src={item.posterUrl} alt={item.title} /> : <div className="home-series-poster home-series-poster-empty"><Clapperboard size={28} /></div>}
@@ -1849,7 +1768,7 @@ function HomeScreen() {
     );
   }
 
-  const publishedVideos = publicVideos.filter((v) => v.status === "Published");
+  const publishedVideos = officialVideos.filter((v) => v.status === "Published");
   const featuredVideos = publishedVideos.filter((v) => v.featured || v.source === "admin");
   const allFeatured = featuredVideos.length >= 3 ? featuredVideos : publishedVideos;
   const recentVideos = [...publishedVideos].reverse().slice(0, 12);
@@ -1920,7 +1839,7 @@ function HomeScreen() {
 function WatchScreen() {
   const { publicVideos, selectedVideoId } = useApp();
   const feedRef = React.useRef<HTMLDivElement>(null);
-  const feedVideos = publicVideos.filter((v) => v.status === "Published");
+  const feedVideos = publicVideos.filter((v) => v.status === "Published" && v.source === "admin");
 
   React.useEffect(() => {
     if (!selectedVideoId || !feedRef.current) return;
@@ -2022,10 +1941,11 @@ function SeriesDetailView({ series, episodes, onBack }: { series: SeriesItem; ep
 function SeriesScreen() {
   const { publicSeries, publicVideos, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId } = useApp();
   const [activeCategory, setActiveCategory] = React.useState("All");
+  const officialVideos = publicVideos.filter((video) => video.source === "admin");
 
   const focusedSeries = selectedSeriesId ? publicSeries.find((s) => s.id === selectedSeriesId) : null;
   const focusedEpisodes = focusedSeries
-    ? publicVideos.filter((v) => v.seriesId === focusedSeries.title && v.status === "Published")
+    ? officialVideos.filter((v) => v.seriesId === focusedSeries.title && v.status === "Published")
     : [];
 
   if (focusedSeries) {
@@ -2039,7 +1959,7 @@ function SeriesScreen() {
   const visibleCategories = activeCategory === "All" ? categories : categories.filter((c) => c === activeCategory);
 
   const playFirstEpisode = (item: SeriesItem) => {
-    const firstEp = publicVideos.find((v) => v.seriesId === item.title && v.status === "Published");
+    const firstEp = officialVideos.find((v) => v.seriesId === item.title && v.status === "Published");
     if (firstEp) { setSelectedVideoId(firstEp.id); go("watch"); }
     else setSelectedSeriesId(item.id);
   };
@@ -2092,7 +2012,7 @@ function SeriesScreen() {
               <h2 className="netflix-row-title">{category}</h2>
               <div className="netflix-row-scroll">
                 {catSeries.map((item) => {
-                  const epCount = publicVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+                  const epCount = officialVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
                   return (
                     <button key={item.id} className="netflix-series-card" onClick={() => setSelectedSeriesId(item.id)}>
                       {item.posterUrl
@@ -2115,7 +2035,7 @@ function SeriesScreen() {
               <h2 className="netflix-row-title">All Series</h2>
               <div className="netflix-row-scroll">
                 {publishedSeries.map((item) => {
-                  const epCount = publicVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+                  const epCount = officialVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
                   return (
                     <button key={item.id} className="netflix-series-card" onClick={() => setSelectedSeriesId(item.id)}>
                       {item.posterUrl
@@ -2140,7 +2060,7 @@ function SeriesScreen() {
           <h2 className="netflix-row-title series-filtered-title">{activeCategory}</h2>
           <div className="series-filtered-grid">
             {publishedSeries.filter((s) => s.category === activeCategory).map((item) => {
-              const epCount = publicVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+              const epCount = officialVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
               return (
                 <button key={item.id} className="netflix-series-card series-grid-card" onClick={() => setSelectedSeriesId(item.id)}>
                   {item.posterUrl
@@ -2158,186 +2078,6 @@ function SeriesScreen() {
         </div>
       )}
     </section>
-  );
-}
-
-function UploadScreen() {
-  const { currentUser, isAdmin, setUploads, setVideos, setSelectedVideoId, setCommunityView, setUploadProgress, notify, go, t } = useApp();
-  const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], testimonyType: "Testimony", visibility: "Public", tags: "", consent: false, rules: false, cropDimension: "9:16", cropRatio: "9 / 16" });
-  const [videoFile, setVideoFile] = React.useState<File | null>(null);
-  const [thumbFile, setThumbFile] = React.useState<File | null>(null);
-  const [thumbPreview, setThumbPreview] = React.useState("");
-
-  if (isAdmin) {
-    return (
-      <section className="screen">
-        <SectionIntro eyebrow={t("upload.adminEyebrow")} title={t("upload.adminTitle")} body={t("upload.adminBody")} />
-        <AdminUpload />
-      </section>
-    );
-  }
-
-  const submit = () => {
-    if (!currentUser) return go("profile");
-    if (!form.title || !form.consent || !form.rules) return notify("Add a title and confirm consent and content rules.");
-    if (!videoFile) return notify("Choose a video file first.");
-
-    const uploadUser = currentUser;
-    const uploadForm = { ...form };
-    const uploadVideoFile = videoFile;
-    const uploadThumbFile = thumbFile;
-    const progress = startUploadProgress(setUploadProgress, "Uploading in background");
-
-    setForm({ ...form, title: "", description: "", scripture: "", tags: "", consent: false, rules: false });
-    setVideoFile(null);
-    setThumbFile(null);
-    setThumbPreview("");
-    notify("Uploading in background. Keep the app open.");
-
-    void (async () => {
-      try {
-        progress.step("Checking login", 20);
-        const authUser = await getActiveAuthUser();
-        progress.step("Starting Cloudflare upload", 8);
-        const video = await uploadMediaFile(uploadVideoFile, authUser.id, "videos", (percent) => progress.percent("Uploading video", percent));
-        progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving post", 94);
-        const thumb = uploadThumbFile ? await uploadMediaFile(uploadThumbFile, authUser.id, "thumbnails") : { name: "Cloudflare thumbnail", url: video.thumbnailUrl || "" };
-        progress.step("Publishing post", 92);
-        const uploadId = uid("upload");
-        const publicVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "user", title: uploadForm.title, description: uploadForm.description, scripture: uploadForm.scripture, category: uploadForm.category, seriesId: "", episode: "", duration: "", creator: uploadUser.name, tags: uploadForm.tags, status: "Published", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: uploadForm.cropDimension, cropRatio: uploadForm.cropRatio };
-        const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, authUser.id)).select("*").single();
-        if (error) throw error;
-        const savedVideo = videoFromDb(data as DbVideo);
-        setUploads((current) => [...current, { id: uploadId, userId: uploadUser.id, ...uploadForm, videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, status: "Approved", adminNote: "Published instantly." }]);
-        setVideos((current) => [...current.filter((item) => item.id !== savedVideo.id), savedVideo]);
-        setSelectedVideoId(savedVideo.id);
-        progress.done("Posted");
-        notify("Posted. Video may take a minute to process.");
-        setCommunityView("feed");
-        go("community");
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Upload failed.";
-        progress.fail("Upload failed");
-        notify(message);
-      }
-    })();
-  };
-
-  return (
-    <section className="screen">
-      <SectionIntro eyebrow={t("upload.eyebrow")} title={t("upload.title")} body={t("upload.body")} />
-      {!currentUser && <EmptyState icon={Lock} title={t("upload.needAccount")} body={t("upload.needAccountBody")} action={t("profile.eyebrow")} onAction={() => go("profile")} />}
-      <form className="form-card">
-        <Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
-        <label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
-        <Field label="Scripture reference" value={form.scripture} onChange={(scripture) => setForm({ ...form, scripture })} />
-        <Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={COMMUNITY_VIDEO_CATEGORIES} />
-        <Select label="Testimony type" value={form.testimonyType} onChange={(testimonyType) => setForm({ ...form, testimonyType })} options={["Testimony", "Answered prayer", "Devotional", "Church clip", "Worship"]} />
-        <Select label="Visibility" value={form.visibility} onChange={(visibility) => setForm({ ...form, visibility })} options={["Public", "Friends", "Private"]} />
-        <Field label="Tags" value={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
-        <CropDimensionPicker value={form.cropDimension} onChange={(option) => setForm({ ...form, cropDimension: option.label, cropRatio: option.ratio })} />
-        <FileField label="Video file" onChange={setVideoFile} />
-        <PhotoCropChooser label="Thumbnail / cover photo" value={thumbPreview} cropLabel={form.cropDimension} cropRatio={form.cropRatio} onChange={(file, previewUrl) => { setThumbFile(file); setThumbPreview(previewUrl); }} />
-        <Check label="I have permission to share this content." checked={form.consent} onChange={(consent) => setForm({ ...form, consent })} />
-        <Check label="This submission follows the content rules." checked={form.rules} onChange={(rules) => setForm({ ...form, rules })} />
-        <button className="primary-button" type="button" onClick={submit}>Post Now</button>
-      </form>
-      <UserSeriesBuilder />
-      <MyUploads />
-    </section>
-  );
-}
-
-function UserSeriesBuilder() {
-  const { currentUser, visibleCategories, series, setSeries, setVideos, notify, go } = useApp();
-  const [seriesForm, setSeriesForm] = React.useState({ title: "", description: "", scriptureTheme: "", category: visibleCategories[0]?.name ?? "" });
-  const [episodeForm, setEpisodeForm] = React.useState({ seriesId: "", title: "", description: "", scripture: "", episode: "1", duration: "" });
-  const [videoFile, setVideoFile] = React.useState<File | null>(null);
-  const [coverFile, setCoverFile] = React.useState<File | null>(null);
-  const userSeries = series.filter((item) => item.title.includes("Community") || item.title === seriesForm.title);
-
-  const createSeries = () => {
-    if (!currentUser) return go("profile");
-    if (!seriesForm.title.trim()) return notify("Name your series first.");
-    if (series.some((item) => item.title.toLowerCase() === seriesForm.title.trim().toLowerCase())) return notify("That series already exists.");
-    const cover = fileInfo(coverFile);
-    const nextSeries: SeriesItem = {
-      id: uid("user-series"),
-      title: seriesForm.title.trim(),
-      description: seriesForm.description,
-      posterName: cover.name,
-      posterUrl: cover.url,
-      scriptureTheme: seriesForm.scriptureTheme,
-      category: seriesForm.category,
-      status: "Published",
-      featured: false,
-    };
-    setSeries((current) => [...current, nextSeries]);
-    setEpisodeForm((current) => ({ ...current, seriesId: nextSeries.title, scripture: nextSeries.scriptureTheme }));
-    setSeriesForm({ ...seriesForm, title: "", description: "", scriptureTheme: "" });
-    setCoverFile(null);
-    notify("Series created. Add an episode next.");
-  };
-
-  const createEpisode = () => {
-    if (!currentUser) return go("profile");
-    if (!episodeForm.seriesId || !episodeForm.title.trim()) return notify("Choose a series and title your episode.");
-    if (!videoFile) return notify("Choose an episode video file.");
-    const video = fileInfo(videoFile);
-    const chosenSeries = series.find((item) => item.title === episodeForm.seriesId);
-    const nextVideo: VideoItem = {
-      id: uid("user-episode"),
-      source: "user",
-      title: episodeForm.title.trim(),
-      description: episodeForm.description,
-      scripture: episodeForm.scripture || chosenSeries?.scriptureTheme || "",
-      category: chosenSeries?.category || seriesForm.category,
-      seriesId: episodeForm.seriesId,
-      episode: episodeForm.episode,
-      duration: episodeForm.duration,
-      creator: currentUser.name,
-      tags: "user series, episode",
-      status: "Published",
-      videoName: video.name,
-      videoUrl: video.url,
-      thumbnailName: chosenSeries?.posterName || "",
-      thumbnailUrl: chosenSeries?.posterUrl || "",
-      cropDimension: "9:16",
-      cropRatio: "9 / 16",
-      createdAt: new Date().toLocaleString(),
-    };
-    setVideos((current) => [nextVideo, ...current]);
-    setEpisodeForm({ seriesId: episodeForm.seriesId, title: "", description: "", scripture: "", episode: String(Number(episodeForm.episode || "1") + 1), duration: "" });
-    setVideoFile(null);
-    notify("Episode added to your series.");
-  };
-
-  return (
-    <div className="user-series-builder">
-      <SectionHeader title="Create a series" action="User content" />
-      <div className="form-card">
-        <Field label="Series title" value={seriesForm.title} onChange={(title) => setSeriesForm({ ...seriesForm, title })} />
-        <label>Description<textarea value={seriesForm.description} onChange={(event) => setSeriesForm({ ...seriesForm, description: event.target.value })} /></label>
-        <Field label="Scripture theme" value={seriesForm.scriptureTheme} onChange={(scriptureTheme) => setSeriesForm({ ...seriesForm, scriptureTheme })} />
-        <Select label="Category" value={seriesForm.category} onChange={(category) => setSeriesForm({ ...seriesForm, category })} options={visibleCategories.map((item) => item.name)} />
-        <FileField label="Series cover" onChange={setCoverFile} />
-        <button className="primary-button" type="button" onClick={createSeries}>Create Series</button>
-      </div>
-      <div className="form-card">
-        <h2>Add episode</h2>
-        <Select label="Series" value={episodeForm.seriesId} onChange={(seriesId) => setEpisodeForm({ ...episodeForm, seriesId })} options={["", ...series.map((item) => item.title)]} />
-        <Field label="Episode title" value={episodeForm.title} onChange={(title) => setEpisodeForm({ ...episodeForm, title })} />
-        <label>Description<textarea value={episodeForm.description} onChange={(event) => setEpisodeForm({ ...episodeForm, description: event.target.value })} /></label>
-        <Field label="Scripture reference" value={episodeForm.scripture} onChange={(scripture) => setEpisodeForm({ ...episodeForm, scripture })} />
-        <Field label="Episode number" value={episodeForm.episode} onChange={(episode) => setEpisodeForm({ ...episodeForm, episode })} />
-        <Field label="Duration" value={episodeForm.duration} onChange={(duration) => setEpisodeForm({ ...episodeForm, duration })} />
-        <FileField label="Episode video" onChange={setVideoFile} />
-        <button className="primary-button" type="button" onClick={createEpisode}>Add Episode</button>
-      </div>
-      <div className="horizontal-series-row home-series-row">
-        {userSeries.slice(0, 10).map((item) => <HomeSeriesCard key={item.id} item={item} episodeCount={0} onOpen={() => notify(item.title)} />)}
-      </div>
-    </div>
   );
 }
 
@@ -2885,7 +2625,6 @@ function SavedScreen() {
   const generalIds = saved[actorId] ?? [];
   const userLists = savedLists[actorId] ?? [];
   const generalVideos = videos.filter((v) => generalIds.includes(v.id));
-  const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
 
   const createList = () => {
     const name = listName.trim();
@@ -2895,6 +2634,7 @@ function SavedScreen() {
     setListName(""); setShowNewList(false); notify("Collection created.");
   };
 
+  const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
   const removeFromGeneral = (videoId: string) => { setSaved({ ...saved, [actorId]: generalIds.filter((id) => id !== videoId) }); notify("Removed."); };
   const deleteList = (listId: string) => { setSavedLists({ ...savedLists, [actorId]: userLists.filter((l) => l.id !== listId) }); notify("Collection deleted."); };
 
@@ -3087,58 +2827,8 @@ function ReelCard({ video, onOpen }: { video: VideoItem; onOpen: () => void }) {
   );
 }
 
-function CommunitySharesScreen({ compact = false }: { compact?: boolean }) {
-  const { publicVideos, notify, go, t } = useApp();
-  const [selectedCategory, setSelectedCategory] = React.useState("All");
-  const userVideos = publicVideos.filter((v) => v.source === "user" && !v.seriesId);
-  const filteredVideos = selectedCategory === "All" ? userVideos : userVideos.filter((video) => video.category === selectedCategory);
-  const openVideo = (video: VideoItem) => playVideoFullscreen(video, notify);
-  return (
-    <div className={compact ? "reel-feed" : "community-shares-screen"}>
-      {!compact && <div className="community-shares-intro">
-        <Share2 size={28} className="community-shares-icon" />
-        <div>
-          <h3 className="community-shares-title">Community Shares</h3>
-          <p className="community-shares-body">Testimonies and videos shared by members of the Faith Flix community. New videos can take a minute to finish processing.</p>
-        </div>
-      </div>}
-      {userVideos.length > 0 && (
-        <div className="community-share-filter" aria-label="Filter community shares by category">
-          <button className={selectedCategory === "All" ? "community-share-pill active" : "community-share-pill"} onClick={() => setSelectedCategory("All")}>All</button>
-          {COMMUNITY_VIDEO_CATEGORIES.map((category) => (
-            <button className={selectedCategory === category ? "community-share-pill active" : "community-share-pill"} key={category} onClick={() => setSelectedCategory(category)}>{category}</button>
-          ))}
-        </div>
-      )}
-      {userVideos.length ? (
-        compact ? (
-          <div className="reel-list">
-            {filteredVideos.map((video) => <ReelCard key={video.id} video={video} onOpen={() => openVideo(video)} />)}
-          </div>
-        ) : (
-          <div className="content-grid community-shares-grid">
-            {filteredVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video)} />)}
-          </div>
-        )
-      ) : (
-        <EmptyState icon={Share2} title="No community shares yet" body="When members submit testimonies and videos they will appear here." action={t("hero.submitTestimony")} onAction={() => go("upload")} />
-      )}
-    </div>
-  );
-}
-
 function CommunityScreen() {
   const { communityView, setCommunityView, notify, commSearchQuery, t } = useApp();
-  const [showPostSheet, setShowPostSheet] = React.useState(communityView === "upload");
-  const [sheetTab, setSheetTab] = React.useState<"post" | "video">(communityView === "upload" ? "video" : "post");
-
-  React.useEffect(() => {
-    if (communityView === "upload") {
-      setSheetTab("video");
-      setShowPostSheet(true);
-      setCommunityView("feed");
-    }
-  }, [communityView]);
 
   const tabs: { id: CommunityView; label: string; icon: React.ElementType }[] = [
     { id: "feed", label: t("comm.tab.feed"), icon: MessagesSquare },
@@ -3162,7 +2852,7 @@ function CommunityScreen() {
         ))}
       </div>
       {commSearchQuery.trim() ? <CommunitySearchResults /> : <>
-        {(communityView === "feed" || communityView === "upload") && <FaithFeed />}
+        {communityView === "feed" && <FaithFeed />}
         {communityView === "prayer" && <PrayerWall />}
         {communityView === "groups" && (
           <div className="comm-groups-grid">
@@ -3183,323 +2873,30 @@ function CommunityScreen() {
         {communityView === "userprofile" && <UserProfilePage />}
       </>}
 
-      <button className="comm-fab" aria-label="Upload video" onClick={() => { setSheetTab("video"); setShowPostSheet(true); }}>
-        <Video size={22} />
-      </button>
-
-      {showPostSheet && (
-        <PostComposerSheet
-          defaultTab={sheetTab}
-          onClose={() => setShowPostSheet(false)}
-        />
-      )}
     </section>
   );
 }
 
 
-function CommunityUpload({ onDone }: { onDone?: () => void } = {}) {
-  const { currentUser, setUploads, setVideos, setSelectedVideoId, setCommunityView, setUploadProgress, notify, go } = useApp();
-  const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], testimonyType: "Testimony", tags: "", consent: false, rules: false, cropDimension: "9:16", cropRatio: "9 / 16" });
-  const [videoFile, setVideoFile] = React.useState<File | null>(null);
-  const [thumbFile, setThumbFile] = React.useState<File | null>(null);
-  const [thumbPreview, setThumbPreview] = React.useState("");
-
-  if (!currentUser) {
-    return <EmptyState icon={Lock} title="Sign in to share" body="Create an account or log in to upload faith videos and testimonies." action="Open Profile" onAction={() => go("profile")} />;
-  }
-
-  const submit = () => {
-    if (!form.title || !form.consent || !form.rules) return notify("Add a title and confirm both checkboxes.");
-    if (!videoFile) return notify("Choose a video file first.");
-
-    const uploadUser = currentUser;
-    const uploadForm = { ...form };
-    const uploadVideoFile = videoFile;
-    const uploadThumbFile = thumbFile;
-    const progress = startUploadProgress(setUploadProgress, "Uploading in background");
-
-    setForm({ ...form, title: "", description: "", scripture: "", tags: "", consent: false, rules: false });
-    setVideoFile(null);
-    setThumbFile(null);
-    setThumbPreview("");
-    notify("Uploading in background. Keep the app open.");
-
-    void (async () => {
-      try {
-        progress.step("Checking login", 20);
-        const authUser = await getActiveAuthUser();
-        progress.step("Uploading video", 8);
-        const video = await uploadMediaFile(uploadVideoFile, authUser.id, "videos", (percent) => progress.percent("Uploading video", percent));
-        progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving post", 94);
-        const thumb = uploadThumbFile ? await uploadMediaFile(uploadThumbFile, authUser.id, "thumbnails") : { name: "Cloudflare thumbnail", url: video.thumbnailUrl || "" };
-        progress.step("Publishing", 92);
-        const uploadId = uid("upload");
-        const publicVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "user", title: uploadForm.title, description: uploadForm.description, scripture: uploadForm.scripture, category: uploadForm.category, seriesId: "", episode: "", duration: "", creator: uploadUser.name, tags: uploadForm.tags, status: "Published", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: uploadForm.cropDimension, cropRatio: uploadForm.cropRatio };
-        const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, authUser.id)).select("*").single();
-        if (error) throw error;
-        const savedVideo = videoFromDb(data as DbVideo);
-        setUploads((current) => [...current, { id: uploadId, userId: uploadUser.id, ...uploadForm, visibility: "Public", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: publicVideo.cropDimension || "9:16", cropRatio: publicVideo.cropRatio || "9 / 16", status: "Approved", adminNote: "Published instantly." }]);
-        setVideos((current) => [...current.filter((item) => item.id !== savedVideo.id), savedVideo]);
-        setSelectedVideoId(savedVideo.id);
-        progress.done("Posted");
-        notify("Posted! Video may take a minute to process.");
-        if (onDone) onDone(); else setCommunityView("feed");
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Upload failed.";
-        progress.fail("Upload failed");
-        notify(message);
-      }
-    })();
-  };
-
-  return (
-    <>
-      <div className="form-card">
-        <h2>Share your faith</h2>
-        <p className="comm-upload-hint">Upload a testimony, devotional, worship clip, or faith video to share with the community.</p>
-        <Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
-        <label>Description<textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
-        <Field label="Scripture reference" value={form.scripture} onChange={(scripture) => setForm({ ...form, scripture })} />
-        <Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={COMMUNITY_VIDEO_CATEGORIES} />
-        <Select label="Type" value={form.testimonyType} onChange={(testimonyType) => setForm({ ...form, testimonyType })} options={["Testimony", "Answered prayer", "Devotional", "Church clip", "Worship"]} />
-        <Field label="Tags (optional)" value={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
-        <div className="comm-format-notice">
-          <span className="comm-format-badge">9:16 Vertical</span>
-          <span className="comm-format-text">Videos must be vertical to appear in the Watch feed.</span>
-        </div>
-        <FileField label="Video file" onChange={setVideoFile} />
-        <PhotoCropChooser label="Thumbnail (optional)" value={thumbPreview} cropLabel="9:16" cropRatio="9 / 16" onChange={(file, previewUrl) => { setThumbFile(file); setThumbPreview(previewUrl); }} />
-        <Check label="I have permission to share this content." checked={form.consent} onChange={(consent) => setForm({ ...form, consent })} />
-        <Check label="This submission follows the Faith Flix content rules." checked={form.rules} onChange={(rules) => setForm({ ...form, rules })} />
-        <button className="primary-button" type="button" onClick={submit}>Post Now</button>
-      </div>
-      <MyUploads />
-    </>
-  );
-}
-
-function PostComposerSheet({ defaultTab, onClose }: { defaultTab: "post" | "video"; onClose: () => void }) {
-  const { currentUser, posts, setPosts, setUploads, setVideos, setSelectedVideoId, setUploadProgress, notify, go } = useApp();
-  const [tab, setTab] = React.useState<"post" | "video">(defaultTab);
-  const [text, setText] = React.useState("");
-  const [scripture, setScripture] = React.useState("");
-  const [image, setImage] = React.useState<File | null>(null);
-  const [imagePreview, setImagePreview] = React.useState("");
-  const [vidForm, setVidForm] = React.useState({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], testimonyType: "Testimony", tags: "", consent: false, rules: false });
-  const [videoFile, setVideoFile] = React.useState<File | null>(null);
-  const [thumbFile, setThumbFile] = React.useState<File | null>(null);
-  const [thumbPreview, setThumbPreview] = React.useState("");
-
-  React.useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, []);
-
-  const submitVideo = () => {
-    if (!currentUser) return notify("Sign in to share a video.");
-    if (!vidForm.title.trim()) return notify("Add a title for your video.");
-    if (!videoFile) return notify("Choose a video file first.");
-    if (!vidForm.consent || !vidForm.rules) return notify("Please confirm both checkboxes.");
-    const uploadUser = currentUser;
-    const uploadForm = { ...vidForm };
-    const uploadVideoFile = videoFile;
-    const uploadThumbFile = thumbFile;
-    const progress = startUploadProgress(setUploadProgress, "Uploading in background");
-    setVidForm({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], testimonyType: "Testimony", tags: "", consent: false, rules: false });
-    setVideoFile(null); setThumbFile(null); setThumbPreview("");
-    notify("Uploading in background. Keep the app open.");
-    onClose();
-    void (async () => {
-      try {
-        progress.step("Checking login", 20);
-        const authUser = await getActiveAuthUser();
-        progress.step("Uploading video", 8);
-        const video = await uploadMediaFile(uploadVideoFile, authUser.id, "videos", (percent) => progress.percent("Uploading video", percent));
-        progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving post", 94);
-        const thumb = uploadThumbFile ? await uploadMediaFile(uploadThumbFile, authUser.id, "thumbnails") : { name: "Cloudflare thumbnail", url: video.thumbnailUrl || "" };
-        progress.step("Publishing", 92);
-        const uploadId = uid("upload");
-        const publicVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "user", title: uploadForm.title, description: uploadForm.description, scripture: uploadForm.scripture, category: uploadForm.category, seriesId: "", episode: "", duration: "", creator: uploadUser.name, tags: uploadForm.tags, status: "Published", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: "9:16", cropRatio: "9 / 16" };
-        const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, authUser.id)).select("*").single();
-        if (error) throw error;
-        const savedVideo = videoFromDb(data as DbVideo);
-        setUploads((current) => [...current, { id: uploadId, userId: uploadUser.id, ...uploadForm, visibility: "Public", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: publicVideo.cropDimension || "9:16", cropRatio: publicVideo.cropRatio || "9 / 16", status: "Approved", adminNote: "Published instantly." }]);
-        setVideos((current) => [...current.filter((item) => item.id !== savedVideo.id), savedVideo]);
-        setSelectedVideoId(savedVideo.id);
-        progress.done("Posted");
-        notify("Posted! Video may take a minute to process.");
-      } catch (err) {
-        progress.fail("Upload failed");
-        notify(err instanceof Error ? err.message : "Upload failed.");
-      }
-    })();
-  };
-
-  const sharePost = () => {
-    if (!currentUser) return notify("Sign in to post.");
-    if (!text.trim()) return notify("Write something first.");
-    const info = fileInfo(image);
-    setPosts((current) => [{ id: uid("post"), userId: currentUser.id, author: currentUser.name, text, scripture, imageName: info.name, imageUrl: info.url, likes: [], saves: [], reports: [] }, ...current]);
-    setText(""); setScripture(""); setImage(null); setImagePreview("");
-    notify("Post shared!");
-    onClose();
-  };
-
-  return (
-    <>
-      <div className="post-sheet-overlay" onClick={onClose} />
-      <div className="post-sheet">
-        <div className="post-sheet-drag-bar" />
-        <div className="post-sheet-header">
-          <div className="post-sheet-tabs">
-            <button className={`post-sheet-tab${tab === "post" ? " active" : ""}`} onClick={() => setTab("post")}>Post</button>
-            <button className={`post-sheet-tab${tab === "video" ? " active" : ""}`} onClick={() => setTab("video")}>Video</button>
-          </div>
-          <button className="icon-button post-sheet-close" aria-label="Close" onClick={onClose}><X size={20} /></button>
-        </div>
-
-        {tab === "post" && (
-          <div className="post-sheet-body">
-            {!currentUser ? (
-              <div className="post-sheet-signin">
-                <Lock size={34} style={{ color: "var(--gold)", marginBottom: 8 }} />
-                <p>Sign in to post in the community</p>
-                <button className="primary-button" onClick={() => { go("profile"); onClose(); }}>Sign In</button>
-              </div>
-            ) : (
-              <>
-                <div className="post-sheet-composer">
-                  <div className="post-avatar post-avatar-lg">{currentUser.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}</div>
-                  <textarea
-                    className="post-sheet-textarea"
-                    placeholder="Share encouragement, a testimony, or what God put on your heart…"
-                    value={text}
-                    autoFocus
-                    onChange={(e) => setText(e.target.value)}
-                    rows={4}
-                  />
-                </div>
-                {imagePreview && <img className="post-sheet-preview" src={imagePreview} alt="Preview" />}
-                <div className="post-sheet-meta-row">
-                  <input className="post-sheet-scripture-input" placeholder="Scripture reference (optional)" value={scripture} onChange={(e) => setScripture(e.target.value)} />
-                </div>
-                <div className="post-sheet-bottom-bar">
-                  <label className="post-sheet-photo-btn" aria-label="Add photo">
-                    <Camera size={20} />
-                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0] ?? null; setImage(f); setImagePreview(f ? URL.createObjectURL(f) : ""); }} />
-                  </label>
-                  <span className="post-sheet-char">{text.length > 0 ? `${text.length} chars` : ""}</span>
-                  <button className="comm-post-btn" onClick={sharePost} disabled={!text.trim()}>Share</button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {tab === "video" && (
-          <div className="post-sheet-body post-sheet-video-body">
-            {!currentUser ? (
-              <div className="post-sheet-signin">
-                <Film size={34} style={{ color: "var(--gold)", marginBottom: 8 }} />
-                <p>Sign in to share a faith video</p>
-                <button className="primary-button" onClick={() => { go("profile"); onClose(); }}>Sign In</button>
-              </div>
-            ) : (
-              <>
-                <div className="prayer-sheet-intro">
-                  <Film size={20} style={{ color: "var(--gold)", flexShrink: 0 }} />
-                  <p>Share a testimony, devotional, worship clip, or faith video with the community.</p>
-                </div>
-                <div className="prayer-sheet-form">
-                  <input
-                    className="post-sheet-scripture-input prayer-title-input"
-                    placeholder="Video title"
-                    value={vidForm.title}
-                    onChange={(e) => setVidForm({ ...vidForm, title: e.target.value })}
-                  />
-                  <textarea
-                    className="prayer-body-textarea"
-                    placeholder="Description (optional)"
-                    value={vidForm.description}
-                    onChange={(e) => setVidForm({ ...vidForm, description: e.target.value })}
-                    rows={3}
-                  />
-                  <input
-                    className="post-sheet-scripture-input"
-                    placeholder="Scripture reference (optional)"
-                    value={vidForm.scripture}
-                    onChange={(e) => setVidForm({ ...vidForm, scripture: e.target.value })}
-                  />
-                  <select
-                    className="post-sheet-scripture-input"
-                    value={vidForm.category}
-                    onChange={(e) => setVidForm({ ...vidForm, category: e.target.value })}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {COMMUNITY_VIDEO_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  <div className="vid-sheet-file-row">
-                    <label className="vid-sheet-file-btn">
-                      <Video size={16} />
-                      {videoFile ? videoFile.name : "Choose video file"}
-                      <input type="file" accept="video/*" style={{ display: "none" }} onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)} />
-                    </label>
-                    <label className="vid-sheet-file-btn vid-sheet-thumb-btn">
-                      <ImageIcon size={16} />
-                      {thumbPreview ? "Thumbnail set" : "Thumbnail (optional)"}
-                      <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0] ?? null; setThumbFile(f); setThumbPreview(f ? URL.createObjectURL(f) : ""); }} />
-                    </label>
-                  </div>
-                  {thumbPreview && <img src={thumbPreview} alt="Thumb preview" style={{ width: "100%", borderRadius: 10, maxHeight: 120, objectFit: "cover", marginTop: 4 }} />}
-                  <div className="vid-sheet-checks">
-                    <label className="vid-sheet-check-row">
-                      <input type="checkbox" checked={vidForm.consent} onChange={(e) => setVidForm({ ...vidForm, consent: e.target.checked })} />
-                      <span>I have permission to share this content</span>
-                    </label>
-                    <label className="vid-sheet-check-row">
-                      <input type="checkbox" checked={vidForm.rules} onChange={(e) => setVidForm({ ...vidForm, rules: e.target.checked })} />
-                      <span>This follows Faith Flix content rules</span>
-                    </label>
-                  </div>
-                </div>
-                <div className="post-sheet-bottom-bar">
-                  <span className="post-sheet-char">{videoFile ? "Video ready" : "No video chosen"}</span>
-                  <button className="comm-post-btn" onClick={submitVideo} disabled={!vidForm.title.trim() || !videoFile || !vidForm.consent || !vidForm.rules}>
-                    Post Video
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
-
 function CommunitySearchResults() {
-  const { commSearchQuery, setCommSearchQuery, posts, prayers, publicVideos, users, messages, currentUser, setSelectedVideoId, setCommunityView, setSelectedCommunityUser, setSelectedMessageUser, go, notify } = useApp();
+  const { commSearchQuery, setCommSearchQuery, posts, prayers, users, messages, currentUser, setCommunityView, setSelectedCommunityUser, setSelectedMessageUser, notify } = useApp();
   const q = commSearchQuery.trim().toLowerCase();
-  const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
   const postMatches = posts.filter((post) => [post.author, post.text, post.scripture].join(" ").toLowerCase().includes(q));
   const prayerMatches = prayers.filter((prayer) => [prayer.title, prayer.text, prayer.visibility].join(" ").toLowerCase().includes(q));
-  const shareMatches = publicVideos.filter((video) => video.source === "user" && [video.title, video.description, video.category, video.creator, video.scripture, video.tags].join(" ").toLowerCase().includes(q));
   const groupMatches = COMMUNITY_GROUPS.filter((group) => [group.name, group.verse, String(group.members)].join(" ").toLowerCase().includes(q));
   const memberMatches = users.filter((user) => user.role !== "admin" && [user.name, user.username, user.bio, user.favoriteScripture, user.ministry, user.location].join(" ").toLowerCase().includes(q));
   const messageMatches = currentUser
     ? messages.filter((message) => [message.text, users.find((user) => user.id === (message.fromId === currentUser.id ? message.toId : message.fromId))?.name].join(" ").toLowerCase().includes(q) && [message.fromId, message.toId].includes(currentUser.id))
     : [];
-  const total = postMatches.length + prayerMatches.length + shareMatches.length + groupMatches.length + memberMatches.length + messageMatches.length;
+  const total = postMatches.length + prayerMatches.length + groupMatches.length + memberMatches.length + messageMatches.length;
 
-  if (!total) return <EmptyState icon={Search} title="No community results found." body="Try searching posts, prayers, groups, members, shared videos, or messages." action="" onAction={() => {}} />;
+  if (!total) return <EmptyState icon={Search} title="No community results found." body="Try searching posts, prayers, groups, members, or messages." action="" onAction={() => {}} />;
 
   return (
     <div className="community-search-results">
       <SectionHeader title="Community results" action={total + " found"} />
       {postMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Faith Feed" action={postMatches.length + " posts"} />{postMatches.map((post) => <article className="content-panel" key={post.id}><p className="eyebrow">{post.author}</p><h3>{post.scripture || "Community post"}</h3><p>{post.text}</p></article>)}</section>}
       {prayerMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Prayer Wall" action={prayerMatches.length + " prayers"} />{prayerMatches.map((prayer) => <article className="content-panel prayer-card" key={prayer.id}><p className="eyebrow">{prayer.visibility}</p><h3>{prayer.title}</h3><p>{prayer.text}</p></article>)}</section>}
-      {shareMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Community Shares" action={shareMatches.length + " videos"} /><div className="content-grid">{shareMatches.map((video) => <VideoCard key={video.id} video={video} onOpen={() => openVideo(video.id)} />)}</div></section>}
       {groupMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Groups" action={groupMatches.length + " groups"} /><div className="comm-groups-grid">{groupMatches.map((group) => <button key={group.name} className="comm-group-card" onClick={() => notify(group.name + " — joining coming soon!")}><div className="comm-group-icon" style={{ background: group.color + "22", borderColor: group.color + "44" }}><Users size={22} style={{ color: group.color }} /></div><p className="comm-group-name">{group.name}</p><p className="comm-group-meta">{group.members} members</p><p className="comm-group-verse">{group.verse}</p></button>)}</div></section>}
       {memberMatches.length > 0 && <section className="community-search-section"><SectionHeader title="Members" action={memberMatches.length + " people"} />{memberMatches.map((member) => <button className="content-panel community-member-result" key={member.id} onClick={() => { setSelectedCommunityUser(member.id); setCommSearchQuery(""); setCommunityView("friends"); }}><p className="eyebrow">@{member.username || "faithmember"}</p><h3>{member.name}</h3>{member.bio && <p>{member.bio}</p>}</button>)}</section>}
       {messageMatches.length > 0 && <section className="community-search-section"><SectionHeader title="DMs" action={messageMatches.length + " messages"} />{messageMatches.map((message) => { const otherId = message.fromId === currentUser?.id ? message.toId : message.fromId; const other = users.find((user) => user.id === otherId); return <button className="content-panel community-member-result" key={message.id} onClick={() => { setSelectedMessageUser(otherId); setCommunityView("messages"); }}><p className="eyebrow">{other?.name || "Message"}</p><h3>{message.text}</h3><p>{message.createdAt}</p></button>; })}</section>}
@@ -3509,7 +2906,6 @@ function CommunitySearchResults() {
 
 function FaithFeed() {
   const { currentUser, posts, setPosts, notify, comments, commSearchQuery } = useApp();
-  const [feedMode, setFeedMode] = React.useState<"posts" | "videos">("posts");
   const [tweetText, setTweetText] = React.useState("");
   const [tweetScripture, setTweetScripture] = React.useState("");
   const [tweetImage, setTweetImage] = React.useState<File | null>(null);
@@ -3537,13 +2933,6 @@ function FaithFeed() {
 
   return (
     <>
-      <div className="feed-mode-switch" role="tablist" aria-label="Feed content type">
-        <button className={feedMode === "posts" ? "feed-mode-pill active" : "feed-mode-pill"} onClick={() => setFeedMode("posts")} type="button">Posts</button>
-        <button className={feedMode === "videos" ? "feed-mode-pill active" : "feed-mode-pill"} onClick={() => setFeedMode("videos")} type="button">Videos</button>
-      </div>
-
-      {feedMode === "posts" ? (
-        <>
           {!commSearchQuery && (
             <div className="inline-tweet-composer">
               <div className="tweet-left">
@@ -3577,111 +2966,7 @@ function FaithFeed() {
           {commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={Search} title="No posts match your search." body="Try a different keyword." action="" onAction={() => {}} />}
           {filteredPosts.map((post) => <PostCard key={post.id} post={post} comments={comments.filter((item) => item.targetId === post.id)} onToggle={togglePost} />)}
           {!commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={MessagesSquare} title="No posts yet — be first!" body="Share encouragement, a testimony, or what God put on your heart." action="" onAction={() => {}} />}
-        </>
-      ) : (
-        <>
-          <CommunityVideoComposer />
-          <CommunitySharesScreen compact />
-          <CommunitySeriesShelf />
-        </>
-      )}
     </>
-  );
-}
-
-function CommunityVideoComposer() {
-  const { currentUser, setVideos, setSelectedVideoId, notify } = useApp();
-  const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], tags: "" });
-  const [videoFile, setVideoFile] = React.useState<File | null>(null);
-  const [thumbFile, setThumbFile] = React.useState<File | null>(null);
-
-  const postVideo = () => {
-    if (!currentUser) return notify("Create an account before posting a video.");
-    if (!form.title.trim()) return notify("Add a video title.");
-    if (!videoFile) return notify("Choose a video file first.");
-    const videoInfo = fileInfo(videoFile);
-    const thumbInfo = fileInfo(thumbFile);
-    const nextVideo: VideoItem = {
-      id: uid("feed-video"),
-      source: "user",
-      title: form.title.trim(),
-      description: form.description,
-      scripture: form.scripture,
-      category: form.category,
-      seriesId: "",
-      episode: "",
-      duration: "",
-      creator: currentUser.name,
-      tags: form.tags,
-      status: "Published",
-      featured: false,
-      videoName: videoInfo.name,
-      videoUrl: videoInfo.url,
-      thumbnailName: thumbInfo.name,
-      thumbnailUrl: thumbInfo.url,
-      cropDimension: "9:16",
-      cropRatio: "9 / 16",
-      createdAt: new Date().toLocaleString(),
-    };
-    setVideos((current) => [nextVideo, ...current]);
-    setSelectedVideoId(nextVideo.id);
-    setForm({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], tags: "" });
-    setVideoFile(null);
-    setThumbFile(null);
-    notify("Video posted to the feed.");
-  };
-
-  return (
-    <div className="inline-dark-composer">
-      <div className="inline-dark-composer-header">
-        <Video size={18} style={{ color: "var(--gold)" }} />
-        <span>Share a Faith Video</span>
-      </div>
-      <div className="prayer-sheet-form">
-        <input className="post-sheet-scripture-input prayer-title-input" placeholder="Video title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-        <textarea className="prayer-body-textarea" placeholder="Description (optional)" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-        <input className="post-sheet-scripture-input" placeholder="✦ Scripture reference (optional)" value={form.scripture} onChange={(e) => setForm({ ...form, scripture: e.target.value })} />
-        <select className="post-sheet-scripture-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} style={{ cursor: "pointer" }}>
-          {COMMUNITY_VIDEO_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <div className="vid-sheet-file-row">
-          <label className="vid-sheet-file-btn">
-            <Video size={15} />
-            {videoFile ? videoFile.name : "Choose video file"}
-            <input type="file" accept="video/*" style={{ display: "none" }} onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)} />
-          </label>
-          <label className="vid-sheet-file-btn vid-sheet-thumb-btn">
-            <ImageIcon size={15} />
-            {thumbFile ? "Thumbnail set" : "Thumbnail (optional)"}
-            <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => setThumbFile(e.target.files?.[0] ?? null)} />
-          </label>
-        </div>
-      </div>
-      <div className="inline-dark-composer-footer">
-        <button className="comm-post-btn" onClick={postVideo} disabled={!form.title.trim() || !videoFile}>Post Video</button>
-      </div>
-    </div>
-  );
-}
-
-function CommunitySeriesShelf() {
-  const { publicSeries, publicVideos, setSelectedSeriesId, go } = useApp();
-  const communitySeries = publicSeries.filter((item) => item.id.startsWith("user-series") || item.id.startsWith("mock-user-series") || item.title.toLowerCase().includes("community series"));
-
-  if (!communitySeries.length) {
-    return <EmptyState icon={Clapperboard} title="No community series yet" body="Series uploaded from the Upload section will appear here." action="Create Series" onAction={() => go("upload")} />;
-  }
-
-  return (
-    <section className="community-series-section">
-      <SectionHeader title="Community series" action={`${communitySeries.length} series`} />
-      <div className="horizontal-series-row home-series-row community-series-row">
-        {communitySeries.map((item) => {
-          const count = publicVideos.filter((video) => video.seriesId === item.title).length;
-          return <HomeSeriesCard key={item.id} item={item} episodeCount={count} onOpen={() => { setSelectedSeriesId(item.id); go("series"); }} />;
-        })}
-      </div>
-    </section>
   );
 }
 
@@ -3735,11 +3020,6 @@ function PrayerWall() {
       })()}
     </>
   );
-}
-
-function DiscussionRooms() {
-  const { publicVideos, comments, setSelectedVideoId, go, t } = useApp();
-  return publicVideos.length ? <div className="content-grid">{publicVideos.map((video) => <VideoCard key={video.id} video={video} onOpen={() => { setSelectedVideoId(video.id); go("watch"); }} extra={<span className="meta">{comments.filter((item) => item.targetId === video.id).length} comments</span>} />)}</div> : <EmptyState icon={MessageCircle} title={t("comm.noDiscussions")} body={t("comm.noDiscussionsBody")} action={t("nav.watch")} onAction={() => go("watch")} />;
 }
 
 function FriendMemberCard({ user, isMyProfile }: { user: Profile; isMyProfile?: boolean }) {
@@ -3874,9 +3154,9 @@ function MessagesPanel() {
 }
 
 function UserProfilePage() {
-  const { users, posts, publicVideos, uploads, currentUser, friendRequests, setFriendRequests, setSelectedCommunityUser, setCommunityView, setSelectedMessageUser, notify, t } = useApp();
+  const { users, posts, currentUser, friendRequests, setFriendRequests, setSelectedCommunityUser, setCommunityView, setSelectedMessageUser, notify, t } = useApp();
   const { selectedCommunityUser } = useApp();
-  const [profileTab, setProfileTab] = React.useState<"posts" | "videos">("posts");
+  const [profileTab, setProfileTab] = React.useState<"posts">("posts");
 
   const member = users.find((u) => u.id === selectedCommunityUser);
   if (!member) return <EmptyState icon={User} title="Profile not found" body="This member doesn't exist." action="Back" onAction={() => setCommunityView("feed")} />;
@@ -3884,9 +3164,6 @@ function UserProfilePage() {
   const initials = member.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
   const handle = "@" + (member.username || member.name.split(" ")[0].toLowerCase());
   const memberPosts = posts.filter((p) => p.userId === member.id);
-  const memberVideos = publicVideos.filter((v) => v.creator === member.name);
-  const memberUploads = uploads.filter((u) => u.userId === member.id);
-  const allVideos = [...memberVideos, ...memberUploads.filter((u) => !memberVideos.some((v) => v.title === u.title))];
 
   const friendship = currentUser ? friendRequests.find((r) => [r.fromId, r.toId].includes(currentUser.id) && [r.fromId, r.toId].includes(member.id)) : null;
   const canMessage = friendship?.status === "accepted";
@@ -3911,7 +3188,6 @@ function UserProfilePage() {
         </div>
         <div className="ig-profile-stats">
           <div className="ig-stat"><span className="ig-stat-num">{memberPosts.length}</span><span className="ig-stat-label">Posts</span></div>
-          <div className="ig-stat"><span className="ig-stat-num">{allVideos.length}</span><span className="ig-stat-label">Videos</span></div>
         </div>
       </div>
 
@@ -3943,7 +3219,6 @@ function UserProfilePage() {
 
       <div className="ig-profile-tabs">
         <button className={`ig-profile-tab${profileTab === "posts" ? " active" : ""}`} onClick={() => setProfileTab("posts")} aria-label="Posts"><LayoutDashboard size={20} /></button>
-        <button className={`ig-profile-tab${profileTab === "videos" ? " active" : ""}`} onClick={() => setProfileTab("videos")} aria-label="Videos"><Film size={20} /></button>
       </div>
 
       {profileTab === "posts" && (
@@ -3952,20 +3227,15 @@ function UserProfilePage() {
           : <EmptyState icon={MessagesSquare} title="No posts yet" body={`${member.name} hasn't posted yet.`} action="" onAction={() => {}} />
       )}
 
-      {profileTab === "videos" && (
-        allVideos.length > 0
-          ? <div className="ig-profile-grid">{allVideos.map((v) => <div key={v.id} className="ig-profile-grid-cell ig-profile-grid-video-cell">{"thumbnailUrl" in v && v.thumbnailUrl ? <img src={v.thumbnailUrl} alt={v.title} /> : <div className="ig-profile-grid-placeholder"><Film size={22} style={{ opacity: 0.5 }} /><span style={{ fontSize: "0.7rem", marginTop: 4, textAlign: "center" }}>{v.title}</span></div>}</div>)}</div>
-          : <EmptyState icon={Film} title="No videos yet" body={`${member.name} hasn't uploaded any videos yet.`} action="" onAction={() => {}} />
-      )}
     </section>
   );
 }
 
 function ProfileScreen() {
-  const { currentUser, users, setUsers, setSessionId, isAdmin, uploads, posts, friendRequests, setFriendRequests, setSelectedCommunityUser, setCommunityView, setSelectedMessageUser, signOut, go, notify, t } = useApp();
+  const { currentUser, users, setUsers, setSessionId, isAdmin, posts, friendRequests, setFriendRequests, setSelectedCommunityUser, setCommunityView, setSelectedMessageUser, signOut, go, notify, t } = useApp();
   const [mode, setMode] = React.useState<"signup" | "login">("login");
   const [editOpen, setEditOpen] = React.useState(false);
-  const [profileTab, setProfileTab] = React.useState<"posts" | "uploads" | "friends">("posts");
+  const [profileTab, setProfileTab] = React.useState<"posts" | "friends">("posts");
 
   if (!currentUser) {
     return (
@@ -3991,7 +3261,6 @@ function ProfileScreen() {
 
   const initials = currentUser.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
   const myPosts = posts.filter((p) => p.userId === currentUser.id);
-  const myUploads = uploads.filter((u) => u.userId === currentUser.id);
   const myFriends = friendRequests.filter((r) => r.status === "accepted" && [r.fromId, r.toId].includes(currentUser.id));
   const myFriendIds = myFriends.map((r) => r.fromId === currentUser.id ? r.toId : r.fromId);
   const incomingRequests = friendRequests.filter((r) => r.toId === currentUser.id && r.status === "pending");
@@ -4007,7 +3276,6 @@ function ProfileScreen() {
         </div>
         <div className="ig-profile-stats">
           <div className="ig-stat"><span className="ig-stat-num">{myPosts.length}</span><span className="ig-stat-label">Posts</span></div>
-          <div className="ig-stat"><span className="ig-stat-num">{myUploads.length}</span><span className="ig-stat-label">Videos</span></div>
           <button className="ig-stat ig-stat-btn" onClick={() => setProfileTab("friends")}>
             <span className="ig-stat-num">{myFriendIds.length}</span>
             <span className="ig-stat-label">Friends {incomingRequests.length > 0 && <span className="profile-req-badge">{incomingRequests.length}</span>}</span>
@@ -4053,9 +3321,6 @@ function ProfileScreen() {
         <button className={`ig-profile-tab${profileTab === "posts" ? " active" : ""}`} onClick={() => setProfileTab("posts")} aria-label="Posts">
           <LayoutDashboard size={20} />
         </button>
-        <button className={`ig-profile-tab${profileTab === "uploads" ? " active" : ""}`} onClick={() => setProfileTab("uploads")} aria-label="Uploads">
-          <Film size={20} />
-        </button>
         <button className={`ig-profile-tab${profileTab === "friends" ? " active" : ""}`} onClick={() => setProfileTab("friends")} aria-label="Friends">
           <UserPlus size={20} />
           {incomingRequests.length > 0 && <span className="ig-tab-badge">{incomingRequests.length}</span>}
@@ -4076,24 +3341,6 @@ function ProfileScreen() {
           </div>
         ) : (
           <EmptyState icon={Camera} title="No posts yet" body="Share in the Community to see your posts here." action="Go to Community" onAction={() => go("community")} />
-        )
-      )}
-
-      {/* ── Uploads grid ── */}
-      {profileTab === "uploads" && (
-        myUploads.length > 0 ? (
-          <div className="ig-profile-grid">
-            {myUploads.map((upload) => (
-              <div key={upload.id} className="ig-profile-grid-cell ig-profile-grid-video-cell">
-                {upload.thumbnailUrl
-                  ? <img src={upload.thumbnailUrl} alt={upload.title} />
-                  : <div className="ig-profile-grid-placeholder"><Film size={22} style={{ opacity: 0.5 }} /></div>}
-                <span className={`ig-upload-status-badge${upload.status === "Approved" ? " approved" : upload.status === "Rejected" ? " rejected" : ""}`}>{upload.status}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <EmptyState icon={Film} title="No uploads yet" body="Upload a video to share your faith." action="Upload" onAction={() => go("community")} />
         )
       )}
 
@@ -4756,14 +4003,7 @@ function AdminTakeDown() {
 
 function ContentRules() {
   const { go, t } = useApp();
-  return <section className="screen"><SectionIntro eyebrow="Content Rules" title="Faith Flix content rules" body="Submissions should be faith-centered, respectful, lawful, and appropriate for a Christian community." /><div className="content-panel"><ul className="rules-list"><li>Share only content you own or have permission to upload.</li><li>Keep all posts centered on faith, scripture, worship, testimony, prayer, or ministry.</li><li>Do not upload hateful, harassing, graphic, or unsafe material.</li><li>Prayer and testimony content should protect private information.</li></ul><button className="primary-button" onClick={() => go("upload")}>Share Your Faith</button></div></section>;
-}
-
-function MyUploads() {
-  const { currentUser, uploads, t } = useApp();
-  if (!currentUser) return null;
-  const mine = uploads.filter((upload) => upload.userId === currentUser.id);
-  return <div className="content-panel"><SectionHeader title="My Uploads" action={`${mine.length} submitted`} />{mine.length ? mine.map((upload) => <div className="item-row" key={upload.id}><span>{upload.title}</span><span className="status-pill">{upload.status}</span>{upload.adminNote && <small>{upload.adminNote}</small>}</div>) : <p>No uploads submitted yet.</p>}</div>;
+  return <section className="screen"><SectionIntro eyebrow="Content Rules" title="Faith Flix content rules" body="Submissions should be faith-centered, respectful, lawful, and appropriate for a Christian community." /><div className="content-panel"><ul className="rules-list"><li>Share only content you own or have permission to upload.</li><li>Keep all posts centered on faith, scripture, worship, testimony, prayer, or ministry.</li><li>Do not upload hateful, harassing, graphic, or unsafe material.</li><li>Prayer and testimony content should protect private information.</li></ul><button className="primary-button" onClick={() => go("community")}>Open Community</button></div></section>;
 }
 
 function CommentBox({ targetId, comments, value, setValue }: { targetId: string; comments: CommentItem[]; value: string; setValue: (value: string) => void }) {
