@@ -1579,6 +1579,15 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
 
   const isCloudflare = isCloudflareStreamUrl(video.videoUrl || "");
 
+  React.useEffect(() => {
+    if (isFullscreen) {
+      document.body.classList.add("video-fullscreen");
+    } else {
+      document.body.classList.remove("video-fullscreen");
+    }
+    return () => document.body.classList.remove("video-fullscreen");
+  }, [isFullscreen]);
+
   const handleOuterTap = () => setIsFullscreen(f => !f);
   const handleCenterTap = (e: React.MouseEvent) => { e.stopPropagation(); tapVideo(); };
 

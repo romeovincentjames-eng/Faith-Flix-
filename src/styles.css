@@ -8612,9 +8612,21 @@ select {
   inset: 0 !important;
   width: 100vw !important;
   height: 100dvh !important;
-  z-index: 200 !important;
+  z-index: 9000 !important;
   scroll-snap-align: none;
   border-radius: 0;
+}
+
+/* Hide topbar + bottom nav when a video is fullscreen */
+body.video-fullscreen .topbar,
+body.video-fullscreen .bottom-nav {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.2s ease;
+}
+.topbar,
+.bottom-nav {
+  transition: opacity 0.2s ease;
 }
 
 .wfc-tap-overlay {
