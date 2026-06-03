@@ -2677,7 +2677,7 @@ function PostComposerSheet({ defaultTab, onClose }: { defaultTab: "post" | "vide
                     onChange={(e) => setPrayerTitle(e.target.value)}
                   />
                   <textarea
-                    className="post-sheet-textarea"
+                    className="prayer-body-textarea"
                     placeholder="Share your prayer request… Be as specific or general as you'd like."
                     value={prayerText}
                     onChange={(e) => setPrayerText(e.target.value)}

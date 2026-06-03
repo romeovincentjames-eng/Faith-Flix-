@@ -2987,6 +2987,15 @@ textarea:focus {
   gap: 12px;
   align-items: flex-start;
   margin-bottom: 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 14px;
+  transition: border-color 0.18s;
+}
+
+.post-sheet-composer:focus-within {
+  border-color: rgba(212,160,23,0.35);
 }
 
 .post-avatar-lg {
@@ -3118,6 +3127,31 @@ textarea:focus {
   flex-direction: column;
   gap: 10px;
   margin-bottom: 4px;
+}
+
+.prayer-body-textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #f7fbff;
+  font-size: 0.92rem;
+  font-family: inherit;
+  resize: none;
+  line-height: 1.55;
+  min-height: 120px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.18s;
+}
+
+.prayer-body-textarea:focus {
+  border-color: rgba(212,160,23,0.45);
+}
+
+.prayer-body-textarea::placeholder {
+  color: rgba(247,251,255,0.3);
 }
 
 .prayer-title-input {
