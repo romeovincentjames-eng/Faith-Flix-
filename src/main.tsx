@@ -2958,7 +2958,21 @@ function CommunitySearchResults() {
 function FaithFeed() {
   const { currentUser, posts, setPosts, notify, comments, commSearchQuery } = useApp();
   const [feedMode, setFeedMode] = React.useState<"posts" | "videos">("posts");
+  const [tweetText, setTweetText] = React.useState("");
+  const [tweetScripture, setTweetScripture] = React.useState("");
+  const [tweetImage, setTweetImage] = React.useState<File | null>(null);
+  const [tweetImagePreview, setTweetImagePreview] = React.useState("");
   const actor = currentUser?.id ?? "guest";
+  const initials = currentUser ? currentUser.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase() : "?";
+
+  const submitTweet = () => {
+    if (!currentUser) return notify("Sign in to post.");
+    if (!tweetText.trim()) return notify("Write something first.");
+    const info = fileInfo(tweetImage);
+    setPosts((current) => [{ id: uid("post"), userId: currentUser.id, author: currentUser.name, text: tweetText.trim(), scripture: tweetScripture.trim(), imageName: info.name, imageUrl: info.url, likes: [], saves: [], reports: [] }, ...current]);
+    setTweetText(""); setTweetScripture(""); setTweetImage(null); setTweetImagePreview("");
+    notify("Post shared! 🙌");
+  };
 
   const togglePost = (id: string, field: "likes" | "saves" | "reports", message: string) => {
     setPosts(posts.map((post) => post.id === id ? { ...post, [field]: post[field].includes(actor) ? post[field].filter((item) => item !== actor) : [...post[field], actor] } : post));
@@ -2978,9 +2992,39 @@ function FaithFeed() {
 
       {feedMode === "posts" ? (
         <>
+          {!commSearchQuery && (
+            <div className="inline-tweet-composer">
+              <div className="tweet-left">
+                <div className="post-avatar tweet-avatar">{initials}</div>
+              </div>
+              <div className="inline-tweet-right">
+                <textarea
+                  className="inline-tweet-textarea"
+                  placeholder="What's on your heart today?"
+                  value={tweetText}
+                  onChange={(e) => setTweetText(e.target.value)}
+                  rows={tweetText.length > 60 ? 4 : 2}
+                />
+                {tweetImagePreview && <img className="tweet-image" src={tweetImagePreview} alt="" />}
+                <input
+                  className="inline-tweet-scripture"
+                  placeholder="✦ Scripture reference (optional)"
+                  value={tweetScripture}
+                  onChange={(e) => setTweetScripture(e.target.value)}
+                />
+                <div className="inline-tweet-bottom">
+                  <label className="inline-tweet-photo" aria-label="Add photo">
+                    <Camera size={18} />
+                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0] ?? null; setTweetImage(f); setTweetImagePreview(f ? URL.createObjectURL(f) : ""); }} />
+                  </label>
+                  <button className="inline-tweet-submit" onClick={submitTweet} disabled={!tweetText.trim()}>Post</button>
+                </div>
+              </div>
+            </div>
+          )}
           {commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={Search} title="No posts match your search." body="Try a different keyword." action="" onAction={() => {}} />}
           {filteredPosts.map((post) => <PostCard key={post.id} post={post} comments={comments.filter((item) => item.targetId === post.id)} onToggle={togglePost} />)}
-          {!commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={MessagesSquare} title="No posts yet — be first!" body="Tap the gold + button below to share encouragement, a testimony, or what God put on your heart." action="" onAction={() => {}} />}
+          {!commSearchQuery && filteredPosts.length === 0 && <EmptyState icon={MessagesSquare} title="No posts yet — be first!" body="Share encouragement, a testimony, or what God put on your heart." action="" onAction={() => {}} />}
         </>
       ) : (
         <>
@@ -3036,16 +3080,34 @@ function CommunityVideoComposer() {
   };
 
   return (
-    <div className="form-card community-video-composer">
-      <SectionHeader title="Post a video" action="Community" />
-      <Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
-      <label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
-      <Field label="Scripture reference" value={form.scripture} onChange={(scripture) => setForm({ ...form, scripture })} />
-      <Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={COMMUNITY_VIDEO_CATEGORIES} />
-      <Field label="Tags" value={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
-      <FileField label="Video file" onChange={setVideoFile} />
-      <FileField label="Thumbnail image" onChange={setThumbFile} />
-      <button className="primary-button" type="button" onClick={postVideo}>Post Video</button>
+    <div className="inline-dark-composer">
+      <div className="inline-dark-composer-header">
+        <Video size={18} style={{ color: "var(--gold)" }} />
+        <span>Share a Faith Video</span>
+      </div>
+      <div className="prayer-sheet-form">
+        <input className="post-sheet-scripture-input prayer-title-input" placeholder="Video title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+        <textarea className="prayer-body-textarea" placeholder="Description (optional)" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+        <input className="post-sheet-scripture-input" placeholder="✦ Scripture reference (optional)" value={form.scripture} onChange={(e) => setForm({ ...form, scripture: e.target.value })} />
+        <select className="post-sheet-scripture-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} style={{ cursor: "pointer" }}>
+          {COMMUNITY_VIDEO_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <div className="vid-sheet-file-row">
+          <label className="vid-sheet-file-btn">
+            <Video size={15} />
+            {videoFile ? videoFile.name : "Choose video file"}
+            <input type="file" accept="video/*" style={{ display: "none" }} onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)} />
+          </label>
+          <label className="vid-sheet-file-btn vid-sheet-thumb-btn">
+            <ImageIcon size={15} />
+            {thumbFile ? "Thumbnail set" : "Thumbnail (optional)"}
+            <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => setThumbFile(e.target.files?.[0] ?? null)} />
+          </label>
+        </div>
+      </div>
+      <div className="inline-dark-composer-footer">
+        <button className="comm-post-btn" onClick={postVideo} disabled={!form.title.trim() || !videoFile}>Post Video</button>
+      </div>
     </div>
   );
 }
@@ -3084,11 +3146,25 @@ function PrayerWall() {
 
   return (
     <>
-      <div className="form-card">
-        <Field label="Request title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
-        <label>Request text<textarea value={form.text} onChange={(event) => setForm({ ...form, text: event.target.value })} /></label>
-        <Select label="Visibility" value={form.visibility} onChange={(visibility) => setForm({ ...form, visibility })} options={["Public", "Private"]} />
-        <button className="primary-button" onClick={create}>Post Prayer Request</button>
+      <div className="inline-dark-composer">
+        <div className="inline-dark-composer-header">
+          <HeartHandshake size={18} style={{ color: "var(--gold)" }} />
+          <span>Post a Prayer Request</span>
+        </div>
+        <div className="prayer-sheet-form">
+          <input className="post-sheet-scripture-input prayer-title-input" placeholder="Prayer title (e.g. Healing for my family)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          <textarea className="prayer-body-textarea" placeholder="Share your prayer request…" rows={3} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} />
+          <div className="prayer-visibility-row">
+            <span className="prayer-visibility-label">Visibility</span>
+            <div className="prayer-visibility-toggle">
+              <button className={`prayer-vis-btn${form.visibility === "Public" ? " active" : ""}`} onClick={() => setForm({ ...form, visibility: "Public" })}>🌐 Public</button>
+              <button className={`prayer-vis-btn${form.visibility === "Private" ? " active" : ""}`} onClick={() => setForm({ ...form, visibility: "Private" })}>🔒 Private</button>
+            </div>
+          </div>
+        </div>
+        <div className="inline-dark-composer-footer">
+          <button className="comm-post-btn prayer-post-btn" onClick={create} disabled={!form.title.trim() || !form.text.trim()}>Post Prayer</button>
+        </div>
       </div>
       {(() => {
         const filtered = commSearchQuery

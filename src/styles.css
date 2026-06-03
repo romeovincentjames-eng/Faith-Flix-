@@ -3536,6 +3536,128 @@ textarea:focus {
   margin-bottom: 18px;
 }
 
+/* ═══════════════════════════════════════════════════
+   INLINE TWEET COMPOSER (Posts tab)
+═══════════════════════════════════════════════════ */
+.inline-tweet-composer {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.inline-tweet-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.inline-tweet-textarea {
+  width: 100%;
+  background: none;
+  border: none;
+  outline: none;
+  color: #f7fbff;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: none;
+  line-height: 1.55;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.inline-tweet-textarea::placeholder {
+  color: rgba(247,251,255,0.3);
+}
+
+.inline-tweet-scripture {
+  background: none;
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  outline: none;
+  color: var(--gold);
+  font-size: 0.82rem;
+  font-family: inherit;
+  padding: 8px 0 4px;
+  width: 100%;
+  opacity: 0.85;
+}
+
+.inline-tweet-scripture::placeholder {
+  color: rgba(212,160,23,0.4);
+}
+
+.inline-tweet-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4px;
+}
+
+.inline-tweet-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--gold);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.inline-tweet-photo:hover { background: rgba(212,160,23,0.12); }
+
+.inline-tweet-submit {
+  padding: 7px 20px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #ffe29a, #d4a017);
+  color: #10131a;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.inline-tweet-submit:disabled { opacity: 0.38; cursor: not-allowed; }
+.inline-tweet-submit:not(:disabled):hover { opacity: 0.88; transform: scale(1.04); }
+
+/* ═══════════════════════════════════════════════════
+   INLINE DARK COMPOSER (Video + Prayer tabs)
+═══════════════════════════════════════════════════ */
+.inline-dark-composer {
+  margin: 12px 16px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.inline-dark-composer-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 10px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #f7fbff;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.inline-dark-composer .prayer-sheet-form {
+  padding: 14px 16px 4px;
+  margin-bottom: 0;
+}
+
+.inline-dark-composer-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 16px 14px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
 .comm-format-notice {
   display: flex;
   align-items: center;
