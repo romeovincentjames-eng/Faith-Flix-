@@ -910,7 +910,7 @@ function App() {
           {visiblePage === "rules" && <ContentRules />}
         </main>
 
-        {!isAdmin && visiblePage !== "community" && visiblePage !== "upload" && !(visiblePage === "profile" && !currentUser) && !(visiblePage === "forgot-password" && !currentUser) && (
+        {!isAdmin && !(visiblePage === "profile" && !currentUser) && !(visiblePage === "forgot-password" && !currentUser) && (
           <nav className="bottom-nav seven" aria-label="Primary navigation">
             <NavButton label={t("nav.home")} icon={Home} active={visiblePage === "home"} onClick={() => go("home")} />
             <NavButton label={t("nav.watch")} icon={Film} active={visiblePage === "watch"} onClick={() => go("watch")} />
@@ -2151,40 +2151,30 @@ function CommunitySharesScreen({ compact = false }: { compact?: boolean }) {
 }
 
 function CommunityScreen() {
-  const { communityView, setCommunityView, notify, go, commSearchQuery, t } = useApp();
+  const { communityView, setCommunityView, notify, commSearchQuery, t } = useApp();
   const tabs: { id: CommunityView; label: string; icon: React.ElementType }[] = [
     { id: "feed", label: t("comm.tab.feed"), icon: MessagesSquare },
     { id: "prayer", label: t("comm.tab.prayer"), icon: HeartHandshake },
-    { id: "upload", label: t("comm.tab.upload"), icon: Upload },
+    { id: "upload", label: "Share", icon: Upload },
     { id: "groups", label: t("comm.tab.groups"), icon: Users },
     { id: "friends", label: t("comm.tab.friends"), icon: UserPlus },
     { id: "messages", label: t("comm.tab.messages"), icon: Inbox },
   ];
 
-  const screenTitles: Record<CommunityView, string> = {
-    feed: t("comm.title.feed"),
-    prayer: t("comm.title.prayer"),
-    upload: t("comm.title.upload"),
-    groups: t("comm.title.groups"),
-    friends: t("comm.title.friends"),
-    messages: t("comm.title.messages"),
-  };
-
   return (
-    <div className="community-app">
-      <div className="community-topbar">
-        <div className="community-brand">
-          <span className="community-brand-icon"><Cross size={15} /></span>
-          <span className="community-brand-name">{screenTitles[communityView]}</span>
-        </div>
+    <section className="screen">
+      <SectionIntro eyebrow="Community" title="Faith-centered connection" body="Post encouragement, share your faith, pray together, and connect with believers." />
+      <div className="segmented-row">
+        {tabs.map(({ id, label, icon: Icon }) => (
+          <button key={id} className={communityView === id ? "segment active" : "segment"} onClick={() => setCommunityView(id)}>
+            <Icon size={16} />{label}
+          </button>
+        ))}
       </div>
-
-
-      <div className="community-body">
-        {commSearchQuery.trim() ? <CommunitySearchResults /> : <>
+      {commSearchQuery.trim() ? <CommunitySearchResults /> : <>
         {communityView === "feed" && <FaithFeed />}
         {communityView === "prayer" && <PrayerWall />}
-        {communityView === "upload" && <UploadScreen />}
+        {communityView === "upload" && <CommunityUpload />}
         {communityView === "groups" && (
           <div className="comm-groups-grid">
             {COMMUNITY_GROUPS.map((group) => (
@@ -2201,29 +2191,89 @@ function CommunityScreen() {
         )}
         {communityView === "friends" && <FriendsPanel />}
         {communityView === "messages" && <MessagesPanel />}
-        </>}
-      </div>
-
-      <nav className="community-inner-nav">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            className={communityView === id ? "comm-nav-btn active" : "comm-nav-btn"}
-            onClick={() => setCommunityView(id)}
-            aria-label={label}
-          >
-            <Icon size={id === "upload" ? 23 : 21} />
-            <span>{label}</span>
-          </button>
-        ))}
-      </nav>
-      <button className="comm-back-bar" onClick={() => go("home")} aria-label={t("comm.backToApp")}>
-        Main Menu
-      </button>
-    </div>
+      </>}
+    </section>
   );
 }
 
+
+function CommunityUpload() {
+  const { currentUser, setUploads, setVideos, setSelectedVideoId, setCommunityView, setUploadProgress, notify, go } = useApp();
+  const [form, setForm] = React.useState({ title: "", description: "", scripture: "", category: COMMUNITY_VIDEO_CATEGORIES[0], testimonyType: "Testimony", tags: "", consent: false, rules: false, cropDimension: "9:16", cropRatio: "9 / 16" });
+  const [videoFile, setVideoFile] = React.useState<File | null>(null);
+  const [thumbFile, setThumbFile] = React.useState<File | null>(null);
+  const [thumbPreview, setThumbPreview] = React.useState("");
+
+  if (!currentUser) {
+    return <EmptyState icon={Lock} title="Sign in to share" body="Create an account or log in to upload faith videos and testimonies." action="Open Profile" onAction={() => go("profile")} />;
+  }
+
+  const submit = () => {
+    if (!form.title || !form.consent || !form.rules) return notify("Add a title and confirm both checkboxes.");
+    if (!videoFile) return notify("Choose a video file first.");
+
+    const uploadUser = currentUser;
+    const uploadForm = { ...form };
+    const uploadVideoFile = videoFile;
+    const uploadThumbFile = thumbFile;
+    const progress = startUploadProgress(setUploadProgress, "Uploading in background");
+
+    setForm({ ...form, title: "", description: "", scripture: "", tags: "", consent: false, rules: false });
+    setVideoFile(null);
+    setThumbFile(null);
+    setThumbPreview("");
+    notify("Uploading in background. Keep the app open.");
+
+    void (async () => {
+      try {
+        progress.step("Checking login", 20);
+        const authUser = await getActiveAuthUser();
+        progress.step("Uploading video", 8);
+        const video = await uploadMediaFile(uploadVideoFile, authUser.id, "videos", (percent) => progress.percent("Uploading video", percent));
+        progress.step(uploadThumbFile ? "Uploading thumbnail" : "Saving post", 94);
+        const thumb = uploadThumbFile ? await uploadMediaFile(uploadThumbFile, authUser.id, "thumbnails") : { name: "Cloudflare thumbnail", url: video.thumbnailUrl || "" };
+        progress.step("Publishing", 92);
+        const uploadId = uid("upload");
+        const publicVideo: Omit<VideoItem, "id" | "createdAt"> = { source: "user", title: uploadForm.title, description: uploadForm.description, scripture: uploadForm.scripture, category: uploadForm.category, seriesId: "", episode: "", duration: "", creator: uploadUser.name, tags: uploadForm.tags, status: "Published", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, cropDimension: uploadForm.cropDimension, cropRatio: uploadForm.cropRatio };
+        const { data, error } = await supabase.from("videos").insert(videoToDb(publicVideo, authUser.id)).select("*").single();
+        if (error) throw error;
+        const savedVideo = videoFromDb(data as DbVideo);
+        setUploads((current) => [...current, { id: uploadId, userId: uploadUser.id, ...uploadForm, visibility: "Public", videoName: video.name, videoUrl: video.url, thumbnailName: thumb.name, thumbnailUrl: thumb.url, status: "Approved", adminNote: "Published instantly." }]);
+        setVideos((current) => [...current.filter((item) => item.id !== savedVideo.id), savedVideo]);
+        setSelectedVideoId(savedVideo.id);
+        progress.done("Posted");
+        notify("Posted! Video may take a minute to process.");
+        setCommunityView("feed");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Upload failed.";
+        progress.fail("Upload failed");
+        notify(message);
+      }
+    })();
+  };
+
+  return (
+    <>
+      <div className="form-card">
+        <h2>Share your faith</h2>
+        <p className="comm-upload-hint">Upload a testimony, devotional, worship clip, or faith video to share with the community.</p>
+        <Field label="Title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
+        <label>Description<textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
+        <Field label="Scripture reference" value={form.scripture} onChange={(scripture) => setForm({ ...form, scripture })} />
+        <Select label="Category" value={form.category} onChange={(category) => setForm({ ...form, category })} options={COMMUNITY_VIDEO_CATEGORIES} />
+        <Select label="Type" value={form.testimonyType} onChange={(testimonyType) => setForm({ ...form, testimonyType })} options={["Testimony", "Answered prayer", "Devotional", "Church clip", "Worship"]} />
+        <Field label="Tags (optional)" value={form.tags} onChange={(tags) => setForm({ ...form, tags })} />
+        <CropDimensionPicker value={form.cropDimension} onChange={(option) => setForm({ ...form, cropDimension: option.label, cropRatio: option.ratio })} />
+        <FileField label="Video file" onChange={setVideoFile} />
+        <PhotoCropChooser label="Thumbnail (optional)" value={thumbPreview} cropLabel={form.cropDimension} cropRatio={form.cropRatio} onChange={(file, previewUrl) => { setThumbFile(file); setThumbPreview(previewUrl); }} />
+        <Check label="I have permission to share this content." checked={form.consent} onChange={(consent) => setForm({ ...form, consent })} />
+        <Check label="This submission follows the Faith Flix content rules." checked={form.rules} onChange={(rules) => setForm({ ...form, rules })} />
+        <button className="primary-button" type="button" onClick={submit}>Post Now</button>
+      </div>
+      <MyUploads />
+    </>
+  );
+}
 
 function CommunitySearchResults() {
   const { commSearchQuery, setCommSearchQuery, posts, prayers, publicVideos, users, messages, currentUser, setSelectedVideoId, setCommunityView, setSelectedCommunityUser, setSelectedMessageUser, go, notify } = useApp();
@@ -2756,7 +2806,6 @@ function AdminUpload() {
     if (!currentUser) return notify("Log in as admin first.");
     if (!form.title) return notify("Add a title first.");
     if (!videoFile) return notify("Choose a video file first.");
-    if (!form.seriesId) return notify("Choose a series for this professional video.");
 
     const uploadUser = currentUser;
     const uploadForm = { ...form };
@@ -2885,6 +2934,9 @@ function AdminVideos() {
               {isEditing
                 ? <button className="primary-button" onClick={finishEditing}><CheckCircle2 size={16} /> Save Changes</button>
                 : <button className="secondary-button" onClick={() => setEditingId(video.id)}><Edit3 size={16} /> Edit All Details</button>}
+              {video.status !== "Hidden"
+                ? <button className="secondary-button danger" onClick={() => updateStatus(video.id, "Hidden")}><EyeOff size={15} /> Take Down</button>
+                : <button className="primary-button" onClick={() => updateStatus(video.id, "Published")}><CheckCircle2 size={15} /> Restore</button>}
               <SelectButton value={video.status} options={["Draft", "Published", "Hidden"]} onChange={(s) => updateStatus(video.id, s as Status)} />
             </div>
           </article>
