@@ -2776,7 +2776,7 @@ function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, save
             <h2 className="album-sheet-title">{album.title}</h2>
             <p className="album-sheet-artist">{album.artist} · {album.year}</p>
             {album.description && <p className="album-sheet-desc">{album.description}</p>}
-            {first && <button className="sp-play-btn" style={{ marginTop: 10 }} onClick={() => { onPlay(first); onClose(); onExpand(); }}><Play size={15} /> Play All</button>}
+            {first && <button className="sp-play-btn" style={{ marginTop: 10 }} onClick={() => onPlay(first)}><Play size={15} /> Play All</button>}
           </div>
           <button className="ep-close-btn" style={{ alignSelf: "flex-start", marginLeft: "auto", flexShrink: 0 }} onClick={onClose} aria-label="Close"><X size={20} /></button>
         </div>
@@ -2787,7 +2787,7 @@ function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, save
             const playing = active && isPlaying;
             const saved = savedSongIds.includes(song.id);
             return (
-              <div key={song.id} className={`album-sheet-track${active ? " active" : ""}`} onClick={() => { onPlay(song); onClose(); onExpand(); }} role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && (onPlay(song), onClose(), onExpand())}>
+              <div key={song.id} className={`album-sheet-track${active ? " active" : ""}`} onClick={() => onPlay(song)} role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && onPlay(song)}>
                 <div className="album-sheet-track-num">
                   {playing ? <span className="sp-eq"><span /><span /><span /></span> : active ? <Play size={12} style={{ color: "var(--gold)" }} /> : <span>{idx + 1}</span>}
                 </div>
