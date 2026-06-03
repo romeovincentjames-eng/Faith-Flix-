@@ -862,26 +862,47 @@ function App() {
   const [notifPanelOpen, setNotifPanelOpen] = React.useState(false);
 
   const navRoRef = React.useRef<ResizeObserver | null>(null);
+
+  const updateNavH = React.useCallback(() => {
+    const nav = document.querySelector<HTMLElement>(".bottom-nav");
+    if (!nav) return;
+    const vv = window.visualViewport;
+    const viewH = vv ? vv.height : window.innerHeight;
+    const rect = nav.getBoundingClientRect();
+    const value = Math.ceil(viewH - rect.top);
+    document.documentElement.style.setProperty("--nav-h", `${Math.max(0, value)}px`);
+  }, []);
+
   const navOnResize = React.useCallback((node: HTMLElement | null) => {
     if (navRoRef.current) {
       navRoRef.current.disconnect();
       navRoRef.current = null;
     }
     if (!node) return;
-    const update = () => {
-      const rect = node.getBoundingClientRect();
-      const value = Math.ceil(window.innerHeight - rect.top);
-      document.documentElement.style.setProperty("--nav-h", `${value}px`);
-    };
-    update();
-    const ro = new ResizeObserver(update);
+    const ro = new ResizeObserver(updateNavH);
     ro.observe(node);
     navRoRef.current = ro;
-  }, []);
+    updateNavH();
+  }, [updateNavH]);
 
   React.useEffect(() => {
+    const vv = window.visualViewport;
+
+    const onViewportChange = () => {
+      if (!vv) return;
+      const keyboardH = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty("--keyboard-inset", `${keyboardH}px`);
+      updateNavH();
+    };
+
+    if (vv) {
+      vv.addEventListener("resize", onViewportChange);
+      vv.addEventListener("scroll", onViewportChange);
+      onViewportChange();
+    }
+
     const onResize = () => {
-      if (navRoRef.current) {
+      if (!vv) {
         const nav = document.querySelector<HTMLElement>(".bottom-nav");
         if (nav) {
           const rect = nav.getBoundingClientRect();
@@ -890,8 +911,34 @@ function App() {
       }
     };
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+
+    const onFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const tag = target.tagName;
+      if (tag !== "INPUT" && tag !== "TEXTAREA" && target.getAttribute("contenteditable") !== "true") return;
+      setTimeout(() => {
+        const navH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--nav-h")) || 80;
+        const rect = target.getBoundingClientRect();
+        const viewH = vv ? vv.height : window.innerHeight;
+        const gap = 12;
+        if (rect.bottom > viewH - navH - gap) {
+          const scrollBy = rect.bottom - (viewH - navH - gap);
+          window.scrollBy({ top: scrollBy, behavior: "smooth" });
+        }
+      }, 100);
+    };
+    document.addEventListener("focusin", onFocusIn);
+
+    return () => {
+      if (vv) {
+        vv.removeEventListener("resize", onViewportChange);
+        vv.removeEventListener("scroll", onViewportChange);
+      }
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("focusin", onFocusIn);
+    };
+  }, [updateNavH]);
 
   const notify = (message: string) => {
     setToast(message);
