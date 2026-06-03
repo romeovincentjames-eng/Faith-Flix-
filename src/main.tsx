@@ -2425,7 +2425,7 @@ function WorshipScreen() {
   const albumSheet = selectedAlbumId && (() => {
     const album = worshipAlbums.find(a => a.id === selectedAlbumId);
     const albumSongs = album ? worshipSongs.filter(s => album.trackIds.includes(s.id)) : [];
-    return album ? <AlbumDetailSheet album={album} songs={albumSongs} currentSongId={currentSongId} isPlaying={isPlaying} onPlay={s => { playSong(s); }} savedSongIds={savedWorshipSongIds} onToggleSave={toggleSave} onClose={() => setSelectedAlbumId(null)} /> : null;
+    return album ? <AlbumDetailSheet album={album} songs={albumSongs} currentSongId={currentSongId} isPlaying={isPlaying} onPlay={s => { playSong(s); }} savedSongIds={savedWorshipSongIds} onToggleSave={toggleSave} onClose={() => setSelectedAlbumId(null)} onExpand={() => setShowExpandedPlayer(true)} /> : null;
   })();
 
   const nowPlayingBar = playerProps && <NowPlayingBar {...playerProps} onExpand={() => setShowExpandedPlayer(true)} />;
@@ -2457,7 +2457,7 @@ function WorshipScreen() {
               {albumsOfType.map(album => {
                 const first = worshipSongs.find(s => album.trackIds.includes(s.id));
                 return (
-                  <div key={album.id} className="ws-browse-card" onClick={() => setSelectedAlbumId(album.id)} role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && setSelectedAlbumId(album.id)}>
+                  <div key={album.id} className="ws-browse-card" onClick={() => { setSelectedAlbumId(album.id); if (first) playSong(first); }} role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && (setSelectedAlbumId(album.id), first && playSong(first))}>
                     <div className="ws-browse-card-art">
                       {album.coverUrl ? <img src={album.coverUrl} alt={album.title} /> : <div className="ws-browse-card-art-empty"><Music2 size={32} /></div>}
                       {first && <button className="ws-browse-card-play" onClick={e => { e.stopPropagation(); playSong(first); }} aria-label="Play"><Play size={18} /></button>}
@@ -2701,9 +2701,9 @@ function ExpandedPlayerOverlay({ song, album, isPlaying, progress, currentTime, 
   );
 }
 
-function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, savedSongIds, onToggleSave, onClose }: {
+function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, savedSongIds, onToggleSave, onClose, onExpand }: {
   album: WorshipAlbum; songs: WorshipSong[]; currentSongId: string | null; isPlaying: boolean;
-  onPlay: (s: WorshipSong) => void; savedSongIds: string[]; onToggleSave: (id: string) => void; onClose: () => void;
+  onPlay: (s: WorshipSong) => void; savedSongIds: string[]; onToggleSave: (id: string) => void; onClose: () => void; onExpand: () => void;
 }) {
   React.useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -2725,7 +2725,7 @@ function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, save
             <h2 className="album-sheet-title">{album.title}</h2>
             <p className="album-sheet-artist">{album.artist} · {album.year}</p>
             {album.description && <p className="album-sheet-desc">{album.description}</p>}
-            {first && <button className="sp-play-btn" style={{ marginTop: 10 }} onClick={() => { onPlay(first); onClose(); }}><Play size={15} /> Play All</button>}
+            {first && <button className="sp-play-btn" style={{ marginTop: 10 }} onClick={() => { onPlay(first); onClose(); onExpand(); }}><Play size={15} /> Play All</button>}
           </div>
           <button className="icon-button" style={{ alignSelf: "flex-start", marginLeft: "auto" }} onClick={onClose} aria-label="Close"><X size={20} /></button>
         </div>
@@ -2736,7 +2736,7 @@ function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, save
             const playing = active && isPlaying;
             const saved = savedSongIds.includes(song.id);
             return (
-              <div key={song.id} className={`album-sheet-track${active ? " active" : ""}`} onClick={() => { onPlay(song); onClose(); }} role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && (onPlay(song), onClose())}>
+              <div key={song.id} className={`album-sheet-track${active ? " active" : ""}`} onClick={() => { onPlay(song); onClose(); onExpand(); }} role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && (onPlay(song), onClose(), onExpand())}>
                 <div className="album-sheet-track-num">
                   {playing ? <span className="sp-eq"><span /><span /><span /></span> : active ? <Play size={12} style={{ color: "var(--gold)" }} /> : <span>{idx + 1}</span>}
                 </div>
