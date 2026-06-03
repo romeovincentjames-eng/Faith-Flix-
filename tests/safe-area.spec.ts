@@ -231,6 +231,38 @@ test.describe('Keyboard open — notched iPhone, safe-area 34 px, keyboard-inset
 
 });
 
+// ── Visual snapshot tests (image diff) ───────────────────────────────────────
+//
+// These tests capture full-page screenshots of the safe-area layout and compare
+// them against committed baseline images.  Any unintended visual shift — e.g. a
+// bar widening and overlapping the nav pill — will cause a pixel diff failure
+// even when the arithmetic-based tests above still pass.
+//
+// To regenerate baselines after an intentional change run:
+//   npx playwright test --update-snapshots
+
+test.describe('Visual snapshots — safe-area layout', () => {
+  test('iPhone 14 layout with --sat 34 px matches snapshot', async ({ page }) => {
+    await buildPage(page, 34, { width: 390, height: 844 });
+    await expect(page).toHaveScreenshot('iphone14-sat34.png', { fullPage: true });
+  });
+
+  test('iPhone SE layout with --sat 0 px matches snapshot', async ({ page }) => {
+    await buildPage(page, 0, { width: 375, height: 667 });
+    await expect(page).toHaveScreenshot('iphone-se-sat0.png', { fullPage: true });
+  });
+
+  test('iPhone 14 layout with keyboard open matches snapshot', async ({ page }) => {
+    await buildPageWithKeyboard(page, 34, { width: 390, height: 844 }, KEYBOARD_INSET);
+    await expect(page).toHaveScreenshot('iphone14-sat34-keyboard.png', { fullPage: true });
+  });
+
+  test('iPhone SE layout with keyboard open matches snapshot', async ({ page }) => {
+    await buildPageWithKeyboard(page, 0, { width: 375, height: 667 }, KEYBOARD_INSET);
+    await expect(page).toHaveScreenshot('iphone-se-sat0-keyboard.png', { fullPage: true });
+  });
+});
+
 // ── --nav-h invariant guard ───────────────────────────────────────────────────
 
 test('--nav-h must be greater than 74 px (required by safe-area invariant)', async ({ page }) => {

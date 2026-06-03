@@ -23,6 +23,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
+  expect: {
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.001,
+    },
+  },
   use: {
     trace: 'on-first-retry',
   },
