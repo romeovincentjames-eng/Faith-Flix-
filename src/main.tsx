@@ -2344,7 +2344,8 @@ function WorshipScreen() {
   const singles = worshipAlbums.filter(a => a.type === "Single");
   const eps = worshipAlbums.filter(a => a.type === "EP");
   const albums = worshipAlbums.filter(a => a.type === "Album");
-  const featuredEp = worshipAlbums.find(a => a.id === "album-faith-rising");
+  const currentAlbum = currentSong?.albumId ? worshipAlbums.find(a => a.id === currentSong.albumId) : undefined;
+  const featuredEp = currentAlbum ?? worshipAlbums.find(a => a.id === "album-faith-rising");
   const featuredEpSongs = featuredEp ? worshipSongs.filter(s => featuredEp.trackIds.includes(s.id)) : [];
   const savedSongs = worshipSongs.filter(s => savedWorshipSongIds.includes(s.id));
 
@@ -2511,7 +2512,7 @@ function WorshipScreen() {
           </div>
           <div className="ws-featured-actions">
             <button className="sp-play-btn" onClick={() => featuredEpSongs[0] && playSong(featuredEpSongs[0])}>
-              <Play size={15} /> Play EP
+              <Play size={15} /> Play {featuredEp?.type ?? ""}
             </button>
             <button className="sp-shuffle-btn" onClick={() => { const r = featuredEpSongs[Math.floor(Math.random() * featuredEpSongs.length)]; if (r) { setShuffle(true); playSong(r); } }}>Shuffle</button>
           </div>
