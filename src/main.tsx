@@ -1686,6 +1686,7 @@ function SeriesDetailView({ series, episodes, onBack }: { series: SeriesItem; ep
 
 function SeriesScreen() {
   const { publicSeries, publicVideos, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId } = useApp();
+  const [activeCategory, setActiveCategory] = React.useState("All");
 
   const focusedSeries = selectedSeriesId ? publicSeries.find((s) => s.id === selectedSeriesId) : null;
   const focusedEpisodes = focusedSeries
@@ -1699,6 +1700,8 @@ function SeriesScreen() {
   const publishedSeries = publicSeries.filter((s) => s.status === "Published");
   const featuredSeries = publishedSeries.find((s) => s.featured) ?? publishedSeries[0];
   const categories = Array.from(new Set(publishedSeries.map((s) => s.category).filter(Boolean)));
+
+  const visibleCategories = activeCategory === "All" ? categories : categories.filter((c) => c === activeCategory);
 
   const playFirstEpisode = (item: SeriesItem) => {
     const firstEp = publicVideos.find((v) => v.seriesId === item.title && v.status === "Published");
@@ -1731,7 +1734,21 @@ function SeriesScreen() {
         </div>
       )}
 
-      {categories.length > 0 ? categories.map((category) => {
+      {categories.length > 1 && (
+        <div className="series-category-filter">
+          {["All", ...categories].map((cat) => (
+            <button
+              key={cat}
+              className={`category-pill series-cat-pill${activeCategory === cat ? " active" : ""}`}
+              onClick={() => setActiveCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {visibleCategories.length > 0 ? visibleCategories.map((category) => {
         const catSeries = publishedSeries.filter((s) => s.category === category);
         return (
           <div key={category} className="netflix-row">

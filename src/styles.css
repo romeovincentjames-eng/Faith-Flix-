@@ -5893,7 +5893,7 @@ textarea:focus {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 130px;
-  gap: 14px;
+  gap: 20px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
@@ -6013,7 +6013,7 @@ textarea:focus {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 200px;
-  gap: 14px;
+  gap: 20px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
@@ -6105,6 +6105,31 @@ textarea:focus {
   padding: 0 !important;
   display: block !important;
   overflow-x: hidden;
+}
+
+.series-category-filter {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  padding: 12px 16px 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.series-category-filter::-webkit-scrollbar { display: none; }
+
+.series-cat-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  min-height: 34px;
+  padding: 6px 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  background: none;
+  border: none;
+  flex-shrink: 0;
 }
 
 .netflix-badge {
@@ -6278,7 +6303,7 @@ textarea:focus {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 105px;
-  gap: 14px;
+  gap: 20px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
