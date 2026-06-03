@@ -151,6 +151,86 @@ test.describe('Non-notched iPhone — safe-area 0 px', () => {
   });
 });
 
+// ── Keyboard-open state (notched iPhone, keyboard-inset = 300 px) ─────────────
+//
+// Simulates the soft keyboard being open by setting --keyboard-inset and then
+// mirroring what the app's ResizeObserver + updateNavH callback does at runtime:
+// --nav-h = Math.ceil(innerHeight - nav.getBoundingClientRect().top).
+// This ensures the test exercises the same CSS arithmetic the browser will use.
+
+const KEYBOARD_INSET = 300; // realistic iOS / Android soft-keyboard height in px
+
+async function buildPageWithKeyboard(
+  page: Page,
+  sat: number,
+  viewport: { width: number; height: number },
+  keyboardInset: number,
+) {
+  await page.setViewportSize(viewport);
+
+  await page.setContent(`<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+${STYLES_CSS}
+:root { --sat: ${sat}px; --keyboard-inset: ${keyboardInset}px; }
+</style>
+</head>
+<body>
+  <nav class="bottom-nav"></nav>
+  <button class="comm-fab"></button>
+  <div class="tt-new-list-bar"></div>
+  <div class="now-playing-bar"></div>
+</body>
+</html>`);
+
+  // Mirror what the app's ResizeObserver + updateNavH does:
+  // --nav-h = Math.ceil(viewH - nav.getBoundingClientRect().top)
+  await page.evaluate(() => {
+    const nav = document.querySelector('.bottom-nav') as HTMLElement;
+    const viewH = window.innerHeight;
+    const rect = nav.getBoundingClientRect();
+    document.documentElement.style.setProperty(
+      '--nav-h',
+      `${Math.ceil(Math.max(0, viewH - rect.top))}px`,
+    );
+  });
+}
+
+test.describe('Keyboard open — notched iPhone, safe-area 34 px, keyboard-inset 300 px', () => {
+  const IPHONE_14 = { width: 390, height: 844 };
+
+  test('.comm-fab bottom clears nav pill top edge when keyboard is open', async ({ page }) => {
+    await buildPageWithKeyboard(page, 34, IPHONE_14, KEYBOARD_INSET);
+    const pillTop = await navPillTopEdge(page);
+    const { bottom } = await getGeometry(page, '.comm-fab');
+    expect(bottom).toBeGreaterThanOrEqual(pillTop);
+  });
+
+  test('.tt-new-list-bar bottom clears nav pill top edge when keyboard is open', async ({ page }) => {
+    await buildPageWithKeyboard(page, 34, IPHONE_14, KEYBOARD_INSET);
+    const pillTop = await navPillTopEdge(page);
+    const { bottom } = await getGeometry(page, '.tt-new-list-bar');
+    expect(bottom).toBeGreaterThanOrEqual(pillTop);
+  });
+
+  test('.now-playing-bar does not overlap nav pill when keyboard is open', async ({ page }) => {
+    await buildPageWithKeyboard(page, 34, IPHONE_14, KEYBOARD_INSET);
+    const { nowPlayingBarBottom, navPillTop } = await page.evaluate(() => {
+      const npBar = document.querySelector('.now-playing-bar') as HTMLElement;
+      const navPill = document.querySelector('.bottom-nav') as HTMLElement;
+      const npRect = npBar.getBoundingClientRect();
+      const navRect = navPill.getBoundingClientRect();
+      return { nowPlayingBarBottom: npRect.bottom, navPillTop: navRect.top };
+    });
+    // now-playing-bar is pinned to the top of the screen; its bottom edge must
+    // sit above the top edge of the nav pill — no overlap, even with keyboard open.
+    expect(nowPlayingBarBottom).toBeLessThanOrEqual(navPillTop);
+  });
+
+});
+
 // ── --nav-h invariant guard ───────────────────────────────────────────────────
 
 test('--nav-h must be greater than 74 px (required by safe-area invariant)', async ({ page }) => {
