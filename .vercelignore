@@ -1,0 +1,10 @@
+attached_assets/
+zipFile.zip
+*.zip
+.config/
+.local/
+node_modules/
+dist/
+test-results/
+work/
+outputs/
