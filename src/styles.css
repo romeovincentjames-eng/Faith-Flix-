@@ -6919,8 +6919,8 @@ textarea:focus {
 
 .watch-feed-screen {
   position: fixed;
-  top: calc(var(--topbar-h) + env(safe-area-inset-top));
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  top: 0;
+  bottom: 0;
   left: 0;
   right: 0;
   overflow-y: scroll;
@@ -6992,7 +6992,7 @@ textarea:focus {
   bottom: 0;
   left: 0;
   right: 80px;
-  padding: 20px 18px 30px;
+  padding: 20px 18px calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px);
   pointer-events: none;
 }
 
