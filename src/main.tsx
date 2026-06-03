@@ -2310,12 +2310,26 @@ function WorshipScreen() {
   const [showCreatePlaylist, setShowCreatePlaylist] = React.useState(false);
   const [newPlaylistName, setNewPlaylistName] = React.useState("");
   const audioRef = React.useRef<HTMLAudioElement>(null);
+  const sectionRef = React.useRef<HTMLElement>(null);
 
   React.useEffect(() => {
     const handler = () => { audioRef.current?.pause(); setIsPlaying(false); };
     window.addEventListener("pauseWorshipAudio", handler);
     return () => window.removeEventListener("pauseWorshipAudio", handler);
   }, []);
+
+  React.useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      document.body.classList.toggle("worship-scrolled", el.scrollTop > 60);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      document.body.classList.remove("worship-scrolled");
+    };
+  }, [browseType]);
 
   const queueSongs = React.useMemo(() => {
     if (browseType) {
@@ -2430,7 +2444,7 @@ function WorshipScreen() {
     const albumsOfType = worshipAlbums.filter(a => a.type === browseType);
     const label = browseType === "Single" ? "Singles" : browseType === "EP" ? "EPs" : "Albums";
     return (
-      <section className={`screen ws-screen${currentSong ? " has-now-playing" : ""}`}>
+      <section ref={sectionRef} className={`screen ws-screen${currentSong ? " has-now-playing" : ""}`}>
         {audioEl}
         <div className="ws-browse-header">
           <button className="ws-back-btn" onClick={() => setBrowseType(null)}><ChevronLeft size={20} /> Music</button>
@@ -2465,7 +2479,7 @@ function WorshipScreen() {
 
   /* ── Home view ── */
   return (
-    <section className={`screen ws-screen${currentSong ? " has-now-playing" : ""}`}>
+    <section ref={sectionRef} className={`screen ws-screen${currentSong ? " has-now-playing" : ""}`}>
       {audioEl}
 
       {/* Featured EP */}
