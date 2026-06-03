@@ -2712,7 +2712,7 @@ function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, save
   const first = songs[0];
   return (
     <>
-      <div className="post-sheet-overlay" style={{ background: "rgba(0,0,0,0.15)", backdropFilter: "none" }} onClick={onClose} />
+      <div className="post-sheet-overlay" style={{ background: "rgba(0,0,0,0.15)", backdropFilter: "none", zIndex: 62 }} onClick={onClose} />
       <div className="album-sheet">
         <div className="post-sheet-drag-bar" />
         <div className="album-sheet-header">
@@ -2726,7 +2726,7 @@ function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, save
             {album.description && <p className="album-sheet-desc">{album.description}</p>}
             {first && <button className="sp-play-btn" style={{ marginTop: 10 }} onClick={() => { onPlay(first); onClose(); onExpand(); }}><Play size={15} /> Play All</button>}
           </div>
-          <button className="icon-button" style={{ alignSelf: "flex-start", marginLeft: "auto" }} onClick={onClose} aria-label="Close"><X size={20} /></button>
+          <button className="ep-close-btn" style={{ alignSelf: "flex-start", marginLeft: "auto", flexShrink: 0 }} onClick={onClose} aria-label="Close"><X size={20} /></button>
         </div>
         <div className="album-sheet-tracks">
           {songs.length === 0 && <p style={{ padding: "16px 20px", color: "rgba(247,251,255,0.4)", fontSize: "0.85rem" }}>No tracks yet.</p>}
