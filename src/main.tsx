@@ -861,6 +861,38 @@ function App() {
   const [showMainSearch, setShowMainSearch] = React.useState(false);
   const [notifPanelOpen, setNotifPanelOpen] = React.useState(false);
 
+  const navRoRef = React.useRef<ResizeObserver | null>(null);
+  const navOnResize = React.useCallback((node: HTMLElement | null) => {
+    if (navRoRef.current) {
+      navRoRef.current.disconnect();
+      navRoRef.current = null;
+    }
+    if (!node) return;
+    const update = () => {
+      const rect = node.getBoundingClientRect();
+      const value = Math.ceil(window.innerHeight - rect.top);
+      document.documentElement.style.setProperty("--nav-h", `${value}px`);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(node);
+    navRoRef.current = ro;
+  }, []);
+
+  React.useEffect(() => {
+    const onResize = () => {
+      if (navRoRef.current) {
+        const nav = document.querySelector<HTMLElement>(".bottom-nav");
+        if (nav) {
+          const rect = nav.getBoundingClientRect();
+          document.documentElement.style.setProperty("--nav-h", `${Math.ceil(window.innerHeight - rect.top)}px`);
+        }
+      }
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   const notify = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(""), 2200);
@@ -1168,7 +1200,7 @@ function App() {
         </main>
 
         {!isAdmin && !(visiblePage === "profile" && !currentUser) && !(visiblePage === "forgot-password" && !currentUser) && (
-          <nav className="bottom-nav" aria-label="Primary navigation">
+          <nav ref={navOnResize} className="bottom-nav" aria-label="Primary navigation">
             <NavButton label={t("nav.home")} icon={Home} active={visiblePage === "home"} onClick={() => go("home")} />
             <NavButton label={t("nav.watch")} icon={Film} active={visiblePage === "watch"} onClick={() => go("watch")} />
             <NavButton label={t("nav.series")} icon={Clapperboard} active={visiblePage === "series"} onClick={() => go("series")} />
