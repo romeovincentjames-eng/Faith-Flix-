@@ -18,12 +18,24 @@ description: Color tokens, layout decisions, and component patterns for the mobi
 - `.home-page` class added to `<main>` when on home — zeroes out padding/max-width so feed is edge-to-edge
 - `.feed-screen` is `position: fixed` from `calc(topbar-h + safe-area-inset-top)` to `calc(nav-h + safe-area-inset-bottom)`
 
-## Home feed (TikTok style)
-- `FeedCard` component: thumbnail bg, cinematic gradient overlay, bottom-left info, right-side action bar
-- `scroll-snap-type: y mandatory` on `.feed-screen`; each `.feed-card` is `scroll-snap-align: start; height: 100%`
-- Action buttons: Heart (like), Bookmark (save), Share2 — right side, vertically stacked
+## Watch screen (TikTok style snap-scroll feed)
+- `WatchFeedCard` component: actual video player with IntersectionObserver autoplay (threshold 0.65)
+- `muted=true` by default (required for browser autoplay); Volume2/VolumeX toggle button on right side
+- `scroll-snap-type: y mandatory` on `.watch-feed-screen` (position:fixed); each `.watch-feed-card` is `height:100%`
+- IntersectionObserver plays video when card is ≥65% visible, pauses when scrolled away
+- Right-side action bar: Heart (like), Bookmark (save), MessageCircle (→community), Share2, Volume toggle
 - Admin videos shown as "✦ Official" gold badge; user videos as blue "Community" badge
-- Search on home page shows grid results in `.home-search-screen` (falls back gracefully)
+- `selectedVideoId` used on mount to scroll to the right card via `scrollIntoView({ behavior: "instant" })`
+- CSS class `.watch-page` on `<main>` removes padding so feed is edge-to-edge (like `.home-page`)
+- Cloudflare Stream iframes shown as-is (no play/pause control possible)
+
+## Home screen (featured content layout)
+- `HomePosterCard`: 148px wide, aspect-ratio 9/14 (poster-style), routes to Watch screen
+- Three sections: Featured (admin/featured videos), Series shelf (horizontal scroll cards), Recently Added
+- `.home-featured-screen` resets padding:0; scrollable content area
+- Hero at top: logo + "Faith Flix" gold title + tagline
+- Series cards: landscape row cards with poster thumbnail + title + episode count + category
+- Search results use `HomePosterCard` row + `home-series-shelf` (replaces old grid)
 
 ## Bottom nav
 - `position: fixed; z-index: 30; backdrop-filter: blur(32px)`

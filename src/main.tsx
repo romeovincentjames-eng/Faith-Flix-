@@ -37,6 +37,8 @@ import {
   UserPlus,
   Users,
   Video,
+  Volume2,
+  VolumeX,
   X,
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
@@ -921,7 +923,7 @@ function App() {
           )}
         </header>
 
-        <main className={`main-stage${visiblePage === "home" ? " home-page" : ""}`}>
+        <main className={`main-stage${visiblePage === "home" ? " home-page" : ""}${visiblePage === "watch" ? " watch-page" : ""}`}>
           {visiblePage === "home" && <HomeScreen />}
           {visiblePage === "watch" && <WatchScreen />}
           {visiblePage === "series" && <SeriesScreen />}
@@ -1268,14 +1270,44 @@ function NavButton({ label, icon: Icon, active, onClick }: { label: string; icon
   );
 }
 
-function FeedCard({ video, onOpen }: { video: VideoItem; onOpen: () => void }) {
-  const { likes, setLikes, saved, setSaved, currentUser, notify } = useApp();
+function WatchFeedCard({ video }: { video: VideoItem }) {
+  const { likes, setLikes, saved, setSaved, currentUser, notify, comments, go, setCommunityView } = useApp();
   const actorId = currentUser?.id ?? "guest";
   const likedIds = likes[actorId] ?? [];
   const savedIds = saved[actorId] ?? [];
   const isLiked = likedIds.includes(video.id);
   const isSaved = savedIds.includes(video.id);
   const likeCount = Object.values(likes).flat().filter((id) => id === video.id).length;
+  const commentCount = comments.filter((c) => c.targetId === video.id).length;
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const cardRef = React.useRef<HTMLDivElement>(null);
+  const [muted, setMuted] = React.useState(true);
+  const [paused, setPaused] = React.useState(false);
+
+  React.useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          videoRef.current?.play().catch(() => {});
+          setPaused(false);
+        } else {
+          videoRef.current?.pause();
+        }
+      },
+      { threshold: 0.65 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const tapVideo = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) { v.play().catch(() => {}); setPaused(false); }
+    else { v.pause(); setPaused(true); }
+  };
 
   const toggleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1287,7 +1319,7 @@ function FeedCard({ video, onOpen }: { video: VideoItem; onOpen: () => void }) {
     e.stopPropagation();
     if (!currentUser) { notify("Log in to save videos."); return; }
     setSaved({ ...saved, [actorId]: isSaved ? savedIds.filter((id) => id !== video.id) : [...savedIds, video.id] });
-    notify(isSaved ? "Removed from saved." : "Saved! ✦");
+    notify(isSaved ? "Removed." : "Saved! ✦");
   };
 
   const share = (e: React.MouseEvent) => {
@@ -1296,31 +1328,58 @@ function FeedCard({ video, onOpen }: { video: VideoItem; onOpen: () => void }) {
     notify("Link copied!");
   };
 
+  const isCloudflare = isCloudflareStreamUrl(video.videoUrl || "");
+
   return (
-    <div className="feed-card">
-      {video.thumbnailUrl
-        ? <img className="feed-card-bg" src={video.thumbnailUrl} alt="" />
-        : <div className="feed-card-bg-empty" />}
-      <div className="feed-card-gradient" />
+    <div ref={cardRef} className="watch-feed-card">
+      {video.videoUrl ? (
+        isCloudflare ? (
+          <iframe
+            className="watch-feed-video"
+            src={video.videoUrl}
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+            allowFullScreen
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            className="watch-feed-video"
+            playsInline
+            loop
+            muted={muted}
+            poster={video.thumbnailUrl || undefined}
+            src={video.videoUrl}
+            onClick={tapVideo}
+          />
+        )
+      ) : video.thumbnailUrl ? (
+        <img className="watch-feed-video" src={video.thumbnailUrl} alt={video.title} style={{ objectFit: "cover" }} onClick={tapVideo} />
+      ) : (
+        <div className="watch-feed-video watch-feed-empty" onClick={tapVideo} />
+      )}
 
-      <button className="feed-card-tap" aria-label={`Play ${video.title}`} onClick={onOpen}>
-        <div className="feed-card-play-btn"><Play size={26} fill="currentColor" /></div>
-      </button>
+      <div className="watch-feed-gradient" />
 
-      <div className="feed-card-footer">
+      {paused && !isCloudflare && (
+        <div className="watch-feed-paused-icon" onClick={tapVideo}>
+          <Play size={52} fill="currentColor" />
+        </div>
+      )}
+
+      <div className="watch-feed-footer">
         <span className={`feed-card-badge${video.source === "user" ? " feed-card-badge-community" : ""}`}>
           {video.source === "admin" ? "✦ Official" : "Community"}
         </span>
-        <h3 className="feed-card-title">{video.title}</h3>
-        <p className="feed-card-creator">{video.creator}</p>
-        {video.scripture && <p className="feed-card-scripture">"{video.scripture}"</p>}
+        <h3 className="watch-feed-title">{video.title}</h3>
+        {video.creator && <p className="watch-feed-creator">@{video.creator}</p>}
+        {video.scripture && <p className="watch-feed-scripture">"{video.scripture}"</p>}
         <div className="feed-card-meta">
           {video.duration && <span className="feed-card-duration">{video.duration}</span>}
           <span className="feed-card-category">{video.category}</span>
         </div>
       </div>
 
-      <div className="feed-card-actions">
+      <div className="watch-feed-actions">
         <button className={`feed-action-btn${isLiked ? " active" : ""}`} onClick={toggleLike}>
           <Heart size={28} fill={isLiked ? "currentColor" : "none"} />
           <span>{likeCount > 0 ? likeCount : "Like"}</span>
@@ -1329,25 +1388,56 @@ function FeedCard({ video, onOpen }: { video: VideoItem; onOpen: () => void }) {
           <Bookmark size={28} fill={isSaved ? "currentColor" : "none"} />
           <span>{isSaved ? "Saved" : "Save"}</span>
         </button>
+        <button className="feed-action-btn" onClick={(e) => { e.stopPropagation(); setCommunityView("feed"); go("community"); }}>
+          <MessageCircle size={26} />
+          <span>{commentCount > 0 ? commentCount : "Chat"}</span>
+        </button>
         <button className="feed-action-btn" onClick={share}>
-          <Share2 size={26} />
+          <Share2 size={24} />
           <span>Share</span>
+        </button>
+        <button className="feed-action-btn" onClick={(e) => { e.stopPropagation(); setMuted((m) => !m); }}>
+          {muted ? <Volume2 size={22} /> : <VolumeX size={22} />}
+          <span>{muted ? "Unmute" : "Mute"}</span>
         </button>
       </div>
     </div>
   );
 }
 
+function HomePosterCard({ video, onOpen }: { video: VideoItem; onOpen: () => void }) {
+  return (
+    <button className="home-poster-card" onClick={onOpen} aria-label={`Play ${video.title}`}>
+      {video.thumbnailUrl
+        ? <img className="home-poster-img" src={video.thumbnailUrl} alt={video.title} />
+        : <div className="home-poster-img home-poster-empty"><Play size={28} fill="currentColor" /></div>}
+      <div className="home-poster-gradient" />
+      <div className="home-poster-badge-wrap">
+        <span className={`feed-card-badge${video.source === "user" ? " feed-card-badge-community" : ""}`}>
+          {video.source === "admin" ? "✦" : "•"}
+        </span>
+      </div>
+      <div className="home-poster-footer">
+        <p className="home-poster-title">{video.title}</p>
+        {video.duration && <span className="feed-card-duration">{video.duration}</span>}
+      </div>
+    </button>
+  );
+}
+
 function HomeScreen() {
   const { publicVideos, publicSeries, go, setSelectedVideoId, setSelectedSeriesId, mainSearchQuery, t } = useApp();
-  const adminVideos = publicVideos.filter((v) => v.source === "admin" && v.status === "Published");
-  const feedVideos = adminVideos.length > 0 ? adminVideos : publicVideos.filter((v) => v.status === "Published");
 
   const openVideo = (video: VideoItem) => {
     flushSync(() => {
       setSelectedVideoId(video.id);
       go("watch");
     });
+  };
+
+  const openSeries = (item: SeriesItem) => {
+    setSelectedSeriesId(item.id);
+    go("series");
   };
 
   const q = mainSearchQuery.trim().toLowerCase();
@@ -1366,9 +1456,9 @@ function HomeScreen() {
         {matchVideos.length > 0 && (
           <>
             <SectionHeader title={t("search.videos")} action={`${matchVideos.length} ${t("home.found")}`} />
-            <div className="content-grid">
+            <div className="home-poster-row">
               {matchVideos.map((video) => (
-                <VideoCard key={video.id} video={video} onOpen={() => openVideo(video)} onTitleOpen={() => openVideo(video)} />
+                <HomePosterCard key={video.id} video={video} onOpen={() => openVideo(video)} />
               ))}
             </div>
           </>
@@ -1376,14 +1466,19 @@ function HomeScreen() {
         {matchSeries.length > 0 && (
           <>
             <SectionHeader title={t("search.series")} action={`${matchSeries.length} ${t("home.found")}`} />
-            <div className="series-grid">
-              {matchSeries.map((item) => (
-                <button key={item.id} className="series-grid-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>
-                  {item.posterUrl ? <img className="series-grid-poster" src={item.posterUrl} alt={item.title} /> : <div className="series-grid-poster series-grid-poster-empty"><Clapperboard size={36} /></div>}
-                  <div className="series-grid-info"><p className="eyebrow">{item.category}</p><h3 className="series-grid-title">{item.title}</h3>{item.scriptureTheme && <p className="series-grid-verse">✦ {item.scriptureTheme}</p>}</div>
-                  <ChevronRight size={18} className="series-grid-arrow" />
-                </button>
-              ))}
+            <div className="home-series-shelf">
+              {matchSeries.map((item) => {
+                const epCount = publicVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+                return (
+                  <button key={item.id} className="home-series-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>
+                    {item.posterUrl ? <img className="home-series-poster" src={item.posterUrl} alt={item.title} /> : <div className="home-series-poster home-series-poster-empty"><Clapperboard size={28} /></div>}
+                    <div className="home-series-info">
+                      <p className="home-series-title">{item.title}</p>
+                      <p className="home-series-meta">{epCount} episode{epCount !== 1 ? "s" : ""} • {item.category}</p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </>
         )}
@@ -1391,148 +1486,109 @@ function HomeScreen() {
     );
   }
 
-  if (!feedVideos.length) {
-    return (
-      <section className="screen home-search-screen">
-        <EmptyState icon={Film} title="No videos yet." body="Content will appear here once published." action="Browse Series" onAction={() => go("series")} />
-      </section>
-    );
-  }
+  const publishedVideos = publicVideos.filter((v) => v.status === "Published");
+  const featuredVideos = publishedVideos.filter((v) => v.featured || v.source === "admin");
+  const allFeatured = featuredVideos.length >= 3 ? featuredVideos : publishedVideos;
+  const recentVideos = [...publishedVideos].reverse().slice(0, 12);
+  const seriesList = publicSeries.filter((s) => s.status === "Published").slice(0, 12);
 
   return (
-    <section className="feed-screen">
-      {feedVideos.map((video) => (
-        <FeedCard key={video.id} video={video} onOpen={() => openVideo(video)} />
-      ))}
+    <section className="screen home-featured-screen">
+      <div className="home-hero">
+        <img src="/brand-icon.png" className="home-hero-logo" alt="Faith Flix" />
+        <div className="home-hero-text">
+          <h1 className="home-hero-title">Faith Flix</h1>
+          <p className="home-hero-tagline">Watch. Believe. Share.</p>
+        </div>
+      </div>
+
+      {allFeatured.length > 0 && (
+        <div className="home-section">
+          <div className="home-section-header">
+            <h2 className="home-section-title">Featured</h2>
+            <button className="home-section-link" onClick={() => go("watch")}>Watch all →</button>
+          </div>
+          <div className="home-poster-row">
+            {allFeatured.slice(0, 10).map((video) => (
+              <HomePosterCard key={video.id} video={video} onOpen={() => openVideo(video)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {seriesList.length > 0 && (
+        <div className="home-section">
+          <div className="home-section-header">
+            <h2 className="home-section-title">Series</h2>
+            <button className="home-section-link" onClick={() => go("series")}>Browse →</button>
+          </div>
+          <div className="home-series-shelf">
+            {seriesList.map((item) => {
+              const epCount = publishedVideos.filter((v) => v.seriesId === item.title).length;
+              return (
+                <button key={item.id} className="home-series-card" onClick={() => openSeries(item)}>
+                  {item.posterUrl
+                    ? <img className="home-series-poster" src={item.posterUrl} alt={item.title} />
+                    : <div className="home-series-poster home-series-poster-empty"><Clapperboard size={28} /></div>}
+                  <div className="home-series-info">
+                    <p className="home-series-title">{item.title}</p>
+                    <p className="home-series-meta">{epCount} episode{epCount !== 1 ? "s" : ""} • {item.category}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {recentVideos.length > 0 && (
+        <div className="home-section">
+          <div className="home-section-header">
+            <h2 className="home-section-title">Recently Added</h2>
+            <button className="home-section-link" onClick={() => go("watch")}>See all →</button>
+          </div>
+          <div className="home-poster-row">
+            {recentVideos.map((video) => (
+              <HomePosterCard key={video.id} video={video} onOpen={() => openVideo(video)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {publishedVideos.length === 0 && seriesList.length === 0 && (
+        <EmptyState icon={Film} title="No content yet." body="Check back soon for faith-based videos and series." action="Browse Series" onAction={() => go("series")} />
+      )}
     </section>
   );
 }
 
 function WatchScreen() {
-  const { publicVideos, selectedVideoId, setSelectedVideoId, saved, setSaved, likes, setLikes, currentUser, go, notify, comments, setComments, setCommunityView, t } = useApp();
-  const playerRef = React.useRef<HTMLDivElement>(null);
-  const userPostVideos = publicVideos.filter((video) => video.source === "user");
-  const selectedPublicVideo = publicVideos.find((video) => video.id === selectedVideoId);
-  const feedVideos = selectedPublicVideo && selectedPublicVideo.source !== "user"
-    ? publicVideos
-    : userPostVideos.length > 0
-      ? userPostVideos
-      : publicVideos;
-  const selected = feedVideos.find((video) => video.id === selectedVideoId) ?? feedVideos[0];
-  const [comment, setComment] = React.useState("");
-  const [touchStartX, setTouchStartX] = React.useState<number | null>(null);
-  const [slideDirection, setSlideDirection] = React.useState<"next" | "previous" | "">("");
-  const actorId = currentUser?.id ?? "guest";
+  const { publicVideos, selectedVideoId } = useApp();
+  const feedRef = React.useRef<HTMLDivElement>(null);
+  const feedVideos = publicVideos.filter((v) => v.status === "Published");
 
-  // Auto-fullscreen when selected video changes
   React.useEffect(() => {
-    if (!selected?.id || !selected.videoUrl) return;
-    const el = playerRef.current;
-    if (!el) return;
-    const t = setTimeout(() => {
-      el.requestFullscreen?.().catch(() => {});
-    }, 150);
-    return () => clearTimeout(t);
-  }, [selected?.id]);
+    if (!selectedVideoId || !feedRef.current) return;
+    const idx = feedVideos.findIndex((v) => v.id === selectedVideoId);
+    if (idx < 1) return;
+    const card = feedRef.current.children[idx] as HTMLElement;
+    card?.scrollIntoView({ behavior: "instant" });
+  }, []);
 
-  if (!selected) {
-    return <section className="screen"><SectionIntro eyebrow={t("watch.eyebrow")} title={t("watch.feedTitle")} body={t("watch.feedBody")} /><EmptyState icon={Video} title={t("watch.noVideos")} body={t("watch.noVideosBody")} action={t("btn.uploadVideo")} onAction={() => go("upload")} /></section>;
+  if (!feedVideos.length) {
+    return (
+      <section className="screen">
+        <EmptyState icon={Video} title="No videos yet." body="Videos will appear once published." action="" onAction={() => {}} />
+      </section>
+    );
   }
 
-  const savedIds = saved[actorId] ?? [];
-  const likedIds = likes[actorId] ?? [];
-  const videoComments = comments.filter((item) => item.targetId === selected.id);
-  const selectedIndex = feedVideos.findIndex((video) => video.id === selected.id);
-  const previousVideo = feedVideos[(selectedIndex - 1 + feedVideos.length) % feedVideos.length];
-  const nextVideo = feedVideos[(selectedIndex + 1) % feedVideos.length];
-
-  const openVideo = (videoId: string, message?: string, direction: "next" | "previous" = "next") => {
-    setSlideDirection("");
-    window.requestAnimationFrame(() => {
-      setSlideDirection(direction);
-      setSelectedVideoId(videoId);
-      setComment("");
-      window.setTimeout(() => setSlideDirection(""), 320);
-    });
-    if (message) notify(message);
-  };
-
-  const handleTouchStart = (x: number) => setTouchStartX(x);
-
-  const handleTouchEnd = (x: number) => {
-    if (touchStartX === null || feedVideos.length < 2) return;
-    const distance = touchStartX - x;
-    const threshold = 48;
-    if (distance > threshold) openVideo(nextVideo.id, "Next video →", "next");
-    if (distance < -threshold) openVideo(previousVideo.id, "← Previous video", "previous");
-    setTouchStartX(null);
-  };
-
-  const toggleList = (setter: typeof setSaved | typeof setLikes, store: Record<string, string[]>, id: string, label: string) => {
-    const list = store[actorId] ?? [];
-    setter({ ...store, [actorId]: list.includes(id) ? list.filter((item) => item !== id) : [...list, id] });
-    notify(label);
-  };
-
   return (
-    <section className="screen watch-screen">
-      <SectionIntro eyebrow={t("watch.eyebrow")} title={selected.title} body={`${selected.creator || t("watch.faithMember")} • ${selected.category}`} />
-      <div className="player-layout">
-        <div
-          ref={playerRef}
-          className={`video-placeholder with-media swipe-player ${slideDirection ? `swipe-slide-${slideDirection}` : ""}`}
-          onTouchStart={(e) => handleTouchStart(e.touches[0].clientX)}
-          onTouchEnd={(e) => handleTouchEnd(e.changedTouches[0].clientX)}
-        >
-          {selected.videoUrl ? (
-            isCloudflareStreamUrl(selected.videoUrl) ? (
-              <iframe
-                className="feed-video feed-video-frame"
-                data-video-id={selected.id}
-                src={selected.videoUrl}
-                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-                allowFullScreen
-              />
-            ) : (
-              <video
-                key={selected.id}
-                className="feed-video"
-                data-video-id={selected.id}
-                playsInline
-                autoPlay
-                src={selected.videoUrl}
-                poster={selected.thumbnailUrl}
-                onClick={(e) => e.currentTarget.paused ? e.currentTarget.play() : e.currentTarget.pause()}
-                onTouchStart={(e) => { e.stopPropagation(); handleTouchStart(e.touches[0].clientX); }}
-                onTouchEnd={(e) => { e.stopPropagation(); handleTouchEnd(e.changedTouches[0].clientX); }}
-              />
-            )
-          ) : (
-            <><Video size={58} /><h2>{selected.videoName || "Video file saved locally"}</h2><p>Video playback is available in this session when a browser file URL exists.</p></>
-          )}
-          {/* Fullscreen swipe hint overlay */}
-          <div className="fullscreen-swipe-hint">
-            <span>← Swipe to change video →</span>
-          </div>
-        </div>
-        <div className="detail-panel">
-          <p>{selected.description || "No description added."}</p>
-          <InfoLine label={t("info.scripture")} value={selected.scripture || t("info.notProvided")} />
-          <InfoLine label={t("info.category")} value={selected.category} />
-          <InfoLine label={t("info.series")} value={selected.seriesId || t("info.notAssigned")} />
-          <InfoLine label={t("info.duration")} value={selected.duration || t("info.notSet")} />
-          <div className="button-row">
-            <button className="secondary-button" onClick={() => toggleList(setLikes, likes, selected.id, likedIds.includes(selected.id) ? "Like removed." : "Video liked.")}><Heart size={17} /> {likedIds.includes(selected.id) ? "Liked" : "Like"}</button>
-            <button className="secondary-button" onClick={() => { if (!currentUser) { notify("Log in to save videos."); go("profile"); return; } toggleList(setSaved, saved, selected.id, savedIds.includes(selected.id) ? "Removed from saved." : "Saved to General."); }}><Bookmark size={17} /> {savedIds.includes(selected.id) ? "Saved" : "Save"}</button>
-            <button className="secondary-button" onClick={() => { navigator.clipboard?.writeText(`faithflix://video/${selected.id}`); notify(t("toast.linkCopied")); }}>Share</button>
-            <button className="secondary-button" onClick={() => { setCommunityView("feed"); go("community"); }}><MessageCircle size={17} /> Discuss</button>
-            <button className="secondary-button" onClick={() => openVideo(previousVideo.id, undefined, "previous")}>← Prev</button>
-            <button className="primary-button" onClick={() => openVideo(nextVideo.id, undefined, "next")}>Next →</button>
-          </div>
-          <CommentBox targetId={selected.id} comments={videoComments} value={comment} setValue={setComment} />
-        </div>
-      </div>
-    </section>
+    <div ref={feedRef} className="watch-feed-screen">
+      {feedVideos.map((video) => (
+        <WatchFeedCard key={video.id} video={video} />
+      ))}
+    </div>
   );
 }
 
