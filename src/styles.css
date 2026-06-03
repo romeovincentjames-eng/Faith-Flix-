@@ -7031,7 +7031,7 @@ textarea:focus {
 .watch-feed-actions {
   position: absolute;
   right: 12px;
-  bottom: 60px;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);
   display: flex;
   flex-direction: column;
   align-items: center;
