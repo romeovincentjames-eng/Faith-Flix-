@@ -1422,7 +1422,7 @@ select option {
   .bottom-nav {
     width: calc(100% - 14px);
     height: 60px;
-    bottom: max(12px, calc(var(--sat, env(safe-area-inset-bottom)) + 8px));
+    bottom: calc(max(12px, calc(var(--sat, env(safe-area-inset-bottom)) + 8px)) + var(--keyboard-inset, 0px));
   }
 
   .nav-icon {

@@ -230,6 +230,34 @@ test.describe('Keyboard open — notched iPhone, safe-area 34 px, keyboard-inset
     expect(nowPlayingBarBottom).toBeLessThanOrEqual(navPillTop);
   });
 
+  test('nav pill rises when keyboard opens — narrow viewport (iPhone 14)', async ({ page }) => {
+    // Baseline: no keyboard
+    await buildPage(page, 34, IPHONE_14);
+    const { bottom: bottomNoKeyboard } = await getGeometry(page, '.bottom-nav');
+
+    // Keyboard open — narrow-viewport rule must now include var(--keyboard-inset, 0px)
+    await buildPageWithKeyboard(page, 34, IPHONE_14, KEYBOARD_INSET);
+    const { bottom: bottomWithKeyboard } = await getGeometry(page, '.bottom-nav');
+
+    // With keyboard-inset = 300 px the pill must sit higher than the baseline
+    expect(bottomWithKeyboard).toBeGreaterThan(bottomNoKeyboard);
+  });
+
+  test('nav pill rises when keyboard opens — narrow viewport (iPhone SE)', async ({ page }) => {
+    const IPHONE_SE = { width: 375, height: 667 };
+
+    // Baseline: no keyboard
+    await buildPage(page, 0, IPHONE_SE);
+    const { bottom: bottomNoKeyboard } = await getGeometry(page, '.bottom-nav');
+
+    // Keyboard open — narrow-viewport rule must include var(--keyboard-inset, 0px)
+    await buildPageWithKeyboard(page, 0, IPHONE_SE, KEYBOARD_INSET);
+    const { bottom: bottomWithKeyboard } = await getGeometry(page, '.bottom-nav');
+
+    // With keyboard-inset = 300 px the pill must sit higher than the baseline
+    expect(bottomWithKeyboard).toBeGreaterThan(bottomNoKeyboard);
+  });
+
 });
 
 // ── Keyboard open — iPad Air (wide viewport, keyboard-inset active) ──────────
