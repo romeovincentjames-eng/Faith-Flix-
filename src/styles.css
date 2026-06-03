@@ -8655,7 +8655,7 @@ body.music-player-open .bottom-nav {
 }
 .topbar,
 .bottom-nav {
-  transition: opacity 0.22s ease;
+  transition: opacity 0.22s ease, bottom 0.28s ease;
 }
 
 /* ── Drop footer + actions to the true bottom when bars are hidden ── */
