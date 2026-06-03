@@ -1,5 +1,5 @@
 import React from "react";
-import { flushSync } from "react-dom";
+import { flushSync, createPortal } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { translate } from "./i18n";
 import {
@@ -2518,7 +2518,7 @@ function WorshipScreen() {
         }
         {albumSheet}
         {nowPlayingBar}
-        {expandedPlayer}
+        {expandedPlayer && createPortal(expandedPlayer, document.body)}
       </section>
     );
   }
@@ -2647,7 +2647,7 @@ function WorshipScreen() {
       {showUploadSheet && <WorshipUploadSheet onClose={() => setShowUploadSheet(false)} />}
       {albumSheet}
       {nowPlayingBar}
-      {expandedPlayer}
+      {expandedPlayer && createPortal(expandedPlayer, document.body)}
     </section>
   );
 }
@@ -2692,6 +2692,11 @@ function ExpandedPlayerOverlay({ song, album, isPlaying, progress, currentTime, 
   onPrev: () => void; onNext: () => void; onTogglePlay: () => void; onSeek: (pct: number) => void;
   onClose: () => void; onOpenAlbum: (id: string) => void; onToggleSave: () => void; onToggleShuffle: () => void; onToggleRepeat: () => void;
 }) {
+  React.useEffect(() => {
+    document.body.classList.add("music-player-open");
+    return () => { document.body.classList.remove("music-player-open"); };
+  }, []);
+
   return (
     <div className="ep-overlay">
       <div className="ep-bg" style={song.coverUrl ? { backgroundImage: `url(${song.coverUrl})` } : undefined} />
