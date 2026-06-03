@@ -5870,15 +5870,15 @@ textarea:focus {
 .home-poster-row {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 172px;
+  grid-auto-columns: 138px;
   gap: 10px;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
   scroll-padding-inline-start: 50%;
-  scroll-padding-inline-end: calc(50% - 86px);
+  scroll-padding-inline-end: calc(50% - 69px);
   padding-inline-start: 16px;
-  padding-inline-end: calc(50% - 86px);
+  padding-inline-end: calc(50% - 69px);
   padding-block: 4px 18px;
   scrollbar-width: none;
 }
@@ -5893,15 +5893,15 @@ textarea:focus {
 
 @media (max-width: 390px) {
   .home-poster-row {
-    grid-auto-columns: 158px;
-    scroll-padding-inline-end: calc(50% - 79px);
-    padding-inline-end: calc(50% - 79px);
+    grid-auto-columns: 126px;
+    scroll-padding-inline-end: calc(50% - 63px);
+    padding-inline-end: calc(50% - 63px);
   }
 }
 
 .home-poster-card {
   position: relative;
-  width: 172px;
+  width: 138px;
   aspect-ratio: 9 / 13;
   border-radius: 14px;
   overflow: hidden;
@@ -5963,8 +5963,8 @@ textarea:focus {
 }
 
 .home-poster-title {
-  margin: 0 0 5px;
-  font-size: 0.82rem;
+  margin: 0 0 3px;
+  font-size: 0.76rem;
   font-weight: 800;
   color: #fff;
   line-height: 1.22;
@@ -5973,6 +5973,17 @@ textarea:focus {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.home-poster-scripture {
+  margin: 0 0 4px;
+  font-size: 0.62rem;
+  font-style: italic;
+  color: rgba(212, 160, 23, 0.88);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Series shelf ────────────────────────────────── */

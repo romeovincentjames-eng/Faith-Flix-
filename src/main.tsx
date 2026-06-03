@@ -1445,6 +1445,7 @@ function HomePosterCard({ video, onOpen }: { video: VideoItem; onOpen: () => voi
       </div>
       <div className="home-poster-footer">
         <p className="home-poster-title">{video.title}</p>
+        {video.scripture && <p className="home-poster-scripture">✦ {video.scripture}</p>}
         {video.duration && <span className="feed-card-duration">{video.duration}</span>}
       </div>
     </button>
