@@ -1274,9 +1274,9 @@ function categoryFromDb(item: DbCategory): CategoryItem {
 
 function NavButton({ label, icon: Icon, active, onClick }: { label: string; icon: React.ElementType; active: boolean; onClick: () => void }) {
   return (
-    <button className={`nav-button ${active ? "active" : ""}`} onClick={onClick}>
-      <Icon size={22} />
-      <span>{label}</span>
+    <button className={`nav-button${active ? " active" : ""}`} onClick={onClick}>
+      <span className="nav-icon"><Icon size={21} /></span>
+      <span className="nav-label">{label}</span>
     </button>
   );
 }

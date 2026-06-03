@@ -807,20 +807,27 @@ select option {
   grid-template-columns: repeat(6, 1fr);
   width: 100%;
   min-height: calc(var(--nav-h) + env(safe-area-inset-bottom));
-  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
-  background: rgba(8, 12, 24, 0.96);
-  border-top: 1px solid rgba(212, 160, 23, 0.14);
-  box-shadow: 0 -1px 0 rgba(255,255,255,0.04), 0 -12px 40px rgba(0,0,0,0.55);
-  backdrop-filter: blur(32px) saturate(1.6);
+  padding: 6px 2px calc(6px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(7,10,22,0.88) 0%, rgba(4,6,16,0.97) 100%);
+  border-top: none;
+  box-shadow: 0 -28px 64px rgba(0,0,0,0.85);
+  backdrop-filter: blur(48px) saturate(2.2);
 }
 
-.bottom-nav.six {
-  grid-template-columns: repeat(6, 1fr);
+/* Gold shimmer line at the top edge */
+.bottom-nav::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 6%;
+  right: 6%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(212,160,23,0.45) 25%, rgba(255,226,154,0.85) 50%, rgba(212,160,23,0.45) 75%, transparent 100%);
+  border-radius: 999px;
 }
 
-.bottom-nav.seven {
-  grid-template-columns: repeat(7, 1fr);
-}
+.bottom-nav.six  { grid-template-columns: repeat(6, 1fr); }
+.bottom-nav.seven { grid-template-columns: repeat(7, 1fr); }
 
 .nav-button {
   position: relative;
@@ -828,48 +835,68 @@ select option {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
-  padding: 6px 4px;
-  color: rgba(247, 251, 255, 0.42);
+  padding: 6px 2px 5px;
+  color: rgba(247, 251, 255, 0.36);
   background: transparent;
   border: 0;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  transition: color 0.18s ease;
+  cursor: pointer;
+  transition: color 0.22s ease;
+}
+
+/* Icon pill container */
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 30px;
+  border-radius: 999px;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
 }
 
 .nav-button svg {
-  transition: transform 0.18s ease;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.22s ease;
 }
 
-.nav-button span {
+.nav-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 0.22s ease;
 }
 
+/* Active state */
 .nav-button.active {
   color: var(--gold);
 }
 
-.nav-button.active svg {
-  transform: scale(1.1);
+.nav-button.active .nav-icon {
+  background: linear-gradient(135deg, rgba(212,160,23,0.24) 0%, rgba(212,160,23,0.10) 100%);
+  box-shadow:
+    0 0 20px rgba(212,160,23,0.18),
+    inset 0 1px 0 rgba(255,226,154,0.28),
+    inset 0 -1px 0 rgba(212,160,23,0.10);
 }
 
-.nav-button.active::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 28px;
-  height: 2px;
-  border-radius: 0 0 3px 3px;
-  background: var(--gold);
-  box-shadow: 0 0 8px rgba(212,160,23,0.6);
+.nav-button.active svg {
+  transform: scale(1.2) translateY(-1px);
+  filter: drop-shadow(0 2px 7px rgba(212,160,23,0.72));
+}
+
+/* Hover on inactive */
+.nav-button:not(.active):hover {
+  color: rgba(247,251,255,0.62);
+}
+
+.nav-button:not(.active):hover .nav-icon {
+  background: rgba(255,255,255,0.06);
 }
 
 @media (min-width: 760px) {
@@ -1399,6 +1426,11 @@ select option {
     gap: 3px;
   }
 
+  .nav-icon {
+    width: 42px;
+    height: 28px;
+  }
+
   .topbar-search-open {
     padding-top: max(12px, calc(env(safe-area-inset-top) + 12px));
   }
@@ -1418,8 +1450,16 @@ select option {
   }
 
   .bottom-nav.seven .nav-button {
-    font-size: 0.5rem;
     gap: 2px;
+  }
+
+  .bottom-nav.seven .nav-label {
+    font-size: 0.47rem;
+  }
+
+  .bottom-nav.seven .nav-icon {
+    width: 36px;
+    height: 26px;
   }
 
   .bottom-nav.seven .nav-button svg {
