@@ -26,8 +26,11 @@ import {
   MessagesSquare,
   MoreHorizontal,
   Music2,
+  Pause,
   Play,
   Plus,
+  SkipBack,
+  SkipForward,
   Search,
   Send,
   Share2,
@@ -1953,14 +1956,203 @@ function UserSeriesBuilder() {
 }
 
 function WorshipScreen() {
-  const { currentUser, worshipSongs, setWorshipSongs, visibleCategories, worshipSearchQuery, notify, go } = useApp();
-  const [form, setForm] = React.useState({ title: "", artist: "", description: "", category: visibleCategories[0]?.name ?? "Worship", duration: "" });
+  const { worshipSongs, worshipSearchQuery } = useApp();
+  const [currentSongId, setCurrentSongId] = React.useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [progress, setProgress] = React.useState(0);
+  const [audioDuration, setAudioDuration] = React.useState(0);
+  const [activeCategory, setActiveCategory] = React.useState("All");
+  const [showUploadSheet, setShowUploadSheet] = React.useState(false);
+  const audioRef = React.useRef<HTMLAudioElement>(null);
+
+  const songQuery = worshipSearchQuery.trim().toLowerCase();
+  const filteredSongs = (songQuery
+    ? worshipSongs.filter((s) => [s.title, s.artist, s.description, s.uploadedBy].join(" ").toLowerCase().includes(songQuery))
+    : worshipSongs
+  ).filter((s) => activeCategory === "All" || s.category === activeCategory);
+
+  const currentSong = worshipSongs.find((s) => s.id === currentSongId) ?? null;
+  const currentIndex = filteredSongs.findIndex((s) => s.id === currentSongId);
+  const categories = ["All", ...Array.from(new Set(worshipSongs.map((s) => s.category).filter(Boolean)))];
+  const featuredSong = currentSong ?? filteredSongs[0] ?? null;
+
+  const playSong = React.useCallback((song: WorshipSong) => {
+    if (currentSongId === song.id) {
+      if (isPlaying) { audioRef.current?.pause(); setIsPlaying(false); }
+      else { void audioRef.current?.play(); setIsPlaying(true); }
+      return;
+    }
+    setCurrentSongId(song.id);
+    setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.src = song.audioUrl ?? "";
+      void audioRef.current.play().catch(() => setIsPlaying(false));
+    }
+  }, [currentSongId, isPlaying]);
+
+  const prevSong = () => { if (currentIndex > 0) playSong(filteredSongs[currentIndex - 1]); };
+  const nextSong = React.useCallback(() => { if (currentIndex < filteredSongs.length - 1) playSong(filteredSongs[currentIndex + 1]); }, [currentIndex, filteredSongs, playSong]);
+
+  const togglePlay = () => {
+    if (!currentSong && filteredSongs.length) { playSong(filteredSongs[0]); return; }
+    if (isPlaying) { audioRef.current?.pause(); setIsPlaying(false); }
+    else { void audioRef.current?.play(); setIsPlaying(true); }
+  };
+
+  const seek = (pct: number) => {
+    if (audioRef.current && audioDuration) {
+      audioRef.current.currentTime = (pct / 100) * audioDuration;
+      setProgress(pct);
+    }
+  };
+
+  return (
+    <section className={`screen worship-screen sp-screen${currentSong ? " has-now-playing" : ""}`}>
+      <audio
+        ref={audioRef}
+        onTimeUpdate={() => { const a = audioRef.current; if (a?.duration) setProgress((a.currentTime / a.duration) * 100); }}
+        onDurationChange={() => setAudioDuration(audioRef.current?.duration ?? 0)}
+        onEnded={nextSong}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+      />
+
+      {/* Hero banner */}
+      <div className="sp-hero">
+        <div className="sp-hero-art">
+          {featuredSong?.coverUrl
+            ? <img src={featuredSong.coverUrl} alt={featuredSong.title} />
+            : <div className="sp-hero-art-empty"><Music2 size={52} /></div>}
+        </div>
+        <div className="sp-hero-info">
+          <p className="eyebrow" style={{ marginBottom: 6 }}>Worship Center</p>
+          <h1 className="sp-hero-title">{featuredSong?.title ?? "Worship Music"}</h1>
+          <p className="sp-hero-artist">{featuredSong ? `${featuredSong.artist} • ${featuredSong.category}` : "Faith Flix"}</p>
+          <p className="sp-hero-desc">{featuredSong?.description || "Stream original worship songs and praise music curated for your faith journey."}</p>
+          <div className="sp-hero-actions">
+            <button className="sp-play-btn" onClick={() => featuredSong && playSong(featuredSong)}>
+              {isPlaying && currentSongId === featuredSong?.id ? <Pause size={18} /> : <Play size={18} />}
+              {isPlaying && currentSongId === featuredSong?.id ? "Pause" : "Play"}
+            </button>
+            <button className="sp-shuffle-btn" onClick={() => { const r = filteredSongs[Math.floor(Math.random() * filteredSongs.length)]; if (r) playSong(r); }}>Shuffle</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Category pills */}
+      <div className="sp-pills">
+        {categories.map((cat) => (
+          <button key={cat} className={`sp-pill${activeCategory === cat ? " active" : ""}`} onClick={() => setActiveCategory(cat)}>{cat}</button>
+        ))}
+      </div>
+
+      {/* Track list */}
+      <div className="sp-list-header">
+        <span className="sp-col-num">#</span>
+        <span className="sp-col-title">Title</span>
+        <span className="sp-col-dur">Time</span>
+      </div>
+      <div className="sp-tracklist">
+        {filteredSongs.length === 0 && <EmptyState icon={Music2} title="No songs found" body="Try a different search or category." action="" onAction={() => {}} />}
+        {filteredSongs.map((song, idx) => (
+          <WorshipTrackRow
+            key={song.id}
+            song={song}
+            index={idx}
+            isActive={currentSongId === song.id}
+            isPlaying={isPlaying && currentSongId === song.id}
+            onPlay={() => playSong(song)}
+          />
+        ))}
+      </div>
+
+      {/* Upload FAB */}
+      <button className="comm-fab" aria-label="Upload worship song" onClick={() => setShowUploadSheet(true)}>
+        <Plus size={24} />
+      </button>
+
+      {showUploadSheet && <WorshipUploadSheet onClose={() => setShowUploadSheet(false)} />}
+
+      {/* Now Playing Bar */}
+      {currentSong && (
+        <NowPlayingBar
+          song={currentSong}
+          isPlaying={isPlaying}
+          progress={progress}
+          hasPrev={currentIndex > 0}
+          hasNext={currentIndex < filteredSongs.length - 1}
+          onPrev={prevSong}
+          onNext={nextSong}
+          onTogglePlay={togglePlay}
+          onSeek={seek}
+        />
+      )}
+    </section>
+  );
+}
+
+function WorshipTrackRow({ song, index, isActive, isPlaying, onPlay }: { song: WorshipSong; index: number; isActive: boolean; isPlaying: boolean; onPlay: () => void }) {
+  return (
+    <button className={`sp-track-row${isActive ? " active" : ""}`} onClick={onPlay}>
+      <div className="sp-col-num">
+        {isPlaying
+          ? <span className="sp-eq" aria-label="Now playing"><span /><span /><span /></span>
+          : isActive
+            ? <Play size={13} style={{ color: "var(--gold)" }} />
+            : <span className="sp-track-num">{index + 1}</span>}
+      </div>
+      <div className="sp-track-art">
+        {song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="sp-track-art-empty"><Music2 size={15} /></div>}
+      </div>
+      <div className="sp-track-info">
+        <span className="sp-track-title">{song.title}</span>
+        <span className="sp-track-artist">{song.artist}</span>
+      </div>
+      <div className="sp-col-dur">{song.duration || "—"}</div>
+    </button>
+  );
+}
+
+function NowPlayingBar({ song, isPlaying, progress, hasPrev, hasNext, onPrev, onNext, onTogglePlay, onSeek }: {
+  song: WorshipSong; isPlaying: boolean; progress: number;
+  hasPrev: boolean; hasNext: boolean;
+  onPrev: () => void; onNext: () => void; onTogglePlay: () => void; onSeek: (pct: number) => void;
+}) {
+  return (
+    <div className="now-playing-bar">
+      <div className="np-left">
+        <div className="np-art">
+          {song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="np-art-empty"><Music2 size={15} /></div>}
+        </div>
+        <div className="np-info">
+          <span className="np-title">{song.title}</span>
+          <span className="np-artist">{song.artist}</span>
+        </div>
+      </div>
+      <div className="np-center">
+        <button className="np-ctrl" onClick={onPrev} disabled={!hasPrev} aria-label="Previous"><SkipBack size={17} /></button>
+        <button className="np-play" onClick={onTogglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
+          {isPlaying ? <Pause size={19} /> : <Play size={19} />}
+        </button>
+        <button className="np-ctrl" onClick={onNext} disabled={!hasNext} aria-label="Next"><SkipForward size={17} /></button>
+      </div>
+      <div className="np-right">
+        <input className="np-progress" type="range" min={0} max={100} value={Math.round(progress)} onChange={(e) => onSeek(Number(e.target.value))} aria-label="Seek" />
+      </div>
+    </div>
+  );
+}
+
+function WorshipUploadSheet({ onClose }: { onClose: () => void }) {
+  const { currentUser, worshipSongs, setWorshipSongs, notify, go } = useApp();
+  const [form, setForm] = React.useState({ title: "", artist: "", description: "", category: "Worship", duration: "" });
   const [audioFile, setAudioFile] = React.useState<File | null>(null);
   const [coverFile, setCoverFile] = React.useState<File | null>(null);
-  const songQuery = worshipSearchQuery.trim().toLowerCase();
-  const filteredSongs = songQuery
-    ? worshipSongs.filter((song) => [song.title, song.artist, song.description, song.uploadedBy].join(" ").toLowerCase().includes(songQuery))
-    : worshipSongs;
+
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   const uploadSong = () => {
     if (!currentUser) return go("profile");
@@ -1968,50 +2160,42 @@ function WorshipScreen() {
     if (!audioFile) return notify("Choose an audio file first.");
     const audio = fileInfo(audioFile);
     const cover = fileInfo(coverFile);
-    const song: WorshipSong = {
-      id: uid("song"),
-      title: form.title.trim(),
-      artist: form.artist.trim(),
-      description: form.description,
-      category: form.category,
-      duration: form.duration,
-      audioName: audio.name,
-      audioUrl: audio.url,
-      coverName: cover.name,
-      coverUrl: cover.url,
-      uploadedBy: currentUser.name,
-      createdAt: new Date().toLocaleString(),
-    };
+    const song: WorshipSong = { id: uid("song"), title: form.title.trim(), artist: form.artist.trim(), description: form.description, category: form.category, duration: form.duration, audioName: audio.name, audioUrl: audio.url, coverName: cover.name, coverUrl: cover.url, uploadedBy: currentUser.name, createdAt: new Date().toLocaleString() };
     setWorshipSongs([song, ...worshipSongs]);
-    setForm({ ...form, title: "", artist: "", description: "", duration: "" });
-    setAudioFile(null);
-    setCoverFile(null);
     notify("Worship song uploaded.");
+    onClose();
   };
 
   return (
-    <section className="screen worship-screen">
-      <SectionIntro eyebrow="Worship" title="Worship music" body="Stream Romeo's worship songs and let members upload original worship music for the community." />
-      <div className="worship-layout">
-        <div>
-          <SectionHeader title="Now streaming" action={filteredSongs.length + " songs"} />
-          <div className="worship-song-list">
-            {filteredSongs.map((song) => <article className="content-panel worship-song-card" key={song.id}>{song.coverUrl ? <img src={song.coverUrl} alt="" /> : <div className="worship-cover-empty"><Music2 size={28} /></div>}<div><p className="eyebrow">{song.uploadedBy || "Worship"}</p><h3>{song.title}</h3><p>{song.artist} • {song.duration || "Original"}</p>{song.audioUrl && <audio controls src={song.audioUrl} />}</div></article>)}
-            {filteredSongs.length === 0 && <EmptyState icon={Music2} title="No songs found" body="Try searching a different song or artist." action="" onAction={() => {}} />}
-          </div>
+    <>
+      <div className="post-sheet-overlay" onClick={onClose} />
+      <div className="post-sheet">
+        <div className="post-sheet-drag-bar" />
+        <div className="post-sheet-header">
+          <span style={{ fontWeight: 800, fontSize: "1rem", color: "#f7fbff" }}>Upload Worship Song</span>
+          <button className="icon-button" aria-label="Close" onClick={onClose}><X size={20} /></button>
         </div>
-        <div className="form-card worship-upload-card">
-          <h2>Upload worship song</h2>
-          <Field label="Song title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
-          <Field label="Artist / worship team" value={form.artist} onChange={(artist) => setForm({ ...form, artist })} />
-          <label>Description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
-          <Field label="Duration" value={form.duration} onChange={(duration) => setForm({ ...form, duration })} />
-          <FileField label="Audio file" onChange={setAudioFile} />
-          <FileField label="Cover image" onChange={setCoverFile} />
-          <button className="primary-button" type="button" onClick={uploadSong}>Upload Song</button>
+        <div className="post-sheet-body">
+          {!currentUser ? (
+            <div className="post-sheet-signin">
+              <Music2 size={34} style={{ color: "var(--gold)", marginBottom: 8 }} />
+              <p>Sign in to upload worship music</p>
+              <button className="primary-button" onClick={() => { go("profile"); onClose(); }}>Sign In</button>
+            </div>
+          ) : (
+            <>
+              <Field label="Song title" value={form.title} onChange={(title) => setForm({ ...form, title })} />
+              <Field label="Artist / worship team" value={form.artist} onChange={(artist) => setForm({ ...form, artist })} />
+              <label>Description<textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
+              <Field label="Duration (e.g. 3:45)" value={form.duration} onChange={(duration) => setForm({ ...form, duration })} />
+              <FileField label="Audio file (MP3, WAV)" onChange={setAudioFile} />
+              <FileField label="Cover image (optional)" onChange={setCoverFile} />
+              <button className="primary-button" type="button" onClick={uploadSong}>Upload Song</button>
+            </>
+          )}
         </div>
       </div>
-    </section>
+    </>
   );
 }
 
