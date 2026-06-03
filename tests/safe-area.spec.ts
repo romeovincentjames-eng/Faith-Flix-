@@ -15,6 +15,7 @@
  * Viewports tested:
  *  - iPhone 14 (390 × 844) — notched, --sat = 34 px
  *  - iPhone SE 3rd gen (375 × 667) — no notch, --sat = 0 px
+ *  - iPad Air (820 × 1180) — wide viewport, --keyboard-inset wired up via base rule
  */
 
 import { test, expect, Page } from '@playwright/test';
@@ -229,6 +230,62 @@ test.describe('Keyboard open — notched iPhone, safe-area 34 px, keyboard-inset
     expect(nowPlayingBarBottom).toBeLessThanOrEqual(navPillTop);
   });
 
+});
+
+// ── Keyboard open — iPad Air (wide viewport, keyboard-inset active) ──────────
+//
+// At widths > 560 px the @media (max-width: 560px) override does NOT apply,
+// so the base rule:
+//   bottom: calc(max(16px, …) + var(--keyboard-inset, 0px))
+// is in effect and --keyboard-inset IS wired up.
+// These tests verify that all bars clear the nav pill and that the pill
+// physically rises when the keyboard opens, confirming the CSS arithmetic
+// is correct on the wide-screen path.
+
+test.describe('Keyboard open — iPad Air 820 × 1180, safe-area 0 px, keyboard-inset 300 px', () => {
+  const IPAD_AIR = { width: 820, height: 1180 };
+
+  test('.comm-fab bottom clears nav pill top edge when keyboard is open', async ({ page }) => {
+    await buildPageWithKeyboard(page, 0, IPAD_AIR, KEYBOARD_INSET);
+    const pillTop = await navPillTopEdge(page);
+    const { bottom } = await getGeometry(page, '.comm-fab');
+    expect(bottom).toBeGreaterThanOrEqual(pillTop);
+  });
+
+  test('.tt-new-list-bar bottom clears nav pill top edge when keyboard is open', async ({ page }) => {
+    await buildPageWithKeyboard(page, 0, IPAD_AIR, KEYBOARD_INSET);
+    const pillTop = await navPillTopEdge(page);
+    const { bottom } = await getGeometry(page, '.tt-new-list-bar');
+    expect(bottom).toBeGreaterThanOrEqual(pillTop);
+  });
+
+  test('.now-playing-bar does not overlap nav pill when keyboard is open', async ({ page }) => {
+    await buildPageWithKeyboard(page, 0, IPAD_AIR, KEYBOARD_INSET);
+    const { nowPlayingBarBottom, navPillTop } = await page.evaluate(() => {
+      const npBar = document.querySelector('.now-playing-bar') as HTMLElement;
+      const navPill = document.querySelector('.bottom-nav') as HTMLElement;
+      const npRect = npBar.getBoundingClientRect();
+      const navRect = navPill.getBoundingClientRect();
+      return { nowPlayingBarBottom: npRect.bottom, navPillTop: navRect.top };
+    });
+    // now-playing-bar is pinned near the top; its bottom edge must sit above
+    // the nav pill's top edge — no overlap, even with keyboard open.
+    expect(nowPlayingBarBottom).toBeLessThanOrEqual(navPillTop);
+  });
+
+  test('nav pill rises when keyboard opens — --keyboard-inset is active at wide viewport', async ({ page }) => {
+    // Baseline: no keyboard — wide viewport uses base CSS rule (no 560 px override)
+    await buildPage(page, 0, IPAD_AIR);
+    const { bottom: bottomNoKeyboard } = await getGeometry(page, '.bottom-nav');
+
+    // Keyboard open — base rule adds var(--keyboard-inset, 0px) so pill must rise
+    await buildPageWithKeyboard(page, 0, IPAD_AIR, KEYBOARD_INSET);
+    const { bottom: bottomWithKeyboard } = await getGeometry(page, '.bottom-nav');
+
+    // At > 560 px the base rule is: max(16px, sat+10px) + keyboard-inset
+    // With keyboard-inset = 300 px the pill should be ~300 px higher than baseline
+    expect(bottomWithKeyboard).toBeGreaterThan(bottomNoKeyboard);
+  });
 });
 
 // ── Visual snapshot tests (image diff) ───────────────────────────────────────
