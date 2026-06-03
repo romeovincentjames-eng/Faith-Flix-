@@ -8573,3 +8573,77 @@ select {
 }
 .ep-ctrl-side:hover { color: rgba(247,251,255,0.85); }
 .ep-ctrl-side.ep-ctrl-active { color: var(--gold); }
+
+/* ── WatchFeedCard fullscreen + tap zones ── */
+.watch-feed-card.wfc-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  z-index: 200 !important;
+  scroll-snap-align: none;
+  border-radius: 0;
+}
+
+.wfc-tap-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.wfc-center-zone {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.wfc-play-hint {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.88);
+  animation: wfc-pulse 0.18s ease-out;
+}
+
+@keyframes wfc-pulse {
+  from { transform: scale(1.25); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.wfc-exit-btn {
+  position: absolute;
+  top: calc(16px + env(safe-area-inset-top));
+  left: 16px;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(10px);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.14s;
+}
+.wfc-exit-btn:hover { background: rgba(0, 0, 0, 0.72); }
+
+.watch-feed-actions { z-index: 5; }
+.watch-feed-footer  { z-index: 5; }
+.watch-feed-gradient { z-index: 1; }

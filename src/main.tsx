@@ -1520,6 +1520,7 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
   const cardRef = React.useRef<HTMLDivElement>(null);
   const [muted, setMuted] = React.useState(true);
   const [paused, setPaused] = React.useState(false);
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
 
   React.useEffect(() => {
     const el = cardRef.current;
@@ -1568,8 +1569,11 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
 
   const isCloudflare = isCloudflareStreamUrl(video.videoUrl || "");
 
+  const handleOuterTap = () => setIsFullscreen(f => !f);
+  const handleCenterTap = (e: React.MouseEvent) => { e.stopPropagation(); tapVideo(); };
+
   return (
-    <div ref={cardRef} className="watch-feed-card">
+    <div ref={cardRef} className={`watch-feed-card${isFullscreen ? " wfc-fullscreen" : ""}`}>
       {video.videoUrl ? (
         isCloudflare ? (
           <iframe
@@ -1587,21 +1591,34 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
             muted={muted}
             poster={video.thumbnailUrl || undefined}
             src={video.videoUrl}
-            onClick={tapVideo}
           />
         )
       ) : video.thumbnailUrl ? (
-        <img className="watch-feed-video" src={video.thumbnailUrl} alt={video.title} style={{ objectFit: "cover" }} onClick={tapVideo} />
+        <img className="watch-feed-video" src={video.thumbnailUrl} alt={video.title} style={{ objectFit: "cover" }} />
       ) : (
-        <div className="watch-feed-video watch-feed-empty" onClick={tapVideo} />
+        <div className="watch-feed-video watch-feed-empty" />
       )}
 
       <div className="watch-feed-gradient" />
 
-      {paused && !isCloudflare && (
-        <div className="watch-feed-paused-icon" onClick={tapVideo}>
-          <Play size={52} fill="currentColor" />
+      {/* Tap zone overlay — center = play/pause, outer = fullscreen */}
+      {!isCloudflare && (
+        <div className="wfc-tap-overlay" onClick={handleOuterTap}>
+          <div className="wfc-center-zone" onClick={handleCenterTap}>
+            {paused && (
+              <div className="wfc-play-hint">
+                <Play size={34} fill="currentColor" />
+              </div>
+            )}
+          </div>
         </div>
+      )}
+
+      {/* Exit fullscreen button */}
+      {isFullscreen && (
+        <button className="wfc-exit-btn" onClick={() => setIsFullscreen(false)} aria-label="Exit fullscreen">
+          <X size={20} />
+        </button>
       )}
 
       <div className="watch-feed-footer">
@@ -2645,7 +2662,7 @@ function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, save
             const playing = active && isPlaying;
             const saved = savedSongIds.includes(song.id);
             return (
-              <button key={song.id} className={`album-sheet-track${active ? " active" : ""}`} onClick={() => { onPlay(song); onClose(); }}>
+              <div key={song.id} className={`album-sheet-track${active ? " active" : ""}`} onClick={() => { onPlay(song); onClose(); }} role="button" tabIndex={0} onKeyDown={e => e.key === "Enter" && (onPlay(song), onClose())}>
                 <div className="album-sheet-track-num">
                   {playing ? <span className="sp-eq"><span /><span /><span /></span> : active ? <Play size={12} style={{ color: "var(--gold)" }} /> : <span>{idx + 1}</span>}
                 </div>
@@ -2660,7 +2677,7 @@ function AlbumDetailSheet({ album, songs, currentSongId, isPlaying, onPlay, save
                   <Heart size={14} fill={saved ? "currentColor" : "none"} />
                 </button>
                 <span className="album-sheet-track-dur">{song.duration || "—"}</span>
-              </button>
+              </div>
             );
           })}
         </div>
