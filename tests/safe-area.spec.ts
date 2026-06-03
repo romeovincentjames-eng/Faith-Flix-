@@ -346,6 +346,11 @@ test.describe('Visual snapshots — safe-area layout', () => {
     await buildPageWithKeyboard(page, 0, { width: 375, height: 667 }, KEYBOARD_INSET);
     await expect(page).toHaveScreenshot('iphone-se-sat0-keyboard.png', { fullPage: true });
   });
+
+  test('iPad Air layout with keyboard open matches snapshot', async ({ page }) => {
+    await buildPageWithKeyboard(page, 0, { width: 820, height: 1180 }, 300);
+    await expect(page).toHaveScreenshot('ipad-air-sat0-keyboard.png', { fullPage: true });
+  });
 });
 
 // ── --nav-h invariant guard ───────────────────────────────────────────────────
