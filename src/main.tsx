@@ -18,6 +18,8 @@ import {
   Eye,
   EyeOff,
   Film,
+  CreditCard,
+  Gift,
   Heart,
   HeartHandshake,
   Home,
@@ -42,11 +44,13 @@ import {
   SkipForward,
   Search,
   Send,
+  Server,
   Share2,
   ShieldCheck,
   Sparkles,
   Trash2,
   Upload,
+  Utensils,
   User,
   UserPlus,
   Users,
@@ -66,6 +70,7 @@ type Page =
   | "community"
   | "worship"
   | "saved"
+  | "donate"
   | "profile"
   | "forgot-password"
   | "admin-login"
@@ -869,6 +874,14 @@ function App() {
   };
 
   React.useEffect(() => {
+    const donationStatus = new URLSearchParams(window.location.search).get("donation");
+    if (!donationStatus) return;
+    setPage("donate");
+    notify(donationStatus === "success" ? "Thank you for supporting Faith Flix." : "Donation checkout was canceled.");
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
+
+  React.useEffect(() => {
     const demoVersion = "faithflix-demo-content-v11";
     if (localStorage.getItem(demoVersion)) return;
     setUsers((current) => mergeById(MOCK_USERS, current));
@@ -1030,10 +1043,10 @@ function App() {
   };
 
   React.useEffect(() => {
-    if (isAdmin && page !== "admin-studio") setPage("admin-studio");
+    if (isAdmin && page !== "admin-studio" && page !== "donate") setPage("admin-studio");
   }, [isAdmin, page]);
 
-  const visiblePage = isAdmin ? "admin-studio" : page;
+  const visiblePage = isAdmin && page !== "donate" ? "admin-studio" : page;
   const isSignInPage = visiblePage === "profile" && !currentUser;
   const isCommunityShell = visiblePage === "community" || visiblePage === "upload";
   const isWorshipShell = visiblePage === "worship";
@@ -1146,6 +1159,10 @@ function App() {
                   <span>Faith Flix</span>
                 </button>
                 <div className="top-actions">
+                  <button className="topbar-donate-btn" aria-label="Donate" onClick={() => go("donate")}>
+                    <HeartHandshake size={16} />
+                    <span>Give</span>
+                  </button>
                   <button className="icon-button topbar-search-btn" aria-label="Search" onClick={() => setShowMainSearch(true)}><Search size={19} /></button>
                   <button className="icon-button topbar-notif-btn" aria-label="Notifications" onClick={() => setNotifPanelOpen(true)}>
                     <Bell size={19} />
@@ -1165,6 +1182,7 @@ function App() {
           {visiblePage === "community" && <CommunityScreen />}
           <div style={{ display: visiblePage === "worship" ? "contents" : "none" }}><WorshipScreen /></div>
           {visiblePage === "saved" && <SavedScreen />}
+          {visiblePage === "donate" && <DonationScreen />}
           {visiblePage === "profile" && <ProfileScreen />}
           {visiblePage === "forgot-password" && <ForgotPasswordScreen />}
           {visiblePage === "admin-login" && <AdminLogin />}
@@ -2123,6 +2141,138 @@ function SeriesScreen() {
           </div>
         </div>
       )}
+    </section>
+  );
+}
+
+const DONATION_AMOUNTS = [500, 1000, 2500, 5000];
+type DonationPurpose = "general" | "servers" | "food-cards" | "videos";
+
+function formatDonationAmount(cents: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: cents % 100 === 0 ? 0 : 2 }).format(cents / 100);
+}
+
+function DonationScreen() {
+  const { currentUser, notify } = useApp();
+  const [selectedAmount, setSelectedAmount] = React.useState(1000);
+  const [customAmount, setCustomAmount] = React.useState("");
+  const [purpose, setPurpose] = React.useState<DonationPurpose>("general");
+  const [loading, setLoading] = React.useState(false);
+  const customAmountCents = customAmount.trim() ? Math.round(Number(customAmount) * 100) : 0;
+  const amountCents = customAmount.trim() ? customAmountCents : selectedAmount;
+  const amountIsValid = Number.isFinite(amountCents) && amountCents >= 100 && amountCents <= 500000;
+  const purposeLabels: Record<DonationPurpose, string> = {
+    general: "Use where needed most",
+    servers: "App servers",
+    "food-cards": "Food cards",
+    videos: "More videos",
+  };
+
+  const startDonation = async () => {
+    if (!amountIsValid) {
+      notify("Choose a donation from $1 to $5,000.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch("/api/create-donation-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: amountCents, purpose, donorEmail: currentUser?.email }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!response.ok || !payload.url) throw new Error(payload.error || "Donation checkout could not start.");
+      window.location.assign(payload.url);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Donation checkout could not start.");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className="screen donate-screen">
+      <div className="donate-hero">
+        <span className="donate-badge"><HeartHandshake size={15} /> Faith Flix Giving</span>
+        <h1>Keep Faith Flix online and growing</h1>
+        <p>Every donation helps cover the servers that run the app, fund first-come, first-served food cards for various places, and create more faith videos.</p>
+      </div>
+
+      <div className="donate-layout">
+        <article className="donate-panel donate-form-panel">
+          <div className="donate-panel-heading">
+            <CreditCard size={20} />
+            <div>
+              <h2>Make a donation</h2>
+              <p>Secure checkout opens with Stripe.</p>
+            </div>
+          </div>
+
+          <div className="donate-amount-grid" aria-label="Donation amount">
+            {DONATION_AMOUNTS.map((amount) => (
+              <button
+                key={amount}
+                className={`donate-amount-chip${!customAmount && selectedAmount === amount ? " active" : ""}`}
+                onClick={() => { setSelectedAmount(amount); setCustomAmount(""); }}
+              >
+                {formatDonationAmount(amount)}
+              </button>
+            ))}
+          </div>
+
+          <label className="donate-custom-label">
+            Custom amount
+            <span>
+              <strong>$</strong>
+              <input
+                inputMode="decimal"
+                min="1"
+                max="5000"
+                placeholder="Enter amount"
+                value={customAmount}
+                onChange={(event) => setCustomAmount(event.target.value)}
+              />
+            </span>
+          </label>
+
+          <div className="donate-purpose-group">
+            <p>Donation focus</p>
+            {(Object.keys(purposeLabels) as DonationPurpose[]).map((key) => (
+              <button key={key} className={`donate-purpose${purpose === key ? " active" : ""}`} onClick={() => setPurpose(key)}>
+                {purposeLabels[key]}
+              </button>
+            ))}
+          </div>
+
+          <button className="primary-button donate-submit" disabled={loading || !amountIsValid} onClick={startDonation}>
+            <HeartHandshake size={17} />
+            {loading ? "Opening Stripe..." : `Donate ${amountIsValid ? formatDonationAmount(amountCents) : ""}`}
+          </button>
+          <p className="donate-fine-print">Funds are directed toward Faith Flix operating costs, food-card support while funds are available, and video production. Food cards are first come, first served.</p>
+        </article>
+
+        <div className="donate-impact-grid">
+          <article className="donate-impact-card">
+            <Server size={22} />
+            <h3>App servers</h3>
+            <p>Helps pay hosting and tools that keep Faith Flix available.</p>
+          </article>
+          <article className="donate-impact-card">
+            <Gift size={22} />
+            <h3>Food cards</h3>
+            <p>Supports first-come, first-served food cards for various places as funds allow.</p>
+          </article>
+          <article className="donate-impact-card">
+            <Film size={22} />
+            <h3>More videos</h3>
+            <p>Funds new faith videos, shorts, teaching content, and creative production.</p>
+          </article>
+          <article className="donate-impact-card">
+            <Utensils size={22} />
+            <h3>Community care</h3>
+            <p>Gives the app a simple way to help people with practical needs.</p>
+          </article>
+        </div>
+      </div>
     </section>
   );
 }
