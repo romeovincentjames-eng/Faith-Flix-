@@ -9298,6 +9298,86 @@ body.video-fullscreen .watch-feed-footer {
   padding-bottom: calc(env(safe-area-inset-bottom) + 24px) !important;
   transition: padding-bottom 0.22s ease;
 }
+
+/* ── Final bottom nav polish/performance pass ────────── */
+.bottom-nav {
+  width: min(520px, calc(100% - 22px));
+  height: 66px;
+  padding: 0 8px;
+  transform: translate3d(-50%, 0, 0);
+  background:
+    linear-gradient(180deg, rgba(12,16,30,0.96), rgba(4,7,16,0.98));
+  border: 1px solid rgba(246,210,123,0.22);
+  border-radius: 999px;
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+  backdrop-filter: blur(18px) saturate(1.35);
+  box-shadow:
+    0 12px 32px rgba(0,0,0,0.58),
+    0 0 0 1px rgba(255,255,255,0.035),
+    inset 0 1px 0 rgba(255,255,255,0.075);
+  contain: layout paint style;
+  backface-visibility: hidden;
+}
+
+.nav-button {
+  min-width: 0;
+  color: rgba(247,251,255,0.42);
+  transform: translateZ(0);
+  transition: color 0.14s ease, opacity 0.14s ease;
+}
+
+.nav-button.active::before {
+  display: none;
+}
+
+.nav-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  transition: background 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.nav-button svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 2.35;
+  shape-rendering: geometricPrecision;
+}
+
+.nav-button.active {
+  color: #07101e;
+}
+
+.nav-button.active .nav-icon {
+  background: linear-gradient(145deg, #ffe89f 0%, #d4a017 72%);
+  box-shadow:
+    0 8px 22px rgba(212,160,23,0.42),
+    inset 0 1px 0 rgba(255,255,255,0.38);
+  transform: translateY(-5px) scale(1.08);
+}
+
+.nav-button:not(.active):hover .nav-icon,
+.nav-button:not(.active):focus-visible .nav-icon {
+  background: rgba(255,255,255,0.075);
+}
+
+@media (max-width: 480px) {
+  .bottom-nav {
+    width: calc(100% - 18px);
+    height: 64px;
+    padding: 0 6px;
+  }
+
+  .nav-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .nav-button svg {
+    width: 20px;
+    height: 20px;
+  }
+}
 body.video-fullscreen .watch-feed-actions {
   bottom: calc(env(safe-area-inset-bottom) + 20px) !important;
   transition: bottom 0.22s ease;
