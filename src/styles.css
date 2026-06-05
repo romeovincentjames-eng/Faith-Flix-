@@ -5643,6 +5643,106 @@ textarea:focus {
 
 .tt-saved-series-card:hover .tt-saved-remove { opacity: 1; }
 
+.tt-saved-post-list {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.tt-saved-post-card {
+  position: relative;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.045);
+  overflow: hidden;
+}
+
+.tt-saved-post-main {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 12px 42px 12px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tt-saved-post-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(246,210,123,0.14);
+  color: #f6d27b;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.tt-saved-post-body {
+  min-width: 0;
+}
+
+.tt-saved-post-author {
+  margin: 0 0 2px;
+  color: #f7fbff;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.tt-saved-post-scripture {
+  margin: 0 0 5px;
+  color: #f6d27b;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.tt-saved-post-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+  color: rgba(247,251,255,0.72);
+  font-size: 0.82rem;
+  line-height: 1.42;
+}
+
+.tt-saved-post-meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  color: rgba(247,251,255,0.4);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.tt-saved-post-image {
+  width: 54px;
+  height: 54px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.tt-saved-post-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.42);
+  color: rgba(247,251,255,0.78);
+  cursor: pointer;
+}
+
 .series-save-pill {
   position: absolute;
   top: 8px;
@@ -5674,11 +5774,11 @@ textarea:focus {
 
 /* ── Donation screen ────────────────────────────────── */
 .donate-screen {
-  padding: 18px 16px 110px;
+  padding: 12px 14px calc(var(--nav-h) + env(safe-area-inset-bottom) + 42px);
 }
 
 .donate-hero {
-  padding: 16px 2px 18px;
+  padding: 10px 2px 14px;
 }
 
 .donate-badge {
@@ -5725,7 +5825,7 @@ textarea:focus {
 }
 
 .donate-form-panel {
-  padding: 16px;
+  padding: 14px;
 }
 
 .donate-panel-heading {
@@ -5755,11 +5855,10 @@ textarea:focus {
 .donate-amount-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 9px;
 }
 
-.donate-amount-chip,
-.donate-purpose {
+.donate-amount-chip {
   min-height: 44px;
   border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.1);
@@ -5770,8 +5869,7 @@ textarea:focus {
   transition: border-color 0.18s, background 0.18s, color 0.18s;
 }
 
-.donate-amount-chip.active,
-.donate-purpose.active {
+.donate-amount-chip.active {
   border-color: rgba(246,210,123,0.74);
   background: rgba(246,210,123,0.16);
   color: #f6d27b;
@@ -5812,24 +5910,6 @@ textarea:focus {
   font-size: 1rem;
 }
 
-.donate-purpose-group {
-  display: grid;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.donate-purpose-group p {
-  margin: 0;
-  color: rgba(247,251,255,0.62);
-  font-size: 0.8rem;
-  font-weight: 800;
-}
-
-.donate-purpose {
-  text-align: left;
-  padding: 0 13px;
-}
-
 .donate-submit {
   width: 100%;
   margin-top: 16px;
@@ -5849,12 +5929,12 @@ textarea:focus {
 
 .donate-impact-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 
 .donate-impact-card {
-  min-height: 150px;
+  min-height: 120px;
   padding: 14px;
 }
 
@@ -5883,6 +5963,10 @@ textarea:focus {
   .donate-layout {
     grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
     align-items: start;
+  }
+
+  .donate-impact-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -8939,6 +9023,47 @@ select {
 .ws-featured-actions .sp-play-btn,
 .ws-featured-actions .sp-shuffle-btn {
   border-radius: 999px;
+}
+
+@media (max-width: 480px) {
+  .ws-screen.has-now-playing {
+    padding-top: 68px;
+  }
+
+  .ws-featured {
+    margin: 10px 10px 2px;
+    border-radius: 22px;
+  }
+
+  .ws-featured-body {
+    gap: 12px;
+    padding: 16px 14px 8px;
+  }
+
+  .ws-featured-art {
+    width: 108px;
+    height: 108px;
+    border-radius: 18px;
+  }
+
+  .ws-featured-title {
+    font-size: 1.1rem;
+  }
+
+  .ws-featured-tracklist {
+    margin: 0 12px;
+  }
+
+  .ws-featured-actions {
+    gap: 8px;
+    padding: 12px 14px 16px;
+  }
+
+  .ws-featured-actions .sp-play-btn,
+  .ws-featured-actions .sp-shuffle-btn {
+    min-height: 42px;
+    padding-inline: 18px;
+  }
 }
 
 /* Heart / save button */

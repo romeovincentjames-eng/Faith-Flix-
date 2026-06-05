@@ -2146,7 +2146,6 @@ function SeriesScreen() {
 }
 
 const DONATION_AMOUNTS = [500, 1000, 2500, 5000];
-type DonationPurpose = "general" | "servers" | "food-cards" | "videos";
 
 function formatDonationAmount(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: cents % 100 === 0 ? 0 : 2 }).format(cents / 100);
@@ -2156,17 +2155,10 @@ function DonationScreen() {
   const { currentUser, notify } = useApp();
   const [selectedAmount, setSelectedAmount] = React.useState(1000);
   const [customAmount, setCustomAmount] = React.useState("");
-  const [purpose, setPurpose] = React.useState<DonationPurpose>("general");
   const [loading, setLoading] = React.useState(false);
   const customAmountCents = customAmount.trim() ? Math.round(Number(customAmount) * 100) : 0;
   const amountCents = customAmount.trim() ? customAmountCents : selectedAmount;
   const amountIsValid = Number.isFinite(amountCents) && amountCents >= 100 && amountCents <= 500000;
-  const purposeLabels: Record<DonationPurpose, string> = {
-    general: "Use where needed most",
-    servers: "App servers",
-    "food-cards": "Food cards",
-    videos: "More videos",
-  };
 
   const startDonation = async () => {
     if (!amountIsValid) {
@@ -2178,7 +2170,7 @@ function DonationScreen() {
       const response = await fetch("/api/create-donation-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amountCents, purpose, donorEmail: currentUser?.email }),
+        body: JSON.stringify({ amount: amountCents, donorEmail: currentUser?.email }),
       });
       const payload = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
       if (!response.ok || !payload.url) throw new Error(payload.error || "Donation checkout could not start.");
@@ -2233,15 +2225,6 @@ function DonationScreen() {
               />
             </span>
           </label>
-
-          <div className="donate-purpose-group">
-            <p>Donation focus</p>
-            {(Object.keys(purposeLabels) as DonationPurpose[]).map((key) => (
-              <button key={key} className={`donate-purpose${purpose === key ? " active" : ""}`} onClick={() => setPurpose(key)}>
-                {purposeLabels[key]}
-              </button>
-            ))}
-          </div>
 
           <button className="primary-button donate-submit" disabled={loading || !amountIsValid} onClick={startDonation}>
             <HeartHandshake size={17} />
@@ -2804,15 +2787,15 @@ function WorshipUploadSheet({ onClose }: { onClose: () => void }) {
 }
 
 function SavedScreen() {
-  const { currentUser, saved, savedSeries, savedLists, videos, publicSeries, setSaved, setSavedSeries, setSavedLists, setSelectedVideoId, setSelectedSeriesId, go, notify } = useApp();
-  const [activeFilter, setActiveFilter] = React.useState<"all" | "videos" | "series" | "lists">("all");
+  const { currentUser, saved, savedSeries, savedLists, videos, publicSeries, posts, comments, setPosts, setSaved, setSavedSeries, setSavedLists, setSelectedVideoId, setSelectedSeriesId, setCommunityView, go, notify } = useApp();
+  const [activeFilter, setActiveFilter] = React.useState<"all" | "videos" | "series" | "posts" | "lists">("all");
   const [showNewList, setShowNewList] = React.useState(false);
   const [listName, setListName] = React.useState("");
 
   if (!currentUser) {
     return (
       <section className="screen">
-        <EmptyState icon={Bookmark} title="Sign in to see your saved library" body="Your saved videos, series, and collections will appear here." action="Sign In" onAction={() => go("profile")} />
+        <EmptyState icon={Bookmark} title="Sign in to see your saved library" body="Your saved videos, series, posts, and collections will appear here." action="Sign In" onAction={() => go("profile")} />
       </section>
     );
   }
@@ -2823,6 +2806,8 @@ function SavedScreen() {
   const userLists = savedLists[actorId] ?? [];
   const generalVideos = videos.filter((v) => generalIds.includes(v.id));
   const generalSeries = publicSeries.filter((item) => savedSeriesIds.includes(item.id));
+  const savedPosts = posts.filter((post) => post.saves.includes(actorId));
+  const hasSavedContent = generalVideos.length > 0 || generalSeries.length > 0 || savedPosts.length > 0 || userLists.length > 0;
 
   const createList = () => {
     const name = listName.trim();
@@ -2834,21 +2819,26 @@ function SavedScreen() {
 
   const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
   const openSeries = (id: string) => { setSelectedSeriesId(id); go("series"); };
+  const openPosts = () => { setCommunityView("feed"); go("community"); };
   const removeFromGeneral = (videoId: string) => { setSaved({ ...saved, [actorId]: generalIds.filter((id) => id !== videoId) }); notify("Removed."); };
   const removeSeries = (seriesId: string) => { setSavedSeries({ ...savedSeries, [actorId]: savedSeriesIds.filter((id) => id !== seriesId) }); notify("Series removed."); };
+  const removePost = (postId: string) => {
+    setPosts(posts.map((post) => post.id === postId ? { ...post, saves: post.saves.filter((id) => id !== actorId) } : post));
+    notify("Post removed.");
+  };
   const deleteList = (listId: string) => { setSavedLists({ ...savedLists, [actorId]: userLists.filter((l) => l.id !== listId) }); notify("Collection deleted."); };
 
   return (
     <section className="screen tt-saved-screen">
       <div className="tt-saved-header">
         <h1 className="tt-saved-title">Saved</h1>
-        <p className="tt-saved-meta">{generalIds.length} video{generalIds.length !== 1 ? "s" : ""} · {savedSeriesIds.length} series · {userLists.length} collection{userLists.length !== 1 ? "s" : ""}</p>
+        <p className="tt-saved-meta">{generalIds.length} video{generalIds.length !== 1 ? "s" : ""} · {savedSeriesIds.length} series · {savedPosts.length} post{savedPosts.length !== 1 ? "s" : ""}</p>
       </div>
 
       <div className="tt-saved-tabs">
-        {(["all", "videos", "series", "lists"] as const).map((f) => (
+        {(["all", "videos", "series", "posts", "lists"] as const).map((f) => (
           <button key={f} className={`tt-saved-tab${activeFilter === f ? " active" : ""}`} onClick={() => setActiveFilter(f)}>
-            {f === "all" ? "All" : f === "videos" ? "Videos" : f === "series" ? "Series" : "Collections"}
+            {f === "all" ? "All" : f === "videos" ? "Videos" : f === "series" ? "Series" : f === "posts" ? "Posts" : "Collections"}
           </button>
         ))}
       </div>
@@ -2871,8 +2861,8 @@ function SavedScreen() {
               </button>
             ))}
           </div>
-        ) : activeFilter === "videos" || generalSeries.length === 0 ? (
-          <EmptyState icon={Bookmark} title="Nothing saved yet" body="Tap the bookmark on any video to save it here." action="Watch Videos" onAction={() => go("watch")} />
+        ) : activeFilter === "videos" || !hasSavedContent ? (
+          <EmptyState icon={Bookmark} title="Nothing saved yet" body="Tap the bookmark on a video, series, or post to save it here." action="Watch Videos" onAction={() => go("watch")} />
         ) : null
       )}
 
@@ -2903,9 +2893,39 @@ function SavedScreen() {
         ) : null
       )}
 
+      {(activeFilter === "all" || activeFilter === "posts") && (
+        savedPosts.length > 0 ? (
+          <div className="tt-saved-post-list">
+            {savedPosts.map((post) => {
+              const commentCount = comments.filter((comment) => comment.targetId === post.id).length;
+              return (
+                <article key={post.id} className="tt-saved-post-card">
+                  <button className="tt-saved-post-main" onClick={openPosts}>
+                    <div className="tt-saved-post-avatar">{post.author.split(" ").map((word) => word[0]).slice(0, 2).join("").toUpperCase()}</div>
+                    <div className="tt-saved-post-body">
+                      <p className="tt-saved-post-author">{post.author}</p>
+                      {post.scripture && <p className="tt-saved-post-scripture">✦ {post.scripture}</p>}
+                      <p className="tt-saved-post-text">{post.text}</p>
+                      <div className="tt-saved-post-meta">
+                        <span>{post.likes.length} like{post.likes.length !== 1 ? "s" : ""}</span>
+                        <span>{commentCount} comment{commentCount !== 1 ? "s" : ""}</span>
+                      </div>
+                    </div>
+                    {post.imageUrl && <img className="tt-saved-post-image" src={post.imageUrl} alt="" />}
+                  </button>
+                  <button className="tt-saved-post-remove" aria-label="Remove post" onClick={() => removePost(post.id)}><X size={14} /></button>
+                </article>
+              );
+            })}
+          </div>
+        ) : activeFilter === "posts" ? (
+          <EmptyState icon={MessagesSquare} title="No saved posts yet" body="Tap the bookmark on a community post to save it here." action="Open Community" onAction={openPosts} />
+        ) : null
+      )}
+
       {(activeFilter === "all" || activeFilter === "lists") && (
         <div className="tt-collections">
-          {activeFilter === "all" && generalVideos.length > 0 && userLists.length > 0 && (
+          {activeFilter === "all" && (generalVideos.length > 0 || generalSeries.length > 0 || savedPosts.length > 0) && userLists.length > 0 && (
             <p className="tt-collections-label">Collections</p>
           )}
           {userLists.map((list) => {

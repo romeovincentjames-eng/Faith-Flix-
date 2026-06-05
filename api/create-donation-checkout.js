@@ -1,6 +1,5 @@
 const MIN_DONATION_CENTS = 100;
 const MAX_DONATION_CENTS = 500000;
-const PURPOSES = new Set(["general", "servers", "food-cards", "videos"]);
 
 async function readJson(request) {
   if (request.body && typeof request.body === "object") return request.body;
@@ -27,6 +26,9 @@ export default async function handler(request, response) {
   if (!secretKey) {
     return response.status(500).json({ error: "Stripe is not configured yet. Add STRIPE_SECRET_KEY in Vercel." });
   }
+  if (!secretKey.startsWith("sk_test_") && !secretKey.startsWith("sk_live_")) {
+    return response.status(500).json({ error: "Stripe needs a secret key that starts with sk_test_ or sk_live_." });
+  }
 
   let body;
   try {
@@ -36,7 +38,6 @@ export default async function handler(request, response) {
   }
 
   const amount = Math.round(Number(body.amount));
-  const purpose = PURPOSES.has(body.purpose) ? body.purpose : "general";
 
   if (!Number.isFinite(amount) || amount < MIN_DONATION_CENTS || amount > MAX_DONATION_CENTS) {
     return response.status(400).json({ error: "Choose a donation from $1 to $5,000." });
@@ -52,8 +53,8 @@ export default async function handler(request, response) {
   params.append("line_items[0][price_data][unit_amount]", String(amount));
   params.append("line_items[0][price_data][product_data][name]", "Faith Flix donation");
   params.append("line_items[0][price_data][product_data][description]", "Supports app servers, first-come food cards, and more faith videos.");
-  params.append("metadata[purpose]", purpose);
-  params.append("payment_intent_data[metadata][purpose]", purpose);
+  params.append("metadata[source]", "faith-flix-donation");
+  params.append("payment_intent_data[metadata][source]", "faith-flix-donation");
   if (typeof body.donorEmail === "string" && body.donorEmail.includes("@")) {
     params.append("customer_email", body.donorEmail);
   }
