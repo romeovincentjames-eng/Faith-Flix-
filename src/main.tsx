@@ -741,7 +741,7 @@ function App() {
   const [page, setPage] = React.useState<Page>(() => {
     const savedPage = sessionStorage.getItem("faithflix-refresh-page") as Page | null;
     sessionStorage.removeItem("faithflix-refresh-page");
-    return savedPage || "profile";
+    return savedPage || "home";
   });
   const [studioView, setStudioView] = React.useState<StudioView>(() => {
     const savedStudioView = sessionStorage.getItem("faithflix-refresh-studio") as StudioView | null;
@@ -1009,7 +1009,7 @@ function App() {
   const signOut = () => {
     void supabase.auth.signOut();
     setSessionId("");
-    setPage("profile");
+    setPage("home");
     notify(t("profile.signedOut"));
   };
 
