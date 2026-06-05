@@ -5481,9 +5481,24 @@ textarea:focus {
   gap: 4px;
   padding: 12px 16px 14px;
   border-bottom: 1px solid rgba(255,255,255,0.07);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%);
+}
+
+.tt-saved-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tt-saved-tab {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  white-space: nowrap;
   padding: 7px 18px;
   border-radius: 999px;
   border: none;
@@ -8913,6 +8928,10 @@ select {
   position: relative;
   overflow: hidden;
   border-radius: 34px;
+  clip-path: inset(0 round 34px);
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  isolation: isolate;
+  transform: translateZ(0);
   margin: 14px 14px 4px;
   border: 1px solid rgba(212,160,23,0.18);
   box-shadow: 0 20px 58px rgba(0,0,0,0.58), 0 0 0 1px rgba(255,255,255,0.055), inset 0 1px 0 rgba(255,255,255,0.08);
@@ -9033,6 +9052,7 @@ select {
   .ws-featured {
     margin: 10px 10px 2px;
     border-radius: 22px;
+    clip-path: inset(0 round 22px);
   }
 
   .ws-featured-body {
