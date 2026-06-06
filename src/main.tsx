@@ -2838,20 +2838,13 @@ function WorshipUploadSheet({ onClose }: { onClose: () => void }) {
 }
 
 function SavedScreen() {
-  const { currentUser, saved, savedSeries, savedLists, videos, publicSeries, posts, comments, setPosts, setSaved, setSavedSeries, setSavedLists, setSelectedVideoId, setSelectedSeriesId, setCommunityView, go, notify } = useApp();
-  const [activeFilter, setActiveFilter] = React.useState<"all" | "videos" | "series" | "posts" | "lists">("all");
-  const [showNewList, setShowNewList] = React.useState(false);
-  const [listName, setListName] = React.useState("");
-
-  React.useEffect(() => {
-    document.body.classList.toggle("saved-list-sheet-open", showNewList);
-    return () => document.body.classList.remove("saved-list-sheet-open");
-  }, [showNewList]);
+  const { currentUser, saved, savedSeries, videos, publicSeries, posts, comments, setPosts, setSaved, setSavedSeries, setSelectedVideoId, setSelectedSeriesId, setCommunityView, go, notify } = useApp();
+  const [activeFilter, setActiveFilter] = React.useState<"all" | "videos" | "series" | "posts">("all");
 
   if (!currentUser) {
     return (
       <section className="screen">
-        <EmptyState icon={Bookmark} title="Sign in to see your saved library" body="Your saved videos, series, posts, and collections will appear here." action="Sign In" onAction={() => go("profile")} />
+        <EmptyState icon={Bookmark} title="Sign in to see your saved library" body="Your saved videos, series, and posts will appear here." action="Sign In" onAction={() => go("profile")} />
       </section>
     );
   }
@@ -2859,27 +2852,10 @@ function SavedScreen() {
   const actorId = currentUser.id;
   const generalIds = saved[actorId] ?? [];
   const savedSeriesIds = savedSeries[actorId] ?? [];
-  const userLists = savedLists[actorId] ?? [];
   const generalVideos = videos.filter((v) => generalIds.includes(v.id));
   const generalSeries = publicSeries.filter((item) => savedSeriesIds.includes(item.id));
   const savedPosts = posts.filter((post) => post.saves.includes(actorId));
-  const hasSavedContent = generalVideos.length > 0 || generalSeries.length > 0 || savedPosts.length > 0 || userLists.length > 0;
-
-  const createList = () => {
-    const name = listName.trim();
-    if (!name) return notify("Name your collection first.");
-    if (userLists.some((l) => l.name.toLowerCase() === name.toLowerCase())) return notify("Collection already exists.");
-    setSavedLists({ ...savedLists, [actorId]: [...userLists, { id: uid("saved-list"), name, videoIds: [] }] });
-    setListName(""); setShowNewList(false); notify("Collection created.");
-  };
-  const openNewCollection = () => {
-    setActiveFilter("lists");
-    setShowNewList(true);
-  };
-  const closeNewCollection = () => {
-    setShowNewList(false);
-    setListName("");
-  };
+  const hasSavedContent = generalVideos.length > 0 || generalSeries.length > 0 || savedPosts.length > 0;
 
   const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
   const openSeries = (id: string) => { setSelectedSeriesId(id); go("series"); };
@@ -2890,7 +2866,6 @@ function SavedScreen() {
     setPosts(posts.map((post) => post.id === postId ? { ...post, saves: post.saves.filter((id) => id !== actorId) } : post));
     notify("Post removed.");
   };
-  const deleteList = (listId: string) => { setSavedLists({ ...savedLists, [actorId]: userLists.filter((l) => l.id !== listId) }); notify("Collection deleted."); };
 
   return (
     <section className="screen tt-saved-screen">
@@ -2900,9 +2875,9 @@ function SavedScreen() {
       </div>
 
       <div className="tt-saved-tabs">
-        {(["all", "videos", "series", "posts", "lists"] as const).map((f) => (
+        {(["all", "videos", "series", "posts"] as const).map((f) => (
           <button key={f} className={`tt-saved-tab${activeFilter === f ? " active" : ""}`} onClick={() => setActiveFilter(f)}>
-            {f === "all" ? "All" : f === "videos" ? "Videos" : f === "series" ? "Series" : f === "posts" ? "Posts" : "Collections"}
+            {f === "all" ? "All" : f === "videos" ? "Videos" : f === "series" ? "Series" : "Posts"}
           </button>
         ))}
       </div>
@@ -2985,62 +2960,6 @@ function SavedScreen() {
         ) : activeFilter === "posts" ? (
           <EmptyState icon={MessagesSquare} title="No saved posts yet" body="Tap the bookmark on a community post to save it here." action="Open Community" onAction={openPosts} />
         ) : null
-      )}
-
-      {(activeFilter === "all" || activeFilter === "lists") && (
-        <div className="tt-collections">
-          {activeFilter === "all" && (generalVideos.length > 0 || generalSeries.length > 0 || savedPosts.length > 0) && userLists.length > 0 && (
-            <p className="tt-collections-label">Collections</p>
-          )}
-          {userLists.map((list) => {
-            const listVideos = videos.filter((v) => list.videoIds.includes(v.id));
-            const previews = listVideos.slice(0, 3);
-            return (
-              <div key={list.id} className="tt-collection-card">
-                <div className="tt-collection-thumbnails">
-                  {previews.length > 0
-                    ? previews.map((v) => v.thumbnailUrl
-                        ? <img key={v.id} src={v.thumbnailUrl} alt="" />
-                        : <div key={v.id} className="tt-coll-thumb-empty"><Film size={13} /></div>)
-                    : <div className="tt-coll-thumb-empty tt-coll-thumb-full"><Bookmark size={18} /></div>}
-                </div>
-                <div className="tt-collection-info">
-                  <p className="tt-collection-name">{list.name}</p>
-                  <p className="tt-collection-count">{listVideos.length} video{listVideos.length !== 1 ? "s" : ""}</p>
-                </div>
-                <button className="tt-collection-delete" onClick={() => deleteList(list.id)} aria-label="Delete"><Trash2 size={16} /></button>
-              </div>
-            );
-          })}
-          {activeFilter === "lists" && userLists.length === 0 && (
-            <EmptyState icon={Bookmark} title="No collections yet" body="Tap + to create your first collection." action="New Collection" onAction={openNewCollection} />
-          )}
-        </div>
-      )}
-
-      {showNewList && (
-        <div className="tt-new-list-overlay" onClick={closeNewCollection}>
-          <div className="tt-new-list-bar" role="dialog" aria-modal="true" aria-label="Create collection" onClick={(e) => e.stopPropagation()}>
-            <div className="tt-new-list-heading">
-              <div>
-                <p>Create collection</p>
-                <span>Save videos into your own folder.</span>
-              </div>
-              <button className="tt-new-list-close" aria-label="Close" onClick={closeNewCollection}><X size={18} /></button>
-            </div>
-            <input className="tt-new-list-input" placeholder="Collection name" value={listName} autoFocus onChange={(e) => setListName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && createList()} />
-            <div className="tt-new-list-btns">
-              <button className="secondary-button" onClick={closeNewCollection}>Cancel</button>
-              <button className="primary-button" onClick={createList}>Create</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!showNewList && (
-        <button className="tt-saved-fab" aria-label="New collection" onClick={openNewCollection}>
-          <Plus size={24} />
-        </button>
       )}
     </section>
   );
