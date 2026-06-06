@@ -903,11 +903,20 @@ function App() {
     localStorage.setItem(demoVersion, "loaded");
   }, [setUsers, setVideos, setSeries, setCategories, setUploads, setPosts, setPrayers, setComments, setFriendRequests, setMessages, setWorshipSongs, setSaved, setSavedSeries, setSavedLists, setLikes]);
 
-  const currentUser = users.find((user) => user.id === sessionId);
+  const currentUser = React.useMemo(() => users.find((user) => user.id === sessionId), [users, sessionId]);
   const isAdmin = currentUser?.role === "admin";
-  const visibleCategories = uniqueCategoriesByName(categories).filter((category) => !category.hidden && !isPrayerCategoryName(category.name));
-  const publicVideos = videos.filter((video) => video.status === "Published" && !isPrayerVideo(video)).map(alignProfessionalVideoWithSeries);
-  const publicSeries = series.filter((item) => item.status === "Published");
+  const visibleCategories = React.useMemo(
+    () => uniqueCategoriesByName(categories).filter((category) => !category.hidden && !isPrayerCategoryName(category.name)),
+    [categories]
+  );
+  const publicVideos = React.useMemo(
+    () => videos.filter((video) => video.status === "Published" && !isPrayerVideo(video)).map(alignProfessionalVideoWithSeries),
+    [videos]
+  );
+  const publicSeries = React.useMemo(
+    () => series.filter((item) => item.status === "Published"),
+    [series]
+  );
 
   const [showSplash, setShowSplash] = React.useState(false);
   const triggerSplash = () => {
@@ -1050,9 +1059,14 @@ function App() {
   const isSignInPage = visiblePage === "profile" && !currentUser;
   const isCommunityShell = visiblePage === "community" || visiblePage === "upload";
   const isWorshipShell = visiblePage === "worship";
+  const [hasOpenedWorship, setHasOpenedWorship] = React.useState(visiblePage === "worship");
   const topSearchValue = isCommunityShell ? commSearchQuery : isWorshipShell ? worshipSearchQuery : mainSearchQuery;
   const setTopSearchValue = isCommunityShell ? setCommSearchQuery : isWorshipShell ? setWorshipSearchQuery : setMainSearchQuery;
   const topSearchPlaceholder = isCommunityShell ? "Search community..." : isWorshipShell ? "Search worship music..." : t("search.placeholder");
+
+  React.useEffect(() => {
+    if (visiblePage === "worship") setHasOpenedWorship(true);
+  }, [visiblePage]);
 
   const app = {
     page,
@@ -1180,7 +1194,7 @@ function App() {
           {visiblePage === "series" && <SeriesScreen />}
           {(visiblePage === "upload") && <CommunityScreen />}
           {visiblePage === "community" && <CommunityScreen />}
-          <div style={{ display: visiblePage === "worship" ? "contents" : "none" }}><WorshipScreen /></div>
+          {hasOpenedWorship && <div style={{ display: visiblePage === "worship" ? "contents" : "none" }}><WorshipScreen /></div>}
           {visiblePage === "saved" && <SavedScreen />}
           {visiblePage === "donate" && <DonationScreen />}
           {visiblePage === "profile" && <ProfileScreen />}
@@ -1542,7 +1556,7 @@ function NavButton({ label, icon: Icon, active, onClick }: { label: string; icon
   );
 }
 
-function WatchFeedCard({ video }: { video: VideoItem }) {
+const WatchFeedCard = React.memo(function WatchFeedCard({ video, index, loadMedia, onVisible }: { video: VideoItem; index: number; loadMedia: boolean; onVisible: (index: number) => void }) {
   const { likes, setLikes, saved, setSaved, currentUser, notify, comments, go, setCommunityView } = useApp();
   const actorId = currentUser?.id ?? "guest";
   const likedIds = likes[actorId] ?? [];
@@ -1572,7 +1586,8 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          videoRef.current?.play().catch(() => {});
+          onVisible(index);
+          if (loadMedia) videoRef.current?.play().catch(() => {});
           setPaused(false);
           window.dispatchEvent(new CustomEvent("pauseWorshipAudio"));
         } else {
@@ -1583,7 +1598,11 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [index, loadMedia, onVisible]);
+
+  React.useEffect(() => {
+    if (!loadMedia) videoRef.current?.pause();
+  }, [loadMedia]);
 
   const tapVideo = () => {
     const v = videoRef.current;
@@ -1627,7 +1646,7 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
 
   return (
     <div ref={cardRef} className={`watch-feed-card${isFullscreen ? " wfc-fullscreen" : ""}${isFullscreen && isExiting ? " wfc-exiting" : ""}`}>
-      {video.videoUrl ? (
+      {loadMedia && video.videoUrl ? (
         isCloudflare ? (
           <iframe
             className="watch-feed-video"
@@ -1655,7 +1674,7 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
       <div className="watch-feed-gradient" />
 
       {/* Tap zone overlay — center = play/pause, outer = fullscreen */}
-      {!isCloudflare && (
+      {loadMedia && !isCloudflare && (
         <div className="wfc-tap-overlay" onClick={handleOuterTap}>
           <div className="wfc-center-zone" onClick={handleCenterTap}>
             {paused && (
@@ -1711,7 +1730,7 @@ function WatchFeedCard({ video }: { video: VideoItem }) {
       </div>
     </div>
   );
-}
+});
 
 function HomePosterCard({ video, onOpen }: { video: VideoItem; onOpen: () => void }) {
   return (
@@ -1736,7 +1755,15 @@ function HomePosterCard({ video, onOpen }: { video: VideoItem; onOpen: () => voi
 
 function HomeScreen() {
   const { publicVideos, publicSeries, go, setSelectedVideoId, setSelectedSeriesId, mainSearchQuery, t } = useApp();
-  const officialVideos = publicVideos.filter((video) => video.source === "admin");
+  const officialVideos = React.useMemo(() => publicVideos.filter((video) => video.source === "admin"), [publicVideos]);
+  const episodeCountBySeries = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const video of officialVideos) {
+      if (video.status !== "Published" || !video.seriesId) continue;
+      counts[video.seriesId] = (counts[video.seriesId] ?? 0) + 1;
+    }
+    return counts;
+  }, [officialVideos]);
 
   const openVideo = (video: VideoItem) => {
     flushSync(() => {
@@ -1751,9 +1778,21 @@ function HomeScreen() {
   };
 
   const q = mainSearchQuery.trim().toLowerCase();
+  const matchVideos = React.useMemo(
+    () => q ? officialVideos.filter((v) => [v.title, v.description, v.category, v.seriesId].join(" ").toLowerCase().includes(q)) : [],
+    [officialVideos, q]
+  );
+  const matchSeries = React.useMemo(
+    () => q ? publicSeries.filter((s) => [s.title, s.description, s.category, s.scriptureTheme].join(" ").toLowerCase().includes(q)) : [],
+    [publicSeries, q]
+  );
+  const publishedVideos = React.useMemo(() => officialVideos.filter((v) => v.status === "Published"), [officialVideos]);
+  const featuredVideos = React.useMemo(() => publishedVideos.filter((v) => v.featured || v.source === "admin"), [publishedVideos]);
+  const allFeatured = featuredVideos.length >= 3 ? featuredVideos : publishedVideos;
+  const recentVideos = React.useMemo(() => [...publishedVideos].reverse().slice(0, 12), [publishedVideos]);
+  const seriesList = React.useMemo(() => publicSeries.filter((s) => s.status === "Published").slice(0, 12), [publicSeries]);
+
   if (q) {
-    const matchVideos = officialVideos.filter((v) => [v.title, v.description, v.category, v.seriesId].join(" ").toLowerCase().includes(q));
-    const matchSeries = publicSeries.filter((s) => [s.title, s.description, s.category, s.scriptureTheme].join(" ").toLowerCase().includes(q));
     return (
       <section className="screen home-search-screen">
         <div className="search-results-header">
@@ -1778,7 +1817,7 @@ function HomeScreen() {
             <SectionHeader title={t("search.series")} action={`${matchSeries.length} ${t("home.found")}`} />
             <div className="home-series-shelf">
               {matchSeries.map((item) => {
-                const epCount = officialVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+                const epCount = episodeCountBySeries[item.title] ?? 0;
                 return (
                   <button key={item.id} className="home-series-card" onClick={() => { setSelectedSeriesId(item.id); go("series"); }}>
                     {item.posterUrl ? <img className="home-series-poster" src={item.posterUrl} alt={item.title} /> : <div className="home-series-poster home-series-poster-empty"><Clapperboard size={28} /></div>}
@@ -1795,12 +1834,6 @@ function HomeScreen() {
       </section>
     );
   }
-
-  const publishedVideos = officialVideos.filter((v) => v.status === "Published");
-  const featuredVideos = publishedVideos.filter((v) => v.featured || v.source === "admin");
-  const allFeatured = featuredVideos.length >= 3 ? featuredVideos : publishedVideos;
-  const recentVideos = [...publishedVideos].reverse().slice(0, 12);
-  const seriesList = publicSeries.filter((s) => s.status === "Published").slice(0, 12);
 
   return (
     <section className="screen home-featured-screen">
@@ -1826,7 +1859,7 @@ function HomeScreen() {
           </div>
           <div className="home-series-shelf">
             {seriesList.map((item) => {
-              const epCount = publishedVideos.filter((v) => v.seriesId === item.title).length;
+              const epCount = episodeCountBySeries[item.title] ?? 0;
               return (
                 <button key={item.id} className="home-series-card" onClick={() => openSeries(item)}>
                   {item.posterUrl
@@ -1867,15 +1900,21 @@ function HomeScreen() {
 function WatchScreen() {
   const { publicVideos, selectedVideoId } = useApp();
   const feedRef = React.useRef<HTMLDivElement>(null);
-  const feedVideos = publicVideos.filter((v) => v.status === "Published" && v.source === "admin");
+  const feedVideos = React.useMemo(() => publicVideos.filter((v) => v.status === "Published" && v.source === "admin"), [publicVideos]);
+  const initialIndex = Math.max(0, feedVideos.findIndex((v) => v.id === selectedVideoId));
+  const [activeIndex, setActiveIndex] = React.useState(initialIndex);
+  const markVisible = React.useCallback((index: number) => {
+    setActiveIndex((current) => current === index ? current : index);
+  }, []);
 
   React.useEffect(() => {
     if (!selectedVideoId || !feedRef.current) return;
     const idx = feedVideos.findIndex((v) => v.id === selectedVideoId);
     if (idx < 1) return;
+    setActiveIndex(idx);
     const card = feedRef.current.children[idx] as HTMLElement;
     card?.scrollIntoView({ behavior: "instant" });
-  }, []);
+  }, [feedVideos, selectedVideoId]);
 
   if (!feedVideos.length) {
     return (
@@ -1887,8 +1926,14 @@ function WatchScreen() {
 
   return (
     <div ref={feedRef} className="watch-feed-screen">
-      {feedVideos.map((video) => (
-        <WatchFeedCard key={video.id} video={video} />
+      {feedVideos.map((video, index) => (
+        <WatchFeedCard
+          key={video.id}
+          video={video}
+          index={index}
+          loadMedia={Math.abs(index - activeIndex) <= 1}
+          onVisible={markVisible}
+        />
       ))}
     </div>
   );
@@ -1981,27 +2026,33 @@ function SeriesDetailView({ series, episodes, onBack }: { series: SeriesItem; ep
 function SeriesScreen() {
   const { currentUser, savedSeries, setSavedSeries, publicSeries, publicVideos, go, setSelectedVideoId, selectedSeriesId, setSelectedSeriesId, notify } = useApp();
   const [activeCategory, setActiveCategory] = React.useState("All");
-  const officialVideos = publicVideos.filter((video) => video.source === "admin");
+  const officialVideos = React.useMemo(() => publicVideos.filter((video) => video.source === "admin"), [publicVideos]);
+  const episodesBySeries = React.useMemo(() => {
+    const groups: Record<string, VideoItem[]> = {};
+    for (const video of officialVideos) {
+      if (video.status !== "Published" || !video.seriesId) continue;
+      groups[video.seriesId] = [...(groups[video.seriesId] ?? []), video];
+    }
+    return groups;
+  }, [officialVideos]);
   const actorId = currentUser?.id ?? "guest";
   const savedSeriesIds = savedSeries[actorId] ?? [];
 
   const focusedSeries = selectedSeriesId ? publicSeries.find((s) => s.id === selectedSeriesId) : null;
-  const focusedEpisodes = focusedSeries
-    ? officialVideos.filter((v) => v.seriesId === focusedSeries.title && v.status === "Published")
-    : [];
+  const focusedEpisodes = focusedSeries ? episodesBySeries[focusedSeries.title] ?? [] : [];
 
   if (focusedSeries) {
     return <SeriesDetailView series={focusedSeries} episodes={focusedEpisodes} onBack={() => setSelectedSeriesId("")} />;
   }
 
-  const publishedSeries = publicSeries.filter((s) => s.status === "Published");
+  const publishedSeries = React.useMemo(() => publicSeries.filter((s) => s.status === "Published"), [publicSeries]);
   const featuredSeries = publishedSeries.find((s) => s.featured) ?? publishedSeries[0];
-  const categories = Array.from(new Set(publishedSeries.map((s) => s.category).filter(Boolean)));
+  const categories = React.useMemo(() => Array.from(new Set(publishedSeries.map((s) => s.category).filter(Boolean))), [publishedSeries]);
 
   const visibleCategories = activeCategory === "All" ? categories : categories.filter((c) => c === activeCategory);
 
   const playFirstEpisode = (item: SeriesItem) => {
-    const firstEp = officialVideos.find((v) => v.seriesId === item.title && v.status === "Published");
+    const firstEp = episodesBySeries[item.title]?.[0];
     if (firstEp) { setSelectedVideoId(firstEp.id); go("watch"); }
     else setSelectedSeriesId(item.id);
   };
@@ -2067,7 +2118,7 @@ function SeriesScreen() {
               <h2 className="netflix-row-title">{category}</h2>
               <div className="netflix-row-scroll">
                 {catSeries.map((item) => {
-                  const epCount = officialVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+                  const epCount = episodesBySeries[item.title]?.length ?? 0;
                   return (
                     <button key={item.id} className="netflix-series-card" onClick={() => setSelectedSeriesId(item.id)}>
                       <span className={`series-save-pill${savedSeriesIds.includes(item.id) ? " active" : ""}`} onClick={(e) => toggleSeriesSave(item, e)} aria-label={savedSeriesIds.includes(item.id) ? "Unsave series" : "Save series"} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleSeriesSave(item, e as unknown as React.MouseEvent); }}>
@@ -2093,7 +2144,7 @@ function SeriesScreen() {
               <h2 className="netflix-row-title">All Series</h2>
               <div className="netflix-row-scroll">
                 {publishedSeries.map((item) => {
-                  const epCount = officialVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+                  const epCount = episodesBySeries[item.title]?.length ?? 0;
                   return (
                     <button key={item.id} className="netflix-series-card" onClick={() => setSelectedSeriesId(item.id)}>
                       <span className={`series-save-pill${savedSeriesIds.includes(item.id) ? " active" : ""}`} onClick={(e) => toggleSeriesSave(item, e)} aria-label={savedSeriesIds.includes(item.id) ? "Unsave series" : "Save series"} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleSeriesSave(item, e as unknown as React.MouseEvent); }}>
@@ -2121,7 +2172,7 @@ function SeriesScreen() {
           <h2 className="netflix-row-title series-filtered-title">{activeCategory}</h2>
           <div className="series-filtered-grid">
             {publishedSeries.filter((s) => s.category === activeCategory).map((item) => {
-              const epCount = officialVideos.filter((v) => v.seriesId === item.title && v.status === "Published").length;
+              const epCount = episodesBySeries[item.title]?.length ?? 0;
               return (
                 <button key={item.id} className="netflix-series-card series-grid-card" onClick={() => setSelectedSeriesId(item.id)}>
                   <span className={`series-save-pill${savedSeriesIds.includes(item.id) ? " active" : ""}`} onClick={(e) => toggleSeriesSave(item, e)} aria-label={savedSeriesIds.includes(item.id) ? "Unsave series" : "Save series"} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleSeriesSave(item, e as unknown as React.MouseEvent); }}>
@@ -2792,6 +2843,11 @@ function SavedScreen() {
   const [showNewList, setShowNewList] = React.useState(false);
   const [listName, setListName] = React.useState("");
 
+  React.useEffect(() => {
+    document.body.classList.toggle("saved-list-sheet-open", showNewList);
+    return () => document.body.classList.remove("saved-list-sheet-open");
+  }, [showNewList]);
+
   if (!currentUser) {
     return (
       <section className="screen">
@@ -2815,6 +2871,14 @@ function SavedScreen() {
     if (userLists.some((l) => l.name.toLowerCase() === name.toLowerCase())) return notify("Collection already exists.");
     setSavedLists({ ...savedLists, [actorId]: [...userLists, { id: uid("saved-list"), name, videoIds: [] }] });
     setListName(""); setShowNewList(false); notify("Collection created.");
+  };
+  const openNewCollection = () => {
+    setActiveFilter("lists");
+    setShowNewList(true);
+  };
+  const closeNewCollection = () => {
+    setShowNewList(false);
+    setListName("");
   };
 
   const openVideo = (id: string) => { setSelectedVideoId(id); go("watch"); };
@@ -2949,23 +3013,32 @@ function SavedScreen() {
             );
           })}
           {activeFilter === "lists" && userLists.length === 0 && (
-            <EmptyState icon={Bookmark} title="No collections yet" body="Tap + to create your first collection." action="" onAction={() => {}} />
+            <EmptyState icon={Bookmark} title="No collections yet" body="Tap + to create your first collection." action="New Collection" onAction={openNewCollection} />
           )}
         </div>
       )}
 
       {showNewList && (
-        <div className="tt-new-list-bar">
-          <input className="tt-new-list-input" placeholder="Collection name…" value={listName} autoFocus onChange={(e) => setListName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && createList()} />
-          <div className="tt-new-list-btns">
-            <button className="secondary-button" onClick={() => { setShowNewList(false); setListName(""); }}>Cancel</button>
-            <button className="primary-button" onClick={createList}>Create</button>
+        <div className="tt-new-list-overlay" onClick={closeNewCollection}>
+          <div className="tt-new-list-bar" role="dialog" aria-modal="true" aria-label="Create collection" onClick={(e) => e.stopPropagation()}>
+            <div className="tt-new-list-heading">
+              <div>
+                <p>Create collection</p>
+                <span>Save videos into your own folder.</span>
+              </div>
+              <button className="tt-new-list-close" aria-label="Close" onClick={closeNewCollection}><X size={18} /></button>
+            </div>
+            <input className="tt-new-list-input" placeholder="Collection name" value={listName} autoFocus onChange={(e) => setListName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && createList()} />
+            <div className="tt-new-list-btns">
+              <button className="secondary-button" onClick={closeNewCollection}>Cancel</button>
+              <button className="primary-button" onClick={createList}>Create</button>
+            </div>
           </div>
         </div>
       )}
 
       {!showNewList && (
-        <button className="comm-fab" aria-label="New collection" onClick={() => setShowNewList(true)}>
+        <button className="tt-saved-fab" aria-label="New collection" onClick={openNewCollection}>
           <Plus size={24} />
         </button>
       )}
@@ -3478,11 +3551,174 @@ function UserProfilePage() {
   );
 }
 
+type ProfileEditDraft = {
+  name: string;
+  username: string;
+  bio: string;
+  favoriteScripture: string;
+  ministry: string;
+  birthday: string;
+  location: string;
+  image: string;
+};
+
+type CircleCropSettings = {
+  zoom: number;
+  x: number;
+  y: number;
+};
+
+function profileToEditDraft(profile?: Profile): ProfileEditDraft {
+  return {
+    name: profile?.name ?? "",
+    username: profile?.username ?? "",
+    bio: profile?.bio ?? "",
+    favoriteScripture: profile?.favoriteScripture ?? "",
+    ministry: profile?.ministry ?? "",
+    birthday: profile?.birthday ?? "",
+    location: profile?.location ?? "",
+    image: profile?.image ?? "",
+  };
+}
+
+function fittedCircleCrop(size: number, imageWidth: number, imageHeight: number, settings: CircleCropSettings) {
+  const baseScale = Math.max(size / imageWidth, size / imageHeight);
+  const scale = baseScale * settings.zoom;
+  const width = imageWidth * scale;
+  const height = imageHeight * scale;
+  const maxX = Math.max(0, (width - size) / 2);
+  const maxY = Math.max(0, (height - size) / 2);
+  return {
+    width,
+    height,
+    left: (size - width) / 2 + (settings.x / 100) * maxX,
+    top: (size - height) / 2 + (settings.y / 100) * maxY,
+  };
+}
+
+function loadImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
+}
+
+async function createCircleProfileImage(src: string, settings: CircleCropSettings) {
+  const image = await loadImage(src);
+  const size = 512;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not crop image.");
+  const frame = fittedCircleCrop(size, image.naturalWidth, image.naturalHeight, settings);
+  ctx.clearRect(0, 0, size, size);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.drawImage(image, frame.left, frame.top, frame.width, frame.height);
+  ctx.restore();
+  return canvas.toDataURL("image/png");
+}
+
+function ProfilePhotoCropper({ value, initials, onChange, notify }: { value: string; initials: string; onChange: (image: string) => void; notify: (message: string) => void }) {
+  const inputId = React.useId();
+  const previewSize = 148;
+  const [source, setSource] = React.useState(value);
+  const [naturalSize, setNaturalSize] = React.useState({ width: 0, height: 0 });
+  const [settings, setSettings] = React.useState<CircleCropSettings>({ zoom: 1, x: 0, y: 0 });
+
+  React.useEffect(() => {
+    setSource(value);
+    setSettings({ zoom: 1, x: 0, y: 0 });
+  }, [value]);
+
+  const frame = source && naturalSize.width && naturalSize.height
+    ? fittedCircleCrop(previewSize, naturalSize.width, naturalSize.height, settings)
+    : null;
+
+  const chooseFile = (file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSource(String(reader.result || ""));
+      setSettings({ zoom: 1, x: 0, y: 0 });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const useCrop = async () => {
+    if (!source) return notify("Choose a profile photo first.");
+    try {
+      const cropped = await createCircleProfileImage(source, settings);
+      onChange(cropped);
+      notify("Circle crop ready. Press Save Changes to keep it.");
+    } catch {
+      notify("That photo could not be cropped. Try another image.");
+    }
+  };
+
+  const imageStyle: React.CSSProperties = frame
+    ? { width: frame.width, height: frame.height, left: frame.left, top: frame.top }
+    : { width: "100%", height: "100%", left: 0, top: 0 };
+
+  return (
+    <div className="profile-photo-cropper">
+      <span className="file-label">Profile photo</span>
+      <div className="profile-photo-crop-layout">
+        <label className="profile-photo-drop" htmlFor={inputId}>
+          <span className="file-icon"><Upload size={22} /></span>
+          <span className="file-copy">
+            <strong>{source ? "Change photo" : "Choose photo"}</strong>
+            <small>Crop it before saving your profile</small>
+          </span>
+          <span className="file-action">Browse</span>
+          <input id={inputId} type="file" accept="image/*" onChange={(event) => chooseFile(event.target.files?.[0] ?? null)} />
+        </label>
+
+        <div className="profile-circle-preview-card">
+          <div className="profile-circle-preview" aria-label="Circle crop preview">
+            {source ? (
+              <img
+                src={source}
+                alt="Profile crop preview"
+                style={imageStyle}
+                onLoad={(event) => setNaturalSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })}
+              />
+            ) : (
+              <span>{initials}</span>
+            )}
+          </div>
+          <p>Circle preview</p>
+        </div>
+      </div>
+
+      {source && (
+        <div className="profile-crop-controls">
+          <label>Zoom<input type="range" min="1" max="2.4" step="0.05" value={settings.zoom} onChange={(event) => setSettings((current) => ({ ...current, zoom: Number(event.target.value) }))} /></label>
+          <label>Move sideways<input type="range" min="-100" max="100" step="1" value={settings.x} onChange={(event) => setSettings((current) => ({ ...current, x: Number(event.target.value) }))} /></label>
+          <label>Move up/down<input type="range" min="-100" max="100" step="1" value={settings.y} onChange={(event) => setSettings((current) => ({ ...current, y: Number(event.target.value) }))} /></label>
+          <button className="secondary-button" onClick={useCrop}>Use This Crop</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProfileScreen() {
   const { currentUser, users, setUsers, setSessionId, isAdmin, posts, friendRequests, setFriendRequests, setSelectedCommunityUser, setCommunityView, setSelectedMessageUser, signOut, go, notify, t } = useApp();
   const [mode, setMode] = React.useState<"signup" | "login">("login");
   const [editOpen, setEditOpen] = React.useState(false);
   const [profileTab, setProfileTab] = React.useState<"posts" | "friends">("posts");
+  const [profileDraft, setProfileDraft] = React.useState<ProfileEditDraft>(() => profileToEditDraft());
+
+  React.useEffect(() => {
+    if (!currentUser || editOpen) return;
+    setProfileDraft(profileToEditDraft(currentUser));
+  }, [currentUser, editOpen]);
 
   if (!currentUser) {
     return (
@@ -3502,8 +3738,30 @@ function ProfileScreen() {
 
   const update = (patch: Partial<Profile>) => {
     setUsers(users.map((u) => u.id === currentUser.id ? { ...u, ...patch } : u));
-    void supabase.from("profiles").update({ name: patch.name, username: patch.username, birthday: patch.birthday, bio: patch.bio, favorite_scripture: patch.favoriteScripture, church_ministry_name: patch.ministry, location: patch.location, profile_image_url: patch.image }).eq("id", currentUser.id);
-    notify(t("profile.profileUpdated"));
+    const dbPatch: Record<string, string> = {};
+    if (patch.name !== undefined) dbPatch.name = patch.name;
+    if (patch.username !== undefined) dbPatch.username = patch.username;
+    if (patch.birthday !== undefined) dbPatch.birthday = patch.birthday;
+    if (patch.bio !== undefined) dbPatch.bio = patch.bio;
+    if (patch.favoriteScripture !== undefined) dbPatch.favorite_scripture = patch.favoriteScripture;
+    if (patch.ministry !== undefined) dbPatch.church_ministry_name = patch.ministry;
+    if (patch.location !== undefined) dbPatch.location = patch.location;
+    if (patch.image !== undefined) dbPatch.profile_image_url = patch.image;
+    if (Object.keys(dbPatch).length) void supabase.from("profiles").update(dbPatch).eq("id", currentUser.id);
+  };
+
+  const openEditor = () => {
+    if (!editOpen) setProfileDraft(profileToEditDraft(currentUser));
+    setEditOpen((value) => !value);
+  };
+
+  const saveProfileChanges = () => {
+    const name = profileDraft.name.trim();
+    if (!name) return notify("Name is required.");
+    update({ ...profileDraft, name, username: profileDraft.username.trim() });
+    setSessionId(currentUser.id);
+    notify(t("profile.profileSaved"));
+    setEditOpen(false);
   };
 
   const initials = currentUser.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
@@ -3543,7 +3801,7 @@ function ProfileScreen() {
 
       {/* ── Action buttons ── */}
       <div className="ig-profile-actions">
-        <button className="ig-profile-btn" onClick={() => setEditOpen((v) => !v)}>{editOpen ? "Done Editing" : "Edit Profile"}</button>
+        <button className="ig-profile-btn" onClick={openEditor}>{editOpen ? "Done Editing" : "Edit Profile"}</button>
         {isAdmin && <button className="ig-profile-btn" onClick={() => go("admin-studio")}>Studio</button>}
         <button className="ig-profile-btn ig-profile-btn-sq" onClick={signOut} aria-label="Sign out"><LogOut size={17} /></button>
       </div>
@@ -3551,15 +3809,20 @@ function ProfileScreen() {
       {/* ── Edit panel (collapsible) ── */}
       {editOpen && (
         <div className="ig-profile-edit-panel">
-          <Field label={t("profile.nameLabel")} value={currentUser.name} onChange={(name) => update({ name })} />
-          <Field label={t("profile.usernameLabel")} value={currentUser.username} onChange={(username) => update({ username })} />
-          <Field label={t("profile.bioLabel")} value={currentUser.bio ?? ""} onChange={(bio) => update({ bio })} />
-          <Field label={t("profile.scriptureLabel")} value={currentUser.favoriteScripture ?? ""} onChange={(favoriteScripture) => update({ favoriteScripture })} />
-          <Field label={t("profile.churchLabel")} value={currentUser.ministry ?? ""} onChange={(ministry) => update({ ministry })} />
-          <Field label="Birthday" type="date" value={currentUser.birthday ?? ""} onChange={(birthday) => update({ birthday })} />
-          <Field label={t("profile.locationLabel")} value={currentUser.location ?? ""} onChange={(location) => update({ location })} />
-          <FileField label="Profile photo" onChange={(file) => update({ image: fileInfo(file).name })} />
-          <button className="primary-button" onClick={() => { setSessionId(currentUser.id); notify(t("profile.profileSaved")); setEditOpen(false); }}>Save Changes</button>
+          <ProfilePhotoCropper
+            value={profileDraft.image}
+            initials={initials}
+            notify={notify}
+            onChange={(image) => setProfileDraft((current) => ({ ...current, image }))}
+          />
+          <Field label={t("profile.nameLabel")} value={profileDraft.name} onChange={(name) => setProfileDraft((current) => ({ ...current, name }))} />
+          <Field label={t("profile.usernameLabel")} value={profileDraft.username} onChange={(username) => setProfileDraft((current) => ({ ...current, username }))} />
+          <Field label={t("profile.bioLabel")} value={profileDraft.bio} onChange={(bio) => setProfileDraft((current) => ({ ...current, bio }))} />
+          <Field label={t("profile.scriptureLabel")} value={profileDraft.favoriteScripture} onChange={(favoriteScripture) => setProfileDraft((current) => ({ ...current, favoriteScripture }))} />
+          <Field label={t("profile.churchLabel")} value={profileDraft.ministry} onChange={(ministry) => setProfileDraft((current) => ({ ...current, ministry }))} />
+          <Field label="Birthday" type="date" value={profileDraft.birthday} onChange={(birthday) => setProfileDraft((current) => ({ ...current, birthday }))} />
+          <Field label={t("profile.locationLabel")} value={profileDraft.location} onChange={(location) => setProfileDraft((current) => ({ ...current, location }))} />
+          <button className="primary-button" onClick={saveProfileChanges}>Save Changes</button>
         </div>
       )}
 
